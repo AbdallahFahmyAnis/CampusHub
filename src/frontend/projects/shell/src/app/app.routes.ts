@@ -4,6 +4,11 @@ import { authGuard } from './auth.guard';
 export const routes: Routes = [
   { path: '', redirectTo: 'catalog', pathMatch: 'full' },
   {
+    path: 'account',
+    canActivate: [authGuard],
+    loadComponent: () => import('./profile').then((m) => m.ProfilePage),
+  },
+  {
     path: 'catalog',
     canActivate: [authGuard],
     loadChildren: () => import('catalog-mfe').then((m) => m.CATALOG_ROUTES),

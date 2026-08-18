@@ -49,10 +49,16 @@ public static class CatalogEndpoints
             return Results.BadRequest(new { error = "Code and name are required." });
         }
 
+        var code = request.Code.Trim().ToUpperInvariant();
+        if (await db.Subjects.AnyAsync(s => s.Code == code, ct))
+        {
+            return Results.Conflict(new { error = "A category with that code already exists." });
+        }
+
         var subject = new Subject
         {
             Id = Guid.NewGuid(),
-            Code = request.Code.Trim().ToUpperInvariant(),
+            Code = code,
             Name = request.Name.Trim(),
             Description = request.Description?.Trim()
         };
@@ -63,20 +69,47 @@ public static class CatalogEndpoints
             new SubjectDto(subject.Id, subject.Code, subject.Name, subject.Description));
     }
 
-    private static async Task<IResult> ListCourses(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    private static async Task<IResult> ListCourses(
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        Guid? subjectId,
+        string? category,
+        int page = 1,
+        int pageSize = 12,
+        CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 48);
+
         var query = db.Courses.AsNoTracking().Include(c => c.Subject).AsQueryable();
         if (!CanManage(user))
         {
             query = query.Where(c => c.Status == CourseStatus.Published);
         }
 
+        if (subjectId is Guid id)
+        {
+            query = query.Where(c => c.SubjectId == id);
+        }
+        else if (!string.IsNullOrWhiteSpace(category))
+        {
+            var code = category.Trim().ToUpperInvariant();
+            query = query.Where(c => c.Subject.Code == code);
+        }
+
+        var total = await query.CountAsync(ct);
         var courses = await query
             .OrderBy(c => c.Title)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(ct);
         var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
 
-        return Results.Ok(courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id))));
+        return Results.Ok(new PagedCoursesDto(
+            courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id))).ToList(),
+            page,
+            pageSize,
+            total));
     }
 
     private static async Task<IResult> ListMine(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)

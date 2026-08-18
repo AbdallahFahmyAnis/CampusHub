@@ -13,7 +13,8 @@ public class CatalogModel(DownstreamApi api) : PageModel
 
     public async Task OnGetAsync(CancellationToken ct)
     {
-        Courses = await api.GetAsync<List<OpsCourse>>("catalog", "/api/catalog/courses", ct) ?? [];
+        var page = await api.GetAsync<PagedOpsCourses>("catalog", "/api/catalog/courses?page=1&pageSize=48", ct);
+        Courses = page?.Items ?? [];
     }
 
     public async Task<IActionResult> OnPostPublishAsync(Guid id, CancellationToken ct)
@@ -30,6 +31,8 @@ public class CatalogModel(DownstreamApi api) : PageModel
         return RedirectToPage();
     }
 }
+
+public sealed record PagedOpsCourses(List<OpsCourse> Items, int Page, int PageSize, int TotalCount);
 
 public sealed record OpsCourse(
     Guid Id,

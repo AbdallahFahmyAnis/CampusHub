@@ -22,9 +22,9 @@ import { CatalogApi, CurriculumDto, SubjectDto } from './catalog.api';
     }
     <form class="form" [formGroup]="form" (ngSubmit)="save()">
       <label>
-        Subject
+        Category
         <select formControlName="subjectId">
-          <option value="">Select a subject</option>
+          <option value="">Select a category</option>
           @for (subject of subjects(); track subject.id) {
             <option [value]="subject.id">{{ subject.code }} — {{ subject.name }}</option>
           }

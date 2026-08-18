@@ -61,13 +61,12 @@ public sealed class AuthorizationController(
 
     [HttpGet("~/connect/logout")]
     [HttpPost("~/connect/logout")]
+    [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Logout()
     {
         await signInManager.SignOutAsync();
 
-        return SignOut(
-            authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-            properties: new AuthenticationProperties { RedirectUri = "/" });
+        return SignOut(authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
     private static IEnumerable<string> GetDestinations(Claim claim)

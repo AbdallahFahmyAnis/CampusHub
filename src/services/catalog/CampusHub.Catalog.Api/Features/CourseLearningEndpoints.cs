@@ -175,9 +175,10 @@ public static class CourseLearningEndpoints
         var (studentId, _) = CatalogEndpoints.Caller(user);
         var items = await db.CourseReviews.AsNoTracking()
             .Where(r => r.CourseId == id)
-            .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(ct);
-        return Results.Ok(items.Select(r => CatalogMappings.ToReview(r, studentId)));
+        return Results.Ok(items
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => CatalogMappings.ToReview(r, studentId)));
     }
 
     private static async Task<IResult> CreateReview(
@@ -242,9 +243,10 @@ public static class CourseLearningEndpoints
         var items = await db.CourseQuestions.AsNoTracking()
             .Where(q => q.CourseId == id)
             .Include(q => q.Answers)
-            .OrderByDescending(q => q.CreatedAt)
             .ToListAsync(ct);
-        return Results.Ok(items.Select(CatalogMappings.ToQuestion));
+        return Results.Ok(items
+            .OrderByDescending(q => q.CreatedAt)
+            .Select(CatalogMappings.ToQuestion));
     }
 
     private static async Task<IResult> CreateQuestion(

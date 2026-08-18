@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,650;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/datatables/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -19,6 +20,7 @@
         <nav>
             <a asp-page="/Index" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active" : null)">Dashboard</a>
             <a asp-page="/Catalog" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Catalog" ? "active" : null)">Catalog</a>
+            <a asp-page="/Categories" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Categories" ? "active" : null)">Categories</a>
             <a asp-page="/Enrollments" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Enrollments" ? "active" : null)">Enrollments</a>
             <a asp-page="/Users" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Users" ? "active" : null)">Users</a>
             <a href="/">Student UI</a>
@@ -30,9 +32,7 @@
                     <span class="who-name">@User.Identity.Name</span>
                     <span class="who-role">Administrator</span>
                 </span>
-                <form method="post" action="/logout">
-                    <button class="btn btn-navy" type="submit">Sign out</button>
-                </form>
+                <a class="btn btn-navy" href="/logout">Sign out</a>
             }
             else
             {
@@ -45,7 +45,11 @@
             @RenderBody()
         </main>
     </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/datatables/dataTables.min.js"></script>
+    <script src="~/lib/datatables/dataTables.bootstrap5.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

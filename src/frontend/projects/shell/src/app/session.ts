@@ -5,13 +5,14 @@ import { firstValueFrom } from 'rxjs';
 export interface Session {
   authenticated: boolean;
   name: string | null;
+  email: string | null;
   sub: string | null;
   roles: string[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
-  private readonly state = signal<Session>({ authenticated: false, name: null, sub: null, roles: [] });
+  private readonly state = signal<Session>({ authenticated: false, name: null, email: null, sub: null, roles: [] });
 
   readonly session = this.state.asReadonly();
   readonly isTeacher = computed(() => {
@@ -40,7 +41,7 @@ export class SessionService {
       this.state.set(session);
       return session;
     } catch {
-      const anonymous = { authenticated: false, name: null, sub: null, roles: [] };
+      const anonymous = { authenticated: false, name: null, email: null, sub: null, roles: [] };
       this.state.set(anonymous);
       return anonymous;
     }
@@ -51,8 +52,11 @@ export class SessionService {
     window.location.href = `/login?returnUrl=${encodeURIComponent(returnUrl || '/catalog')}`;
   }
 
-  async logout(): Promise<void> {
-    await firstValueFrom(this.http.post('/logout', {}, { responseType: 'text' }));
-    window.location.href = '/';
+  logout(): void {
+    window.location.assign('/logout');
+  }
+
+  patchName(name: string): void {
+    this.state.update((current) => ({ ...current, name }));
   }
 }

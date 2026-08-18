@@ -24,6 +24,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
     await db.Database.EnsureCreatedAsync();
+    await NotificationSeeder.SeedAsync(db, app.Lifetime.ApplicationStopping);
 }
 
 app.Run();

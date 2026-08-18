@@ -28,13 +28,48 @@
     </nav>
     <div class="session" [class.open]="menuOpen()">
       @if (session.session().authenticated) {
-        <span class="who">
+        <div class="alerts">
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="toggleAlerts($event)"
+            [attr.aria-expanded]="alertsOpen()"
+            aria-label="Notifications"
+          >
+            <span aria-hidden="true">🔔</span>
+            @if (alerts.unreadCount()) {
+              <span class="badge">{{ alerts.unreadCount() > 9 ? '9+' : alerts.unreadCount() }}</span>
+            }
+          </button>
+          @if (alertsOpen()) {
+            <div class="alerts-panel" role="menu" (click)="$event.stopPropagation()">
+              <div class="alerts-head">
+                <strong>Alerts</strong>
+                @if (alerts.unreadCount()) {
+                  <button type="button" class="btn ghost" (click)="markAllRead($event)">Mark all read</button>
+                }
+              </div>
+              <div class="alerts-list">
+                @for (item of alerts.recent(); track item.id) {
+                  <button type="button" class="alert-item" [class.unread]="!item.read" (click)="openAlert(item)">
+                    <span class="alert-title">{{ item.title }}</span>
+                    <span class="alert-body">{{ item.body }}</span>
+                  </button>
+                } @empty {
+                  <p class="muted alerts-empty">No alerts yet.</p>
+                }
+              </div>
+              <a class="alerts-all" routerLink="/learn/inbox" (click)="alertsOpen.set(false)">Open inbox</a>
+            </div>
+          }
+        </div>
+        <a class="who" routerLink="/account">
           <span class="who-name">{{ session.session().name }}</span>
           @if (session.roleLabel(); as role) {
             <span class="who-role">{{ role }}</span>
           }
-        </span>
-        <button type="button" (click)="session.logout()">Sign out</button>
+        </a>
+        <button type="button" class="sign-out" (click)="session.logout()">Sign out</button>
       } @else {
         <button type="button" (click)="session.login()">Sign in</button>
       }

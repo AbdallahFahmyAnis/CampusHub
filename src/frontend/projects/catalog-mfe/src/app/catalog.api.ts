@@ -27,6 +27,13 @@ export interface CourseListItemDto {
   durationMinutes: number;
 }
 
+export interface PagedCoursesDto {
+  items: CourseListItemDto[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
 export interface CourseDetailDto extends CourseListItemDto {
   subjectId: string;
   description?: string | null;
@@ -123,8 +130,16 @@ export class CatalogApi {
     return firstValueFrom(this.http.get<SubjectDto[]>('/api/catalog/subjects'));
   }
 
-  courses() {
-    return firstValueFrom(this.http.get<CourseListItemDto[]>('/api/catalog/courses'));
+  courses(options?: { category?: string; page?: number; pageSize?: number }) {
+    const params: Record<string, string | number> = {
+      page: options?.page ?? 1,
+      pageSize: options?.pageSize ?? 12,
+    };
+    if (options?.category) {
+      params['category'] = options.category;
+    }
+
+    return firstValueFrom(this.http.get<PagedCoursesDto>('/api/catalog/courses', { params }));
   }
 
   mine() {

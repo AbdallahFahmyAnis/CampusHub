@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using CampusHub.BuildingBlocks.Security;
+using CampusHub.Gateway;
 using CampusHub.Gateway.Infrastructure;
 using CampusHub.ServiceDefaults;
 using Microsoft.AspNetCore.Authentication;
@@ -135,6 +136,18 @@ builder.Services.AddAuthentication(options =>
 
             return Task.CompletedTask;
         };
+        options.Events.OnRemoteFailure = context =>
+        {
+            var returnUrl = context.Properties?.RedirectUri;
+            if (string.IsNullOrWhiteSpace(returnUrl) || !returnUrl.StartsWith('/'))
+            {
+                returnUrl = "/catalog";
+            }
+
+            context.Response.Redirect($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddReverseProxy()
@@ -184,12 +197,14 @@ app.MapGet("/login", (string? returnUrl) =>
         }))
     .AllowAnonymous();
 
-app.MapPost("/logout", async (HttpContext http) =>
-    {
-        await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        await http.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
-    })
-    .RequireAuthorization()
+app.MapMethods("/logout", ["GET", "POST"], () =>
+        Results.SignOut(
+            new AuthenticationProperties { RedirectUri = "/" },
+            [
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                OpenIdConnectDefaults.AuthenticationScheme
+            ]))
+    .AllowAnonymous()
     .DisableAntiforgery();
 
 app.MapGet("/whoami", (HttpContext http) =>
@@ -199,6 +214,7 @@ app.MapGet("/whoami", (HttpContext http) =>
         {
             authenticated = user.Identity?.IsAuthenticated ?? false,
             name = user.Identity?.Name,
+            email = user.FindFirstValue("email") ?? user.FindFirstValue("preferred_username"),
             sub = user.FindFirstValue("sub"),
             roles = user.FindAll("role").Select(c => c.Value).ToArray(),
             claims = user.Claims.Select(c => new { c.Type, c.Value })
@@ -206,6 +222,7 @@ app.MapGet("/whoami", (HttpContext http) =>
     })
     .RequireAuthorization();
 
+app.MapAccountEndpoints();
 app.MapRazorPages();
 app.MapReverseProxy();
 app.MapDefaultEndpoints();

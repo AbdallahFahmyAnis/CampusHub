@@ -14,6 +14,7 @@ public static class NotificationEndpoints
         app.MapGet("/api/notifications/mine", Mine).RequireAuthorization();
         app.MapGet("/api/notifications/unread-count", UnreadCount).RequireAuthorization();
         app.MapPost("/api/notifications/{id:guid}/read", MarkRead).RequireAuthorization();
+        app.MapPost("/api/notifications/read-all", MarkAllRead).RequireAuthorization();
         return app;
     }
 
@@ -73,6 +74,15 @@ public static class NotificationEndpoints
 
         item.Read = true;
         await db.SaveChangesAsync(ct);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> MarkAllRead(ClaimsPrincipal user, NotificationDbContext db, CancellationToken ct)
+    {
+        var userId = UserId(user);
+        await db.Notifications
+            .Where(n => n.UserId == userId && n.Channel == NotificationChannels.InApp && !n.Read)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(n => n.Read, true), ct);
         return Results.NoContent();
     }
 

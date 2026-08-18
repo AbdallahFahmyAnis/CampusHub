@@ -1,3 +1,8 @@
-.topbar .session button {
+.topbar .session .sign-out {
   min-width: 96px;
+}
+
+.topbar .session .icon-btn,
+.topbar .session .alerts-panel button {
+  min-width: 0;
 }

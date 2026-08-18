@@ -1,0 +1,60 @@
+@page "/ops/categories"
+@model CategoriesModel
+@{
+    ViewData["Title"] = "Ops categories";
+}
+
+<h1 class="mb-2">Categories</h1>
+<p class="ops-lede">Subjects used when teachers create and publish courses. Code is a short unique label such as <code>CS</code> or <code>BIO</code>.</p>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="alert alert-info">@message</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div class="ops-form-panel mb-4">
+    <h2 class="h5 mb-3">Add category</h2>
+    <form method="post" asp-page-handler="Create" class="ops-form">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label" for="code">Code</label>
+                <input class="form-control" id="code" name="Code" required maxlength="32" placeholder="BIO" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="name">Name</label>
+                <input class="form-control" id="name" name="Name" required maxlength="200" placeholder="Biology" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label" for="description">Description</label>
+                <input class="form-control" id="description" name="Description" maxlength="400" placeholder="Life sciences for campus students." />
+            </div>
+        </div>
+        <button class="btn btn-primary mt-3" type="submit">Add category</button>
+    </form>
+</div>
+
+<div class="table-panel">
+<table class="table table-sm js-datatable w-100">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var subject in Model.Subjects)
+    {
+        <tr>
+            <td><code>@subject.Code</code></td>
+            <td>@subject.Name</td>
+            <td>@subject.Description</td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>

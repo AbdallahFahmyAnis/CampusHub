@@ -5,10 +5,48 @@
 }
 
 <h1 class="mb-2">Users</h1>
-<p class="ops-lede">Identity directory via the internal service key. Password for seeded accounts is <code>CampusHub!123</code>.</p>
+<p class="ops-lede">Register a student, teacher, or administrator. Passwords need 10+ characters with a digit, uppercase letter, and symbol. Seeded accounts use <code>CampusHub!123</code>.</p>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="alert alert-info">@message</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div class="ops-form-panel mb-4">
+    <h2 class="h5 mb-3">Register account</h2>
+    <form method="post" asp-page-handler="Register" class="ops-form">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="displayName">Display name</label>
+                <input class="form-control" id="displayName" name="DisplayName" required maxlength="200" placeholder="Jordan Lee" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="email">Email</label>
+                <input class="form-control" id="email" name="Email" type="email" required maxlength="256" placeholder="jordan@campushub.local" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-control" id="password" name="Password" type="text" required value="CampusHub!123" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="role">Role</label>
+                <select class="form-select" id="role" name="Role">
+                    <option value="Student" selected>Student</option>
+                    <option value="Teacher">Teacher</option>
+                    <option value="Administrator">Administrator</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-primary mt-3" type="submit">Create account</button>
+    </form>
+</div>
 
 <div class="table-panel">
-<table class="table table-sm">
+<table class="table table-sm js-datatable w-100">
     <thead>
         <tr>
             <th>Name</th>

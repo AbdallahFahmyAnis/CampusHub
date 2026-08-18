@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { LearningApi, NotificationDto } from './learning.api';
+import { NotificationAlerts, NotificationDto } from '../../../shell/src/app/notifications';
 
 @Component({
   selector: 'app-inbox',
@@ -9,8 +9,11 @@ import { LearningApi, NotificationDto } from './learning.api';
     <div class="page-head">
       <div>
         <h1>Inbox</h1>
-        <p class="page-kicker">Enrollment, payment, and access messages delivered after the saga completes.</p>
+        <p class="page-kicker">Enrollment, payment, and campus alerts. Unread items stay highlighted until you mark them.</p>
       </div>
+      @if (items().some((item) => !item.read)) {
+        <button class="btn secondary" type="button" (click)="readAll()">Mark all read</button>
+      }
     </div>
     @if (error()) {
       <p class="error">{{ error() }}</p>
@@ -42,7 +45,7 @@ import { LearningApi, NotificationDto } from './learning.api';
   `,
 })
 export class Inbox {
-  private readonly api = inject(LearningApi);
+  private readonly alerts = inject(NotificationAlerts);
   readonly items = signal<NotificationDto[]>([]);
   readonly error = signal<string | null>(null);
 
@@ -51,13 +54,19 @@ export class Inbox {
   }
 
   async read(item: NotificationDto): Promise<void> {
-    await this.api.markRead(item.id);
+    await this.alerts.markRead(item.id);
+    await this.refresh();
+  }
+
+  async readAll(): Promise<void> {
+    await this.alerts.markAllRead();
     await this.refresh();
   }
 
   private async refresh(): Promise<void> {
     try {
-      this.items.set(await this.api.mine());
+      await this.alerts.refresh();
+      this.items.set(this.alerts.all());
     } catch {
       this.error.set('Could not load notifications.');
     }

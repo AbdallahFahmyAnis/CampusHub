@@ -167,7 +167,8 @@ h1, h2, .h5 {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
+  padding: 16px 16px 12px;
   box-shadow: 0 10px 28px rgba(28, 25, 21, 0.07);
 }
 
@@ -187,6 +188,35 @@ h1, h2, .h5 {
 .table td, .table th {
   border-color: var(--line);
   vertical-align: middle;
+}
+
+.dt-container .dt-search input,
+.dt-container .dt-length select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffcf7;
+  color: var(--ink);
+  padding: 6px 10px;
+}
+
+.dt-container .dt-search label,
+.dt-container .dt-length label,
+.dt-container .dt-info {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.dt-container .dt-paging .page-item.active .page-link {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+
+.dt-container .dt-paging .page-link {
+  color: var(--navy);
+}
+
+.dt-container .dt-layout-row {
+  margin-bottom: 8px;
 }
 
 .btn-navy,
@@ -213,10 +243,32 @@ h1, h2, .h5 {
   border-color: var(--navy);
 }
 
-.alert-info {
-  background: var(--gold-soft);
-  border-color: #ead7ab;
-  color: var(--ink);
+.alert-danger {
+  background: var(--brick-soft);
+  border-color: #e3c0bc;
+  color: var(--brick);
+}
+
+.ops-form-panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 22px 22px;
+  box-shadow: 0 10px 28px rgba(28, 25, 21, 0.07);
+}
+
+.ops-form .form-label {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ops-form .form-control,
+.ops-form .form-select {
+  border-color: var(--line);
+  background: #fffcf7;
 }
 
 code {

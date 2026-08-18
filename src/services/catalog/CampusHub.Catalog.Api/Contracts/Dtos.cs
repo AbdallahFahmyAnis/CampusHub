@@ -2,6 +2,12 @@ namespace CampusHub.Catalog.Api.Contracts;
 
 public sealed record SubjectDto(Guid Id, string Code, string Name, string? Description);
 
+public sealed record PagedCoursesDto(
+    IReadOnlyList<CourseListItemDto> Items,
+    int Page,
+    int PageSize,
+    int TotalCount);
+
 public sealed record CourseListItemDto(
     Guid Id,
     string Title,
