@@ -38,6 +38,9 @@ interface Profile {
         }
         <p class="muted">Signed in as {{ item.roles.join(', ') || 'Student' }}</p>
         <div class="actions">
+          @if (session.isAdmin()) {
+            <a class="btn secondary" routerLink="/people">People</a>
+          }
           <a class="btn secondary" routerLink="/learn/inbox">Inbox</a>
           <a class="btn secondary" routerLink="/enroll">Enrollments</a>
           <a class="btn secondary" routerLink="/learn">Course pass</a>

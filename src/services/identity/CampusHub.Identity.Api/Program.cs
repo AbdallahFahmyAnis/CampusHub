@@ -32,6 +32,7 @@ app.MapRazorPages();
 app.MapControllers();
 app.MapIdentityUserEndpoints();
 app.MapTenantEndpoints();
+app.MapCampusEndpoints();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {

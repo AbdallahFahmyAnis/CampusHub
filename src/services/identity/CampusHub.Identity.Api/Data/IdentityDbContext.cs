@@ -8,6 +8,7 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<CampusInvite> CampusInvites => Set<CampusInvite>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -26,6 +27,18 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
         builder.Entity<ApplicationUser>(entity =>
         {
             entity.Property(x => x.TenantId).HasConversion(GuidAsText);
+        });
+        builder.Entity<CampusInvite>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasConversion(GuidAsText);
+            entity.Property(x => x.TenantId).HasConversion(GuidAsText);
+            entity.Property(x => x.Email).HasMaxLength(256);
+            entity.Property(x => x.DisplayName).HasMaxLength(200);
+            entity.Property(x => x.Role).HasMaxLength(32);
+            entity.Property(x => x.Token).HasMaxLength(64);
+            entity.HasIndex(x => x.Token).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.Email });
         });
     }
 

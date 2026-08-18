@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { CanActivateFn } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { SessionService } from './session';
 
 export const authGuard: CanActivateFn = async () => {
@@ -22,4 +22,17 @@ export const teacherGuard: CanActivateFn = async () => {
     return false;
   }
   return session.isTeacher();
+};
+
+export const adminGuard: CanActivateFn = async () => {
+  const session = inject(SessionService);
+  const router = inject(Router);
+  if (!session.session().authenticated) {
+    await session.load();
+  }
+  if (!session.session().authenticated) {
+    session.login();
+    return false;
+  }
+  return session.isAdmin() ? true : router.parseUrl('/catalog');
 };

@@ -23,6 +23,21 @@ internal static class IdentitySchema
             UPDATE AspNetUsers SET TenantId = '{SeedTenants.DefaultId}'
             WHERE TenantId IS NULL OR TenantId = '' OR TenantId = '00000000-0000-0000-0000-000000000000';
             """, ct);
+        await TryAsync(db, """
+            CREATE TABLE IF NOT EXISTS CampusInvites (
+                Id TEXT NOT NULL CONSTRAINT PK_CampusInvites PRIMARY KEY,
+                TenantId TEXT NOT NULL,
+                Email TEXT NOT NULL,
+                DisplayName TEXT NOT NULL,
+                Role TEXT NOT NULL,
+                Token TEXT NOT NULL,
+                CreatedBy TEXT NOT NULL,
+                CreatedAt TEXT NOT NULL,
+                ExpiresAt TEXT NOT NULL,
+                AcceptedAt TEXT NULL
+            );
+            """, ct);
+        await TryAsync(db, "CREATE UNIQUE INDEX IF NOT EXISTS IX_CampusInvites_Token ON CampusInvites (Token);", ct);
     }
 
     private static async Task TryAsync(IdentityDbContext db, string sql, CancellationToken ct)

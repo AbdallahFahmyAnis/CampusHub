@@ -1,11 +1,20 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './auth.guard';
+import { adminGuard, authGuard } from './auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'catalog', pathMatch: 'full' },
   {
     path: 'signup',
     loadComponent: () => import('./signup').then((m) => m.SignupPage),
+  },
+  {
+    path: 'invite/:token',
+    loadComponent: () => import('./invite').then((m) => m.InvitePage),
+  },
+  {
+    path: 'people',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./people').then((m) => m.PeoplePage),
   },
   {
     path: 'account',

@@ -91,6 +91,40 @@ public sealed class DownstreamApi(IHttpClientFactory httpFactory, IHttpContextAc
         return (false, $"Request failed ({(int)response.StatusCode}).");
     }
 
+    public async Task<(bool Ok, string? Error, TOut? Body)> PostJsonResultAsync<TIn, TOut>(
+        string clientName,
+        string path,
+        TIn body,
+        CancellationToken ct = default,
+        bool internalKey = false)
+    {
+        using var response = await SendAsync(clientName, HttpMethod.Post, path, ct, internalKey, body);
+        var text = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(text);
+                if (document.RootElement.TryGetProperty("error", out var error) &&
+                    error.GetString() is { Length: > 0 } message)
+                {
+                    return (false, message, default);
+                }
+            }
+            catch (JsonException)
+            {
+                // Fall through to the status-code message.
+            }
+
+            return (false, $"Request failed ({(int)response.StatusCode}).", default);
+        }
+
+        var value = string.IsNullOrWhiteSpace(text)
+            ? default
+            : JsonSerializer.Deserialize<TOut>(text, Json);
+        return (true, null, value);
+    }
+
     private async Task<HttpResponseMessage> SendAsync(
         string clientName,
         HttpMethod method,

@@ -21,6 +21,7 @@ public static class UserEndpoints
         HttpContext http,
         IConfiguration config,
         UserManager<ApplicationUser> users,
+        string? tenantId,
         CancellationToken ct)
     {
         var expected = config["Internal:ApiKey"] ?? "campus-dev-internal";
@@ -30,7 +31,13 @@ public static class UserEndpoints
             return Results.Unauthorized();
         }
 
-        var list = await users.Users.AsNoTracking().OrderBy(u => u.Email).ToListAsync(ct);
+        var query = users.Users.AsNoTracking().AsQueryable();
+        if (Guid.TryParse(tenantId, out var campusId))
+        {
+            query = query.Where(u => u.TenantId == campusId);
+        }
+
+        var list = await query.OrderBy(u => u.Email).ToListAsync(ct);
         var result = new List<IdentityUserDto>();
         foreach (var user in list)
         {

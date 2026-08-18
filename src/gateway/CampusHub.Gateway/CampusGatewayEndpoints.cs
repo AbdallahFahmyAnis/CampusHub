@@ -1,0 +1,122 @@
+using System.Security.Claims;
+using CampusHub.BuildingBlocks.Security;
+using CampusHub.Gateway.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CampusHub.Gateway;
+
+public static class CampusGatewayEndpoints
+{
+    public static WebApplication MapCampusGatewayEndpoints(this WebApplication app)
+    {
+        var campus = app.MapGroup("/api/campus").RequireAuthorization().DisableAntiforgery();
+        campus.MapGet("/members", ListMembers);
+        campus.MapPost("/invites", CreateInvite);
+
+        app.MapGet("/api/invites/{token}", GetInvite).AllowAnonymous();
+        app.MapPost("/api/invites/{token}/accept", AcceptInvite).AllowAnonymous().DisableAntiforgery();
+        return app;
+    }
+
+    private static async Task<IResult> ListMembers(ClaimsPrincipal user, DownstreamApi api, CancellationToken ct)
+    {
+        if (!user.IsInRole(Roles.Administrator))
+        {
+            return Results.Forbid();
+        }
+
+        var tenantId = Tenancy.TenantId(user);
+        var members = await api.GetInternalAsync<CampusMembersDto>(
+            "identity",
+            $"/api/identity/tenants/{tenantId}/members",
+            ct);
+        return members is null
+            ? Results.NotFound(new { error = "Campus was not found." })
+            : Results.Ok(members);
+    }
+
+    private static async Task<IResult> CreateInvite(
+        [FromBody] CreateCampusInviteBody request,
+        ClaimsPrincipal user,
+        HttpContext http,
+        DownstreamApi api,
+        CancellationToken ct)
+    {
+        if (!user.IsInRole(Roles.Administrator))
+        {
+            return Results.Forbid();
+        }
+
+        var tenantId = Tenancy.TenantId(user);
+        var createdBy = user.FindFirstValue("email") ?? user.Identity?.Name ?? string.Empty;
+        var (ok, error, created) = await api.PostJsonResultAsync<CreateCampusInviteBody, CreatedInviteDto>(
+            "identity",
+            $"/api/identity/tenants/{tenantId}/invites",
+            new CreateCampusInviteBody(request.Email, request.DisplayName, request.Role, createdBy),
+            ct,
+            internalKey: true);
+        if (!ok || created is null)
+        {
+            return Results.BadRequest(new { error = error ?? "Could not create the invite." });
+        }
+
+        var origin = $"{http.Request.Scheme}://{http.Request.Host}";
+        return Results.Ok(new
+        {
+            created.Token,
+            created.Email,
+            created.Role,
+            created.ExpiresAt,
+            inviteUrl = $"{origin}/invite/{created.Token}"
+        });
+    }
+
+    private static async Task<IResult> GetInvite(string token, DownstreamApi api, CancellationToken ct)
+    {
+        var invite = await api.GetInternalAsync<OpenInviteDto>(
+            "identity",
+            $"/api/identity/invites/{Uri.EscapeDataString(token)}",
+            ct);
+        return invite is null
+            ? Results.NotFound(new { error = "This invite is invalid or has expired." })
+            : Results.Ok(invite);
+    }
+
+    private static async Task<IResult> AcceptInvite(
+        string token,
+        [FromBody] AcceptCampusInviteBody request,
+        DownstreamApi api,
+        CancellationToken ct)
+    {
+        var (ok, error) = await api.PostJsonAsync(
+            "identity",
+            $"/api/identity/invites/{Uri.EscapeDataString(token)}/accept",
+            request,
+            ct,
+            internalKey: true);
+        return ok
+            ? Results.Ok(new { accepted = true })
+            : Results.BadRequest(new { error = error ?? "Could not accept the invite." });
+    }
+
+    private sealed record CampusMembersDto(
+        Guid TenantId,
+        string TenantName,
+        string Plan,
+        int SeatCap,
+        int SeatsUsed,
+        CampusMemberDto[] Members,
+        PendingInviteDto[] Invites);
+
+    private sealed record CampusMemberDto(string Id, string Email, string DisplayName, string[] Roles);
+
+    private sealed record PendingInviteDto(string Email, string DisplayName, string Role, string Token, DateTimeOffset ExpiresAt);
+
+    private sealed record CreatedInviteDto(string Token, string Email, string Role, DateTimeOffset ExpiresAt);
+
+    private sealed record OpenInviteDto(string Email, string DisplayName, string Role, string CampusName, DateTimeOffset ExpiresAt);
+
+    private sealed record CreateCampusInviteBody(string Email, string DisplayName, string Role, string? CreatedBy);
+
+    private sealed record AcceptCampusInviteBody(string Password, string? DisplayName);
+}

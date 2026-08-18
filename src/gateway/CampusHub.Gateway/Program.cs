@@ -226,6 +226,7 @@ app.MapGet("/whoami", (HttpContext http) =>
     .RequireAuthorization();
 
 app.MapAccountEndpoints();
+app.MapCampusGatewayEndpoints();
 app.MapPost("/api/tenants/register", async (RegisterCampusRequest body, DownstreamApi api, CancellationToken ct) =>
     {
         var (ok, error) = await api.PostJsonAsync("identity", "/api/identity/tenants/register", body, ct, internalKey: true);

@@ -11,6 +11,8 @@ public class UsersModel(DownstreamApi api) : PageModel
 {
     public IReadOnlyList<OpsUser> Users { get; private set; } = [];
 
+    public string CampusName => Tenancy.TenantName(User);
+
     [BindProperty]
     public string Email { get; set; } = string.Empty;
 
@@ -25,15 +27,20 @@ public class UsersModel(DownstreamApi api) : PageModel
 
     public async Task OnGetAsync(CancellationToken ct)
     {
-        Users = await api.GetInternalAsync<List<OpsUser>>("identity", "/api/identity/users", ct) ?? [];
+        var tenantId = Tenancy.TenantId(User);
+        Users = await api.GetInternalAsync<List<OpsUser>>(
+            "identity",
+            $"/api/identity/users?tenantId={tenantId}",
+            ct) ?? [];
     }
 
     public async Task<IActionResult> OnPostRegisterAsync(CancellationToken ct)
     {
+        var tenantId = Tenancy.TenantId(User);
         var (ok, error) = await api.PostJsonAsync(
             "identity",
             "/api/identity/users",
-            new { email = Email, displayName = DisplayName, password = Password, role = Role },
+            new { email = Email, displayName = DisplayName, password = Password, role = Role, tenantId = tenantId.ToString() },
             ct,
             internalKey: true);
 
