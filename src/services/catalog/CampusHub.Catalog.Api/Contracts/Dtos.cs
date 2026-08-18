@@ -23,7 +23,8 @@ public sealed record CourseListItemDto(
     double RatingAverage,
     int RatingCount,
     int LectureCount,
-    int DurationMinutes);
+    int DurationMinutes,
+    bool Wishlisted);
 
 public sealed record CourseDetailDto(
     Guid Id,
@@ -49,7 +50,8 @@ public sealed record CourseDetailDto(
     double RatingAverage,
     int RatingCount,
     int LectureCount,
-    int DurationMinutes);
+    int DurationMinutes,
+    bool Wishlisted);
 
 public sealed record CreateSubjectRequest(string Code, string Name, string? Description);
 
@@ -84,7 +86,9 @@ public sealed record LectureOutlineDto(
     int DurationMinutes,
     string? Summary,
     bool IsPreview,
-    int SortOrder);
+    int SortOrder,
+    string? VideoUrl,
+    bool Completed);
 
 public sealed record SectionDto(
     Guid Id,
@@ -105,7 +109,9 @@ public sealed record LectureDetailDto(
     string? Body,
     bool IsPreview,
     bool Locked,
-    int SortOrder);
+    int SortOrder,
+    string? VideoUrl,
+    bool Completed);
 
 public sealed record CreateSectionRequest(string Title);
 
@@ -115,7 +121,8 @@ public sealed record CreateLectureRequest(
     int DurationMinutes,
     string? Summary,
     string? Body,
-    bool IsPreview);
+    bool IsPreview,
+    string? VideoUrl);
 
 public sealed record ReviewDto(
     Guid Id,

@@ -13,8 +13,13 @@ public static class CourseLearningEndpoints
     {
         api.MapGet("/courses/{id:guid}/curriculum", GetCurriculum);
         api.MapGet("/courses/{id:guid}/lectures/{lectureId:guid}", GetLecture);
+        api.MapPost("/courses/{id:guid}/lectures/{lectureId:guid}/complete", CompleteLecture);
         api.MapPost("/courses/{id:guid}/sections", CreateSection).RequireAuthorization("CanManageCatalog");
         api.MapPost("/courses/{id:guid}/sections/{sectionId:guid}/lectures", CreateLecture).RequireAuthorization("CanManageCatalog");
+
+        api.MapGet("/wishlist", ListWishlist);
+        api.MapPost("/courses/{id:guid}/wishlist", AddWishlist);
+        api.MapDelete("/courses/{id:guid}/wishlist", RemoveWishlist);
 
         api.MapGet("/courses/{id:guid}/reviews", ListReviews);
         api.MapPost("/courses/{id:guid}/reviews", CreateReview);
@@ -25,7 +30,7 @@ public static class CourseLearningEndpoints
         return api;
     }
 
-    private static async Task<IResult> GetCurriculum(Guid id, CatalogDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetCurriculum(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
         if (!await CourseVisible(db, id, ct))
         {
@@ -37,6 +42,8 @@ public static class CourseLearningEndpoints
             .Include(s => s.Lectures)
             .OrderBy(s => s.SortOrder)
             .ToListAsync(ct);
+        var (studentId, _) = CatalogEndpoints.Caller(user);
+        var completed = await CatalogMappings.CompletedLectureIds(db, studentId, id, ct);
 
         var dto = new CurriculumDto(
             id,
@@ -44,7 +51,7 @@ public static class CourseLearningEndpoints
                 section.Id,
                 section.Title,
                 section.SortOrder,
-                section.Lectures.OrderBy(l => l.SortOrder).Select(CatalogMappings.ToOutline).ToList())).ToList());
+                section.Lectures.OrderBy(l => l.SortOrder).Select(l => CatalogMappings.ToOutline(l, completed.Contains(l.Id))).ToList())).ToList());
         return Results.Ok(dto);
     }
 
@@ -72,6 +79,8 @@ public static class CourseLearningEndpoints
                        || CatalogEndpoints.CanManage(user)
                        || CatalogEndpoints.IsOwner(course, user)
                        || await enrollment.IsConfirmedAsync(studentId, id, ct);
+        var completed = await db.LectureProgress.AnyAsync(
+            p => p.LectureId == lectureId && p.StudentId == studentId, ct);
 
         return Results.Ok(new LectureDetailDto(
             lecture.Id,
@@ -84,7 +93,115 @@ public static class CourseLearningEndpoints
             unlocked ? lecture.Body : null,
             lecture.IsPreview,
             !unlocked,
-            lecture.SortOrder));
+            lecture.SortOrder,
+            unlocked ? lecture.VideoUrl : null,
+            completed));
+    }
+
+    private static async Task<IResult> CompleteLecture(
+        Guid id,
+        Guid lectureId,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        EnrollmentGateway enrollment,
+        CancellationToken ct)
+    {
+        var lecture = await db.Lectures
+            .Include(l => l.Section)
+            .ThenInclude(s => s.Course)
+            .SingleOrDefaultAsync(l => l.Id == lectureId && l.Section.CourseId == id, ct);
+        if (lecture is null)
+        {
+            return Results.NotFound();
+        }
+
+        var (studentId, _) = CatalogEndpoints.Caller(user);
+        var allowed = lecture.IsPreview
+                      || CatalogEndpoints.CanManage(user)
+                      || CatalogEndpoints.IsOwner(lecture.Section.Course, user)
+                      || await enrollment.IsConfirmedAsync(studentId, id, ct);
+        if (!allowed)
+        {
+            return Results.Forbid();
+        }
+
+        var existing = await db.LectureProgress.SingleOrDefaultAsync(
+            p => p.LectureId == lectureId && p.StudentId == studentId, ct);
+        if (existing is null)
+        {
+            db.LectureProgress.Add(new LectureProgress
+            {
+                Id = Guid.NewGuid(),
+                CourseId = id,
+                LectureId = lectureId,
+                StudentId = studentId,
+                CompletedAt = DateTimeOffset.UtcNow
+            });
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Results.Ok(new { completed = true });
+    }
+
+    private static async Task<IResult> ListWishlist(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    {
+        var (studentId, _) = CatalogEndpoints.Caller(user);
+        var saved = await db.CourseWishlists.AsNoTracking()
+            .Where(w => w.StudentId == studentId)
+            .Select(w => new { w.CourseId, w.CreatedAt })
+            .ToListAsync(ct);
+        var ids = saved
+            .OrderByDescending(w => w.CreatedAt)
+            .Select(w => w.CourseId)
+            .ToList();
+        var courses = await db.Courses.AsNoTracking()
+            .Include(c => c.Subject)
+            .Where(c => ids.Contains(c.Id))
+            .ToListAsync(ct);
+        var order = ids.Select((courseId, index) => (courseId, index)).ToDictionary(x => x.courseId, x => x.index);
+        courses.Sort((a, b) => order[a.Id].CompareTo(order[b.Id]));
+        var stats = await CatalogMappings.LoadStats(db, ids, ct);
+        return Results.Ok(courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id), true)).ToList());
+    }
+
+    private static async Task<IResult> AddWishlist(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    {
+        if (!await CourseVisible(db, id, ct))
+        {
+            return Results.NotFound();
+        }
+
+        var (studentId, _) = CatalogEndpoints.Caller(user);
+        if (string.IsNullOrEmpty(studentId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var exists = await db.CourseWishlists.AnyAsync(w => w.CourseId == id && w.StudentId == studentId, ct);
+        if (!exists)
+        {
+            db.CourseWishlists.Add(new CourseWishlist
+            {
+                Id = Guid.NewGuid(),
+                CourseId = id,
+                StudentId = studentId,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Results.Ok(new { wishlisted = true });
+    }
+
+    private static async Task<IResult> RemoveWishlist(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    {
+        var (studentId, _) = CatalogEndpoints.Caller(user);
+        var rows = await db.CourseWishlists
+            .Where(w => w.CourseId == id && w.StudentId == studentId)
+            .ExecuteDeleteAsync(ct);
+        return rows > 0 || await db.Courses.AnyAsync(c => c.Id == id, ct)
+            ? Results.Ok(new { wishlisted = false })
+            : Results.NotFound();
     }
 
     private static async Task<IResult> CreateSection(
@@ -157,6 +274,7 @@ public static class CourseLearningEndpoints
             DurationMinutes = Math.Max(1, request.DurationMinutes),
             Summary = request.Summary?.Trim(),
             Body = request.Body?.Trim(),
+            VideoUrl = string.IsNullOrWhiteSpace(request.VideoUrl) ? null : request.VideoUrl.Trim(),
             IsPreview = request.IsPreview,
             SortOrder = order
         };

@@ -53,7 +53,7 @@ internal static class CatalogMappings
             ? []
             : value.Split(['\n', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    public static CourseListItemDto ToListItem(Course c, CourseStats? stats)
+    public static CourseListItemDto ToListItem(Course c, CourseStats? stats, bool wishlisted = false)
     {
         var s = stats ?? new CourseStats(0, 0, 0, 0);
         return new(
@@ -71,10 +71,11 @@ internal static class CatalogMappings
             Math.Round(s.Average, 1),
             s.Count,
             s.Lectures,
-            s.Minutes);
+            s.Minutes,
+            wishlisted);
     }
 
-    public static CourseDetailDto ToDetail(Course c, CourseStats? stats, bool enrolled)
+    public static CourseDetailDto ToDetail(Course c, CourseStats? stats, bool enrolled, bool wishlisted = false)
     {
         var s = stats ?? new CourseStats(0, 0, 0, 0);
         return new(
@@ -101,11 +102,64 @@ internal static class CatalogMappings
             Math.Round(s.Average, 1),
             s.Count,
             s.Lectures,
-            s.Minutes);
+            s.Minutes,
+            wishlisted);
     }
 
-    public static LectureOutlineDto ToOutline(Lecture lecture) =>
-        new(lecture.Id, lecture.Title, lecture.Kind, lecture.DurationMinutes, lecture.Summary, lecture.IsPreview, lecture.SortOrder);
+    public static LectureOutlineDto ToOutline(Lecture lecture, bool completed = false) =>
+        new(
+            lecture.Id,
+            lecture.Title,
+            lecture.Kind,
+            lecture.DurationMinutes,
+            lecture.Summary,
+            lecture.IsPreview,
+            lecture.SortOrder,
+            lecture.VideoUrl,
+            completed);
+
+    public static async Task<HashSet<Guid>> WishlistIds(
+        CatalogDbContext db,
+        string studentId,
+        IEnumerable<Guid>? courseIds,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(studentId))
+        {
+            return [];
+        }
+
+        var query = db.CourseWishlists.AsNoTracking().Where(w => w.StudentId == studentId);
+        if (courseIds is not null)
+        {
+            var ids = courseIds.Distinct().ToList();
+            if (ids.Count == 0)
+            {
+                return [];
+            }
+
+            query = query.Where(w => ids.Contains(w.CourseId));
+        }
+
+        return (await query.Select(w => w.CourseId).ToListAsync(ct)).ToHashSet();
+    }
+
+    public static async Task<HashSet<Guid>> CompletedLectureIds(
+        CatalogDbContext db,
+        string studentId,
+        Guid courseId,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(studentId))
+        {
+            return [];
+        }
+
+        return (await db.LectureProgress.AsNoTracking()
+            .Where(p => p.StudentId == studentId && p.CourseId == courseId)
+            .Select(p => p.LectureId)
+            .ToListAsync(ct)).ToHashSet();
+    }
 
     public static ReviewDto ToReview(CourseReview review, string studentId) =>
         new(review.Id, review.StudentName, review.Rating, review.Title, review.Body, review.CreatedAt, review.StudentId == studentId);

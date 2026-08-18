@@ -11,7 +11,7 @@ import { NotificationAlerts, NotificationDto } from '../../../shell/src/app/noti
         <h1>Inbox</h1>
         <p class="page-kicker">Enrollment, payment, and campus alerts. Unread items stay highlighted until you mark them.</p>
       </div>
-      @if (items().some((item) => !item.read)) {
+      @if (alerts.unreadCount()) {
         <button class="btn secondary" type="button" (click)="readAll()">Mark all read</button>
       }
     </div>
@@ -45,7 +45,7 @@ import { NotificationAlerts, NotificationDto } from '../../../shell/src/app/noti
   `,
 })
 export class Inbox {
-  private readonly alerts = inject(NotificationAlerts);
+  readonly alerts = inject(NotificationAlerts);
   readonly items = signal<NotificationDto[]>([]);
   readonly error = signal<string | null>(null);
 

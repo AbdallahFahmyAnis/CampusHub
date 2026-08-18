@@ -98,8 +98,28 @@ public sealed class Lecture
     public int DurationMinutes { get; set; }
     public string? Summary { get; set; }
     public string? Body { get; set; }
+    public string? VideoUrl { get; set; }
     public bool IsPreview { get; set; }
     public int SortOrder { get; set; }
+}
+
+public sealed class CourseWishlist
+{
+    public Guid Id { get; set; }
+    public Guid CourseId { get; set; }
+    public Course Course { get; set; } = null!;
+    public required string StudentId { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class LectureProgress
+{
+    public Guid Id { get; set; }
+    public Guid CourseId { get; set; }
+    public Guid LectureId { get; set; }
+    public Lecture Lecture { get; set; } = null!;
+    public required string StudentId { get; set; }
+    public DateTimeOffset CompletedAt { get; set; }
 }
 
 public sealed class CourseReview

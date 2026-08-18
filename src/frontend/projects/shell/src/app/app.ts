@@ -1,12 +1,19 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { NotificationAlerts, NotificationDto } from './notifications';
+import {
+  NotificationAlerts,
+  NotificationDto,
+  noticeGlyph,
+  noticeKind,
+  timeAgo,
+} from './notifications';
 import { SessionService } from './session';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -17,6 +24,14 @@ export class App {
   readonly menuOpen = signal(false);
   readonly bleed = signal(false);
   readonly alertsOpen = signal(false);
+  readonly alertTab = signal<'all' | 'unread'>('all');
+  searchQuery = '';
+  readonly timeAgo = timeAgo;
+  readonly visibleAlerts = computed(() => {
+    const items = this.alerts.all();
+    const filtered = this.alertTab() === 'unread' ? items.filter((item) => !item.read) : items;
+    return filtered.slice(0, 12);
+  });
 
   constructor() {
     void this.session.load().then((session) => {
@@ -48,6 +63,7 @@ export class App {
     const next = !this.alertsOpen();
     this.alertsOpen.set(next);
     if (next) {
+      this.alertTab.set('all');
       void this.alerts.refresh();
     }
   }
@@ -63,5 +79,19 @@ export class App {
     }
     this.alertsOpen.set(false);
     await this.router.navigateByUrl('/learn/inbox');
+  }
+
+  kindOf(item: NotificationDto): string {
+    return noticeKind(item.eventType);
+  }
+
+  glyphOf(item: NotificationDto): string {
+    return noticeGlyph(noticeKind(item.eventType));
+  }
+
+  searchCatalog(event: Event): void {
+    event.preventDefault();
+    const q = this.searchQuery.trim();
+    void this.router.navigate(['/catalog'], { queryParams: q ? { q } : {} });
   }
 }

@@ -16,6 +16,7 @@ public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> lo
         await EnsureSubjectsAsync(cancellationToken);
         await EnsureCoursesAsync(cancellationToken);
         await SeedCurriculumAsync(cancellationToken);
+        await EnsureVideoUrlsAsync(cancellationToken);
         await SeedCommunityAsync(cancellationToken);
         logger.LogInformation(
             "Catalog seed completed with {CourseCount} courses",
@@ -132,7 +133,8 @@ public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> lo
         AddSection(AlgorithmsId, 1, "Getting started",
             Lecture(1, "Welcome to the course", "Video", 4, true,
                 "How the course is structured and how to use the player, Q&A, and reviews.",
-                "Welcome. Each section has a short lecture plus a worked example.\n\nUse Preview lectures before you enroll. After enrollment, the full article body unlocks and you can post reviews and questions.\n\nSuggested pace: two lectures a sitting, then try the practice prompt at the end of each article."),
+                "Welcome. Each section has a short lecture plus a worked example.\n\nUse Preview lectures before you enroll. After enrollment, the full article body unlocks and you can post reviews and questions.\n\nSuggested pace: two lectures a sitting, then try the practice prompt at the end of each article.",
+                "https://www.youtube.com/watch?v=8hly31xKli0"),
             Lecture(2, "What is an algorithm?", "Article", 12, true,
                 "A first definition, plus why analysis matters more than clever tricks.",
                 "An algorithm is a finite, unambiguous procedure that transforms input into output.\n\nWe care about three properties: correctness, efficiency, and simplicity. A slow correct algorithm is still useful as a baseline. A fast incorrect algorithm is a bug.\n\nIn this course we write algorithms in plain language first, then in code-shaped steps. That habit is what interviewers and code reviews actually reward.\n\nPractice: write the steps to find the maximum value in an unsorted list of n numbers. How many comparisons do you need?"));
@@ -146,7 +148,8 @@ public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> lo
         AddSection(AlgorithmsId, 3, "Sorting and graphs",
             Lecture(1, "Merge sort vs quicksort", "Video", 16, false,
                 "Stable vs in-place, and when to pick which.",
-                "Merge sort is stable and O(n log n) always. It needs extra memory. Quicksort is often faster in practice and can be in-place, but the worst case is quadratic unless you randomize or median-of-three the pivot.\n\nUse merge sort (or a library timsort) when stability matters — for example sorting students by grade, then keeping their original order for equal grades.\n\nPractice: sort 8 integers with merge sort on paper and count the merges."),
+                "Merge sort is stable and O(n log n) always. It needs extra memory. Quicksort is often faster in practice and can be in-place, but the worst case is quadratic unless you randomize or median-of-three the pivot.\n\nUse merge sort (or a library timsort) when stability matters — for example sorting students by grade, then keeping their original order for equal grades.\n\nPractice: sort 8 integers with merge sort on paper and count the merges.",
+                "https://www.youtube.com/watch?v=4VqmGXwpLqc"),
             Lecture(2, "BFS and DFS on campus maps", "Article", 20, false,
                 "Traverse graphs with a queue or a stack.",
                 "Represent buildings as nodes and walkways as edges. BFS finds the fewest hops. DFS explores a path fully before backtracking.\n\nBFS uses a queue. Mark a node visited when you enqueue it, not when you dequeue it, or you will explode the queue on dense graphs.\n\nDFS can be recursive or an explicit stack. Watch the recursion depth on long corridors.\n\nPractice: from the library, list the BFS order of neighboring buildings if each edge has the same walking time."));
@@ -161,7 +164,8 @@ public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> lo
         AddSection(LinearId, 1, "Vectors and spaces",
             Lecture(1, "Vectors you can see", "Video", 8, true,
                 "Arrows, coordinates, and why two numbers can mean a point or a direction.",
-                "A vector is both a point from the origin and a displacement. Adding vectors is walking one path then another. Scaling stretches or flips it.\n\nIn R² we write columns. The standard basis i and j let you rebuild any vector as a combination.\n\nPractice: draw u = (2, 1) and v = (−1, 2). Sketch u+v and 2u − v."),
+                "A vector is both a point from the origin and a displacement. Adding vectors is walking one path then another. Scaling stretches or flips it.\n\nIn R² we write columns. The standard basis i and j let you rebuild any vector as a combination.\n\nPractice: draw u = (2, 1) and v = (−1, 2). Sketch u+v and 2u − v.",
+                "https://www.youtube.com/watch?v=fNk_zzaMoSs"),
             Lecture(2, "Linear combinations and span", "Article", 15, false,
                 "What it means for vectors to fill a plane.",
                 "The span of a set of vectors is every linear combination you can form. Two non-parallel vectors in R² span the plane. Parallel vectors span only a line.\n\nA set is linearly independent when the only combination that yields zero is all coefficients zero.\n\nThis is the language of bases: a basis is an independent spanning set."));
@@ -175,7 +179,8 @@ public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> lo
         AddSection(LinearId, 3, "Eigenvalues and applications",
             Lecture(1, "Eigenvectors as invariant directions", "Video", 17, false,
                 "The map stretches some arrows and only those arrows keep their line.",
-                "Av = λv. The vector stays on its line; the scalar λ says stretch or flip.\n\nCharacteristic polynomial det(A − λI) = 0. Multiplicity can be algebraic or geometric — they need not match, which is why not every matrix diagonalizes.\n\nPractice: find eigenvalues of [[2, 1], [0, 3]]."),
+                "Av = λv. The vector stays on its line; the scalar λ says stretch or flip.\n\nCharacteristic polynomial det(A − λI) = 0. Multiplicity can be algebraic or geometric — they need not match, which is why not every matrix diagonalizes.\n\nPractice: find eigenvalues of [[2, 1], [0, 3]].",
+                "https://www.youtube.com/watch?v=PF_pS2omP3I"),
             Lecture(2, "A first look at SVD", "Article", 16, false,
                 "Why data people keep saying “singular values”.",
                 "Any matrix factors as UΣVᵀ. Singular values are the stretch amounts. Large singular values are the important directions in a dataset.\n\nYou do not need the full proof in this course. You do need the picture: rotation, stretch, rotation. That picture is principal component analysis in disguise."));
@@ -220,7 +225,7 @@ public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> lo
         db.CourseSections.Add(section);
     }
 
-    private static Lecture Lecture(int order, string title, string kind, int minutes, bool preview, string summary, string body) =>
+    private static Lecture Lecture(int order, string title, string kind, int minutes, bool preview, string summary, string body, string? videoUrl = null) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -230,8 +235,43 @@ public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> lo
             IsPreview = preview,
             SortOrder = order,
             Summary = summary,
-            Body = body
+            Body = body,
+            VideoUrl = string.Equals(kind, "Video", StringComparison.OrdinalIgnoreCase)
+                ? videoUrl ?? DemoVideo(order + title.Length)
+                : null
         };
+
+    private static readonly string[] DemoVideos =
+    [
+        "https://www.youtube.com/watch?v=8hly31xKli0",
+        "https://www.youtube.com/watch?v=fNk_zzaMoSs",
+        "https://www.youtube.com/watch?v=aircAruvnKk",
+        "https://www.youtube.com/watch?v=HXV3zeQKqGY",
+        "https://www.youtube.com/watch?v=rfscVS0vtbw",
+        "https://www.youtube.com/watch?v=8JJ101D3knE",
+        "https://www.youtube.com/watch?v=PkZNo7MFNFg",
+        "https://www.youtube.com/watch?v=W6NZfCO5SIk"
+    ];
+
+    private static string DemoVideo(int n) => DemoVideos[Math.Abs(n) % DemoVideos.Length];
+
+    private async Task EnsureVideoUrlsAsync(CancellationToken ct)
+    {
+        var videos = await db.Lectures
+            .Where(l => l.Kind == "Video" && (l.VideoUrl == null || l.VideoUrl == ""))
+            .ToListAsync(ct);
+        if (videos.Count == 0)
+        {
+            return;
+        }
+
+        for (var i = 0; i < videos.Count; i++)
+        {
+            videos[i].VideoUrl = DemoVideo(i + videos[i].Title.Length);
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
 
     private async Task SeedCommunityAsync(CancellationToken ct)
     {

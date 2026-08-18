@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -12,25 +12,31 @@ import {
   ReviewDto,
   starSlots,
 } from '../../../catalog-mfe/src/app/catalog.api';
+import { VideoEmbed } from '../../../catalog-mfe/src/app/video-embed';
 
 @Component({
   selector: 'app-course-player',
-  imports: [RouterLink, DatePipe, FormsModule],
+  imports: [RouterLink, DatePipe, FormsModule, VideoEmbed],
   template: `
     @if (course(); as item) {
       <div class="player">
         <aside class="player-nav">
           <a class="back-link light" [routerLink]="['/catalog', item.id]">Course landing</a>
           <h1>{{ item.title }}</h1>
+          <div class="player-progress">
+            {{ progress().done }} / {{ progress().total }} complete
+            <div class="player-progress-bar" aria-hidden="true"><span [style.width.%]="progress().pct"></span></div>
+          </div>
           @for (section of curriculum()?.sections ?? []; track section.id) {
             <p class="player-section">{{ section.title }}</p>
             @for (lecture of section.lectures; track lecture.id) {
               <a
                 class="player-item"
                 [class.active]="lecture.id === lectureId()"
+                [class.done]="lecture.completed"
                 [routerLink]="['/learn', 'course', item.id, lecture.id]"
               >
-                <span>{{ lecture.kind === 'Video' ? '▶' : '☰' }} {{ lecture.title }}</span>
+                <span>{{ lecture.completed ? '✓' : lecture.kind === 'Video' ? '▶' : '☰' }} {{ lecture.title }}</span>
                 <span class="muted">{{ lecture.durationMinutes }}m</span>
               </a>
             }
@@ -39,6 +45,7 @@ import {
         <section class="player-main">
           <div class="player-tabs">
             <button type="button" [class.active]="tab() === 'lecture'" (click)="tab.set('lecture')">Lecture</button>
+            <button type="button" [class.active]="tab() === 'notes'" (click)="tab.set('notes')">Notes</button>
             <button type="button" [class.active]="tab() === 'qa'" (click)="tab.set('qa')">Q&amp;A</button>
             <button type="button" [class.active]="tab() === 'reviews'" (click)="tab.set('reviews')">Reviews</button>
           </div>
@@ -46,7 +53,12 @@ import {
           @if (tab() === 'lecture') {
             @if (lecture(); as current) {
               <div class="stage" [class.video]="current.kind === 'Video'">
-                @if (current.kind === 'Video') {
+                @if (current.kind === 'Video' && !current.locked && current.videoUrl) {
+                  <app-video-embed [url]="current.videoUrl">
+                    <p>Lecture · {{ current.durationMinutes }} min</p>
+                    <strong>{{ current.title }}</strong>
+                  </app-video-embed>
+                } @else {
                   <p>Lecture · {{ current.durationMinutes }} min</p>
                   <strong>{{ current.title }}</strong>
                 }
@@ -63,9 +75,26 @@ import {
                 @for (para of paragraphs(current.body); track $index) {
                   <p>{{ para }}</p>
                 }
+                <div class="complete-row">
+                  <button type="button" class="btn secondary" [disabled]="current.completed" (click)="markComplete()">
+                    {{ current.completed ? 'Completed' : 'Mark as complete' }}
+                  </button>
+                </div>
               }
             } @else {
               <p class="muted">Choose a lecture from the sidebar.</p>
+            }
+          }
+
+          @if (tab() === 'notes') {
+            @if (lecture(); as current) {
+              @if (current.locked) {
+                <p class="muted">Enroll to take notes on this lecture.</p>
+              } @else {
+                <label>Your notes
+                  <textarea class="notes-box" rows="10" [(ngModel)]="noteDraft" (ngModelChange)="saveNote()" placeholder="Capture a timestamp, a question, or the idea you want to keep."></textarea>
+                </label>
+              }
             }
           }
 
@@ -154,15 +183,22 @@ export class CoursePlayer implements OnDestroy {
   readonly lectureId = signal<string | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly questions = signal<QuestionDto[]>([]);
-  readonly tab = signal<'lecture' | 'qa' | 'reviews'>('lecture');
+  readonly tab = signal<'lecture' | 'notes' | 'qa' | 'reviews'>('lecture');
   readonly error = signal<string | null>(null);
   readonly starSlots = starSlots;
+  readonly progress = computed(() => {
+    const lectures = (this.curriculum()?.sections ?? []).flatMap((section) => section.lectures);
+    const total = lectures.length;
+    const done = lectures.filter((lecture) => lecture.completed).length;
+    return { done, total, pct: total ? Math.round((100 * done) / total) : 0 };
+  });
   questionTitle = '';
   questionBody = '';
   reviewRating = 5;
   reviewTitle = '';
   reviewBody = '';
   replies: Record<string, string> = {};
+  noteDraft = '';
 
   constructor() {
     this.sub = this.route.paramMap.subscribe((params) => {
@@ -180,6 +216,47 @@ export class CoursePlayer implements OnDestroy {
 
   paragraphs(body?: string | null): string[] {
     return (body ?? '').split(/\n\n+/).map((part) => part.trim()).filter(Boolean);
+  }
+
+  async markComplete(): Promise<void> {
+    const courseId = this.course()?.id;
+    const lecture = this.lecture();
+    if (!courseId || !lecture || lecture.locked || lecture.completed) {
+      return;
+    }
+    try {
+      await this.api.completeLecture(courseId, lecture.id);
+      this.lecture.set({ ...lecture, completed: true });
+      this.curriculum.update((curriculum) => {
+        if (!curriculum) {
+          return curriculum;
+        }
+        return {
+          ...curriculum,
+          sections: curriculum.sections.map((section) => ({
+            ...section,
+            lectures: section.lectures.map((item) =>
+              item.id === lecture.id ? { ...item, completed: true } : item,
+            ),
+          })),
+        };
+      });
+    } catch {
+      this.error.set('Could not mark this lecture complete. Confirm you can open it.');
+    }
+  }
+
+  saveNote(): void {
+    const courseId = this.course()?.id;
+    const lectureId = this.lecture()?.id;
+    if (!courseId || !lectureId) {
+      return;
+    }
+    localStorage.setItem(this.noteKey(courseId, lectureId), this.noteDraft);
+  }
+
+  private noteKey(courseId: string, lectureId: string): string {
+    return `campushub:notes:${courseId}:${lectureId}`;
   }
 
   async ask(event: Event): Promise<void> {
@@ -239,7 +316,9 @@ export class CoursePlayer implements OnDestroy {
       }
       this.lectureId.set(target);
       if (target) {
-        this.lecture.set(await this.api.lecture(courseId, target));
+        const detail = await this.api.lecture(courseId, target);
+        this.lecture.set(detail);
+        this.noteDraft = localStorage.getItem(this.noteKey(courseId, target)) ?? '';
       }
       this.error.set(null);
     } catch {

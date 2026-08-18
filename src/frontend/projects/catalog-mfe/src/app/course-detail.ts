@@ -1,21 +1,23 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   CatalogApi,
   CourseDetailDto,
   CurriculumDto,
+  LectureOutlineDto,
   QuestionDto,
   ReviewDto,
   hoursLabel,
   starSlots,
 } from './catalog.api';
 import { SessionService } from '../../../shell/src/app/session';
+import { VideoEmbed } from './video-embed';
 
 @Component({
   selector: 'app-course-detail',
-  imports: [RouterLink, DecimalPipe, DatePipe, FormsModule],
+  imports: [RouterLink, DecimalPipe, DatePipe, FormsModule, VideoEmbed],
   template: `
     @if (course(); as item) {
       <div class="udemy-page">
@@ -49,8 +51,14 @@ import { SessionService } from '../../../shell/src/app/session';
               <p>Created by <strong>{{ item.teacherName }}</strong></p>
             </div>
             <aside class="buy-card">
-              <div class="udemy-cover buy-cover" [attr.data-subject]="item.subjectCode">
-                <span>{{ item.subjectCode }}</span>
+              <div class="udemy-cover buy-cover" [class.trailer]="!!trailer()" [attr.data-subject]="item.subjectCode">
+                @if (trailer(); as preview) {
+                  <app-video-embed [url]="preview.videoUrl">
+                    <span>{{ item.subjectCode }}</span>
+                  </app-video-embed>
+                } @else {
+                  <span>{{ item.subjectCode }}</span>
+                }
               </div>
               <p class="buy-price">{{ item.price | number: '1.2-2' }} USD</p>
               @if (item.enrolled) {
@@ -60,6 +68,9 @@ import { SessionService } from '../../../shell/src/app/session';
               } @else if (!item.canEnroll) {
                 <p class="muted">This course is not open for enrollment.</p>
               }
+              <button type="button" class="btn secondary" (click)="toggleWish()" [disabled]="busy()">
+                {{ item.wishlisted ? '♥ Wishlisted' : '♡ Add to wishlist' }}
+              </button>
               @if (session.isTeacher()) {
                 <a class="btn secondary" [routerLink]="['/catalog', item.id, 'edit']">Edit course</a>
               }
@@ -228,6 +239,15 @@ export class CourseDetail {
   readonly busy = signal(false);
   readonly starSlots = starSlots;
   readonly hoursLabel = hoursLabel;
+  readonly trailer = computed((): LectureOutlineDto | null => {
+    for (const section of this.curriculum()?.sections ?? []) {
+      const preview = section.lectures.find((lecture) => lecture.isPreview && lecture.kind === 'Video' && lecture.videoUrl);
+      if (preview) {
+        return preview;
+      }
+    }
+    return null;
+  });
   reviewRating = 5;
   reviewTitle = '';
   reviewBody = '';
@@ -246,6 +266,27 @@ export class CourseDetail {
 
   initials(name: string): string {
     return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  async toggleWish(): Promise<void> {
+    const course = this.course();
+    if (!course) {
+      return;
+    }
+    this.busy.set(true);
+    try {
+      if (course.wishlisted) {
+        await this.api.removeWishlist(course.id);
+        this.course.set({ ...course, wishlisted: false });
+      } else {
+        await this.api.addWishlist(course.id);
+        this.course.set({ ...course, wishlisted: true });
+      }
+    } catch {
+      this.error.set('Could not update your wishlist.');
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   async submitReview(event: Event): Promise<void> {

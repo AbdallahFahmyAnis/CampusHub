@@ -75,6 +75,32 @@ internal static class CatalogSchema
                 CONSTRAINT FK_CourseAnswers_CourseQuestions_QuestionId FOREIGN KEY (QuestionId) REFERENCES CourseQuestions (Id) ON DELETE CASCADE
             );
             """, ct);
+        await TryAsync(db, "ALTER TABLE Lectures ADD COLUMN VideoUrl TEXT", ct);
+        await TryAsync(db, """
+            CREATE TABLE IF NOT EXISTS CourseWishlists (
+                Id TEXT NOT NULL CONSTRAINT PK_CourseWishlists PRIMARY KEY,
+                CourseId TEXT NOT NULL,
+                StudentId TEXT NOT NULL,
+                CreatedAt TEXT NOT NULL,
+                CONSTRAINT FK_CourseWishlists_Courses_CourseId FOREIGN KEY (CourseId) REFERENCES Courses (Id) ON DELETE CASCADE
+            );
+            """, ct);
+        await TryAsync(db, """
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_CourseWishlists_CourseId_StudentId ON CourseWishlists (CourseId, StudentId);
+            """, ct);
+        await TryAsync(db, """
+            CREATE TABLE IF NOT EXISTS LectureProgress (
+                Id TEXT NOT NULL CONSTRAINT PK_LectureProgress PRIMARY KEY,
+                CourseId TEXT NOT NULL,
+                LectureId TEXT NOT NULL,
+                StudentId TEXT NOT NULL,
+                CompletedAt TEXT NOT NULL,
+                CONSTRAINT FK_LectureProgress_Lectures_LectureId FOREIGN KEY (LectureId) REFERENCES Lectures (Id) ON DELETE CASCADE
+            );
+            """, ct);
+        await TryAsync(db, """
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_LectureProgress_LectureId_StudentId ON LectureProgress (LectureId, StudentId);
+            """, ct);
     }
 
     private static async Task TryAsync(CatalogDbContext db, string sql, CancellationToken ct)

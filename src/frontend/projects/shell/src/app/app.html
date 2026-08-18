@@ -4,6 +4,17 @@
       <span class="brand-mark" aria-hidden="true">C</span>
       <span class="brand-name">CampusHub</span>
     </a>
+    <form class="top-search" (submit)="searchCatalog($event)">
+      <input
+        name="q"
+        type="search"
+        [(ngModel)]="searchQuery"
+        placeholder="Search for anything"
+        autocomplete="off"
+        aria-label="Search courses"
+      />
+      <button type="submit">Search</button>
+    </form>
     <button
       class="nav-toggle"
       type="button"
@@ -13,9 +24,10 @@
       Menu
     </button>
     <nav [class.open]="menuOpen()" aria-label="Primary">
-      <a routerLink="/catalog" routerLinkActive="active">Catalog</a>
+      <a routerLink="/catalog" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Catalog</a>
       <a routerLink="/enroll" routerLinkActive="active">Enrollments</a>
-      <a routerLink="/learn" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Pass</a>
+      <a routerLink="/learn" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">My learning</a>
+      <a routerLink="/catalog" [queryParams]="{ saved: '1' }">Wishlist</a>
       <a routerLink="/learn/inbox" routerLinkActive="active">Inbox</a>
       <a routerLink="/chat" routerLinkActive="active">Chat</a>
       @if (session.isTeacher()) {
@@ -44,22 +56,35 @@
           @if (alertsOpen()) {
             <div class="alerts-panel" role="menu" (click)="$event.stopPropagation()">
               <div class="alerts-head">
-                <strong>Alerts</strong>
-                @if (alerts.unreadCount()) {
-                  <button type="button" class="btn ghost" (click)="markAllRead($event)">Mark all read</button>
-                }
+                <strong>Notifications</strong>
+                <button type="button" class="alerts-action" (click)="markAllRead($event)" [disabled]="!alerts.unreadCount()">
+                  Mark all as read
+                </button>
+              </div>
+              <div class="alerts-tabs" role="tablist">
+                <button type="button" role="tab" [class.active]="alertTab() === 'all'" (click)="alertTab.set('all')">All</button>
+                <button type="button" role="tab" [class.active]="alertTab() === 'unread'" (click)="alertTab.set('unread')">
+                  Unread
+                </button>
               </div>
               <div class="alerts-list">
-                @for (item of alerts.recent(); track item.id) {
+                @for (item of visibleAlerts(); track item.id) {
                   <button type="button" class="alert-item" [class.unread]="!item.read" (click)="openAlert(item)">
-                    <span class="alert-title">{{ item.title }}</span>
-                    <span class="alert-body">{{ item.body }}</span>
+                    <span class="alert-icon" [attr.data-kind]="kindOf(item)">{{ glyphOf(item) }}</span>
+                    <span class="alert-copy">
+                      <span class="alert-title">{{ item.title }}</span>
+                      <span class="alert-body">{{ item.body }}</span>
+                      <time class="alert-time">{{ timeAgo(item.createdAt) }}</time>
+                    </span>
+                    @if (!item.read) {
+                      <span class="alert-dot" aria-hidden="true"></span>
+                    }
                   </button>
                 } @empty {
-                  <p class="muted alerts-empty">No alerts yet.</p>
+                  <p class="muted alerts-empty">{{ alertTab() === 'unread' ? "You're all caught up." : 'No notifications yet.' }}</p>
                 }
               </div>
-              <a class="alerts-all" routerLink="/learn/inbox" (click)="alertsOpen.set(false)">Open inbox</a>
+              <a class="alerts-all" routerLink="/learn/inbox" (click)="alertsOpen.set(false)">See all</a>
             </div>
           }
         </div>

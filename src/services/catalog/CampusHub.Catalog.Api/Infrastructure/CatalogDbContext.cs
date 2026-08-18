@@ -12,6 +12,8 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
     public DbSet<CourseReview> CourseReviews => Set<CourseReview>();
     public DbSet<CourseQuestion> CourseQuestions => Set<CourseQuestion>();
     public DbSet<CourseAnswer> CourseAnswers => Set<CourseAnswer>();
+    public DbSet<CourseWishlist> CourseWishlists => Set<CourseWishlist>();
+    public DbSet<LectureProgress> LectureProgress => Set<LectureProgress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,7 +63,31 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
                 .WithMany(x => x.Lectures)
                 .HasForeignKey(x => x.SectionId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(x => x.VideoUrl).HasMaxLength(500);
             entity.HasIndex(x => new { x.SectionId, x.SortOrder });
+        });
+
+        modelBuilder.Entity<CourseWishlist>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.StudentId).HasMaxLength(64);
+            entity.HasIndex(x => new { x.CourseId, x.StudentId }).IsUnique();
+            entity.HasOne(x => x.Course)
+                .WithMany()
+                .HasForeignKey(x => x.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LectureProgress>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.StudentId).HasMaxLength(64);
+            entity.HasIndex(x => new { x.LectureId, x.StudentId }).IsUnique();
+            entity.HasIndex(x => new { x.CourseId, x.StudentId });
+            entity.HasOne(x => x.Lecture)
+                .WithMany()
+                .HasForeignKey(x => x.LectureId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<CourseReview>(entity =>

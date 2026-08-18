@@ -86,11 +86,20 @@ import { CatalogApi, CurriculumDto, SubjectDto } from './catalog.api';
             <summary>{{ section.title }}</summary>
             <ul>
               @for (lecture of section.lectures; track lecture.id) {
-                <li>{{ lecture.title }} · {{ lecture.durationMinutes }}m @if (lecture.isPreview) { (preview) }</li>
+                <li>{{ lecture.title }} · {{ lecture.kind }} · {{ lecture.durationMinutes }}m @if (lecture.isPreview) { (preview) }</li>
               }
             </ul>
             <form class="form stacked" (submit)="addLecture($event, section.id)">
               <label>Lecture title <input name="ltitle-{{ section.id }}" [(ngModel)]="lectureTitle[section.id]" /></label>
+              <label>Kind
+                <select name="lkind-{{ section.id }}" [(ngModel)]="lectureKind[section.id]">
+                  <option value="Article">Article</option>
+                  <option value="Video">Video</option>
+                </select>
+              </label>
+              <label>Video URL (YouTube, Vimeo, or .mp4)
+                <input name="lurl-{{ section.id }}" [(ngModel)]="lectureVideo[section.id]" placeholder="https://www.youtube.com/watch?v=..." />
+              </label>
               <label>Minutes <input type="number" name="mins-{{ section.id }}" [(ngModel)]="lectureMinutes[section.id]" /></label>
               <label>Body <textarea name="lbody-{{ section.id }}" rows="3" [(ngModel)]="lectureBody[section.id]"></textarea></label>
               <label class="inline"><input type="checkbox" name="prev-{{ section.id }}" [(ngModel)]="lecturePreview[section.id]" /> Preview</label>
@@ -120,6 +129,8 @@ export class CourseEditor {
   readonly saving = signal(false);
   sectionTitle = '';
   lectureTitle: Record<string, string> = {};
+  lectureKind: Record<string, string> = {};
+  lectureVideo: Record<string, string> = {};
   lectureMinutes: Record<string, number> = {};
   lectureBody: Record<string, string> = {};
   lecturePreview: Record<string, boolean> = {};
@@ -226,10 +237,12 @@ export class CourseEditor {
       durationMinutes: this.lectureMinutes[sectionId] || 10,
       body: this.lectureBody[sectionId],
       isPreview: this.lecturePreview[sectionId] === true,
-      kind: 'Article',
+      kind: this.lectureKind[sectionId] || 'Article',
+      videoUrl: (this.lectureVideo[sectionId] ?? '').trim() || undefined,
     });
     this.lectureTitle[sectionId] = '';
     this.lectureBody[sectionId] = '';
+    this.lectureVideo[sectionId] = '';
     this.curriculum.set(await this.api.curriculum(id));
   }
 }

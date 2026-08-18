@@ -25,6 +25,7 @@ export interface CourseListItemDto {
   ratingCount: number;
   lectureCount: number;
   durationMinutes: number;
+  wishlisted?: boolean;
 }
 
 export interface PagedCoursesDto {
@@ -67,6 +68,8 @@ export interface LectureOutlineDto {
   summary?: string | null;
   isPreview: boolean;
   sortOrder: number;
+  videoUrl?: string | null;
+  completed?: boolean;
 }
 
 export interface SectionDto {
@@ -93,6 +96,8 @@ export interface LectureDetailDto {
   isPreview: boolean;
   locked: boolean;
   sortOrder: number;
+  videoUrl?: string | null;
+  completed?: boolean;
 }
 
 export interface ReviewDto {
@@ -130,13 +135,16 @@ export class CatalogApi {
     return firstValueFrom(this.http.get<SubjectDto[]>('/api/catalog/subjects'));
   }
 
-  courses(options?: { category?: string; page?: number; pageSize?: number }) {
+  courses(options?: { category?: string; q?: string; page?: number; pageSize?: number }) {
     const params: Record<string, string | number> = {
       page: options?.page ?? 1,
       pageSize: options?.pageSize ?? 12,
     };
     if (options?.category) {
       params['category'] = options.category;
+    }
+    if (options?.q) {
+      params['q'] = options.q;
     }
 
     return firstValueFrom(this.http.get<PagedCoursesDto>('/api/catalog/courses', { params }));
@@ -181,6 +189,7 @@ export class CatalogApi {
     summary?: string;
     body?: string;
     isPreview: boolean;
+    videoUrl?: string;
   }) {
     return firstValueFrom(
       this.http.post<LectureOutlineDto>(`/api/catalog/courses/${courseId}/sections/${sectionId}/lectures`, body),
@@ -206,6 +215,24 @@ export class CatalogApi {
   addAnswer(courseId: string, questionId: string, body: string) {
     return firstValueFrom(
       this.http.post<QuestionDto>(`/api/catalog/courses/${courseId}/questions/${questionId}/answers`, { body }),
+    );
+  }
+
+  wishlist() {
+    return firstValueFrom(this.http.get<CourseListItemDto[]>('/api/catalog/wishlist'));
+  }
+
+  addWishlist(courseId: string) {
+    return firstValueFrom(this.http.post<{ wishlisted: boolean }>(`/api/catalog/courses/${courseId}/wishlist`, {}));
+  }
+
+  removeWishlist(courseId: string) {
+    return firstValueFrom(this.http.delete<{ wishlisted: boolean }>(`/api/catalog/courses/${courseId}/wishlist`));
+  }
+
+  completeLecture(courseId: string, lectureId: string) {
+    return firstValueFrom(
+      this.http.post<{ completed: boolean }>(`/api/catalog/courses/${courseId}/lectures/${lectureId}/complete`, {}),
     );
   }
 }

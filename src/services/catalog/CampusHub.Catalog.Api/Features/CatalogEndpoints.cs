@@ -74,6 +74,7 @@ public static class CatalogEndpoints
         ClaimsPrincipal user,
         Guid? subjectId,
         string? category,
+        string? q,
         int page = 1,
         int pageSize = 12,
         CancellationToken ct = default)
@@ -97,6 +98,17 @@ public static class CatalogEndpoints
             query = query.Where(c => c.Subject.Code == code);
         }
 
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var term = q.Trim();
+            query = query.Where(c =>
+                c.Title.Contains(term) ||
+                (c.Subtitle != null && c.Subtitle.Contains(term)) ||
+                (c.Description != null && c.Description.Contains(term)) ||
+                c.Subject.Name.Contains(term) ||
+                c.Subject.Code.Contains(term));
+        }
+
         var total = await query.CountAsync(ct);
         var courses = await query
             .OrderBy(c => c.Title)
@@ -104,9 +116,11 @@ public static class CatalogEndpoints
             .Take(pageSize)
             .ToListAsync(ct);
         var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
+        var (studentId, _) = Caller(user);
+        var wished = await CatalogMappings.WishlistIds(db, studentId, courses.Select(c => c.Id), ct);
 
         return Results.Ok(new PagedCoursesDto(
-            courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id))).ToList(),
+            courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id), wished.Contains(c.Id))).ToList(),
             page,
             pageSize,
             total));
@@ -121,8 +135,9 @@ public static class CatalogEndpoints
             .OrderBy(c => c.Title)
             .ToListAsync(ct);
         var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
+        var wished = await CatalogMappings.WishlistIds(db, id, courses.Select(c => c.Id), ct);
 
-        return Results.Ok(courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id))));
+        return Results.Ok(courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id), wished.Contains(c.Id))));
     }
 
     private static async Task<IResult> GetCourse(
@@ -148,8 +163,9 @@ public static class CatalogEndpoints
 
         var (studentId, _) = Caller(user);
         var enrolled = CanManage(user) || IsOwner(course, user) || await enrollment.IsConfirmedAsync(studentId, id, ct);
+        var wishlisted = await db.CourseWishlists.AnyAsync(w => w.CourseId == id && w.StudentId == studentId, ct);
         var stats = await CatalogMappings.LoadStats(db, [id], ct);
-        return Results.Ok(CatalogMappings.ToDetail(course, stats.GetValueOrDefault(id), enrolled));
+        return Results.Ok(CatalogMappings.ToDetail(course, stats.GetValueOrDefault(id), enrolled, wishlisted));
     }
 
     private static async Task<IResult> CreateCourse(
