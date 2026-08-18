@@ -217,12 +217,24 @@ app.MapGet("/whoami", (HttpContext http) =>
             email = user.FindFirstValue("email") ?? user.FindFirstValue("preferred_username"),
             sub = user.FindFirstValue("sub"),
             roles = user.FindAll("role").Select(c => c.Value).ToArray(),
+            tenantId = user.FindFirstValue(Tenancy.TenantIdClaim),
+            tenantName = user.FindFirstValue(Tenancy.TenantNameClaim),
+            plan = user.FindFirstValue(Tenancy.PlanClaim),
             claims = user.Claims.Select(c => new { c.Type, c.Value })
         });
     })
     .RequireAuthorization();
 
 app.MapAccountEndpoints();
+app.MapPost("/api/tenants/register", async (RegisterCampusRequest body, DownstreamApi api, CancellationToken ct) =>
+    {
+        var (ok, error) = await api.PostJsonAsync("identity", "/api/identity/tenants/register", body, ct, internalKey: true);
+        return ok
+            ? Results.Ok(new { created = true })
+            : Results.BadRequest(new { error = error ?? "Could not create the campus." });
+    })
+    .AllowAnonymous()
+    .DisableAntiforgery();
 app.MapRazorPages();
 app.MapReverseProxy();
 app.MapDefaultEndpoints();
@@ -231,3 +243,5 @@ app.Run();
 
 static bool IsBrowserApiCall(PathString path) =>
     path.StartsWithSegments("/api") || path.StartsWithSegments("/socket.io");
+
+public sealed record RegisterCampusRequest(string CampusName, string Email, string DisplayName, string Password);

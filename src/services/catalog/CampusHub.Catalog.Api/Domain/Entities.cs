@@ -36,6 +36,7 @@ public sealed class Course
     public string? Language { get; set; }
     public string? Outcomes { get; set; }
     public string? Requirements { get; set; }
+    public Guid TenantId { get; set; }
 
     public ICollection<CourseSection> Sections { get; set; } = new List<CourseSection>();
     public ICollection<CourseReview> Reviews { get; set; } = new List<CourseReview>();

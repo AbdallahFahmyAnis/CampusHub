@@ -5,4 +5,5 @@ namespace CampusHub.Identity.Api.Data;
 public sealed class ApplicationUser : IdentityUser
 {
     public string DisplayName { get; set; } = string.Empty;
+    public Guid TenantId { get; set; }
 }

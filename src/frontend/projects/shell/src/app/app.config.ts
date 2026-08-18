@@ -9,7 +9,7 @@ import { routes } from './app.routes';
 const unauthorizedInterceptor: HttpInterceptorFn = (req, next) =>
   next(req).pipe(
     catchError((error) => {
-      if (error.status === 401 && !req.url.includes('/whoami')) {
+      if (error.status === 401 && !req.url.includes('/whoami') && !req.url.includes('/api/tenants/register')) {
         window.location.href = `/login?returnUrl=${encodeURIComponent(location.pathname)}`;
       }
       return throwError(() => error);

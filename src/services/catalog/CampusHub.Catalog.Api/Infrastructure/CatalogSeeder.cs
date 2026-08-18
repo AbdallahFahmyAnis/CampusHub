@@ -13,6 +13,9 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
         await CatalogSchema.EnsureAsync(db, cancellationToken);
+        await db.Courses
+            .Where(c => c.TenantId == Guid.Empty)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.TenantId, Tenancy.DefaultTenantId), cancellationToken);
         await EnsureSubjectsAsync(cancellationToken);
         await EnsureCoursesAsync(cancellationToken);
         await SeedCurriculumAsync(cancellationToken);
@@ -95,7 +98,8 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
                 Price = seed.Price,
                 Status = CourseStatus.Published,
                 CreatedAt = DateTimeOffset.UtcNow,
-                PublishedAt = DateTimeOffset.UtcNow
+                PublishedAt = DateTimeOffset.UtcNow,
+                TenantId = Tenancy.DefaultTenantId
             });
         }
 

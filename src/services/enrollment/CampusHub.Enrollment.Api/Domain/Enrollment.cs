@@ -25,6 +25,7 @@ public sealed class Enrollment
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public string IdempotencyKey { get; set; } = string.Empty;
+    public Guid TenantId { get; set; }
 }
 
 public sealed class OutboxMessage

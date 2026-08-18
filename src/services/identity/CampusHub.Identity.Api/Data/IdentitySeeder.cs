@@ -1,5 +1,6 @@
 using CampusHub.BuildingBlocks.Security;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using Oidc = OpenIddict.Abstractions.OpenIddictConstants;
 
@@ -18,7 +19,8 @@ public sealed class IdentitySeeder(
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
-        await db.Database.EnsureCreatedAsync(cancellationToken);
+        await IdentitySchema.EnsureAsync(db, cancellationToken);
+        await EnsureDefaultTenantAsync(cancellationToken);
 
         foreach (var role in Roles.All)
         {
@@ -63,7 +65,8 @@ public sealed class IdentitySeeder(
                 UserName = email,
                 Email = email,
                 EmailConfirmed = true,
-                DisplayName = displayName
+                DisplayName = displayName,
+                TenantId = Tenancy.DefaultTenantId
             };
 
             var created = await users.CreateAsync(user, DevPassword);
@@ -74,10 +77,36 @@ public sealed class IdentitySeeder(
             }
         }
 
+        if (user.TenantId == Guid.Empty)
+        {
+            user.TenantId = Tenancy.DefaultTenantId;
+            await users.UpdateAsync(user);
+        }
+
         if (!await users.IsInRoleAsync(user, role))
         {
             await users.AddToRoleAsync(user, role);
         }
+    }
+
+    private async Task EnsureDefaultTenantAsync(CancellationToken ct)
+    {
+        if (await db.Tenants.AnyAsync(
+                t => t.Id == Tenancy.DefaultTenantId || t.Slug == SeedTenants.DefaultSlug,
+                ct))
+        {
+            return;
+        }
+
+        db.Tenants.Add(new Tenant
+        {
+            Id = Tenancy.DefaultTenantId,
+            Name = SeedTenants.DefaultName,
+            Slug = SeedTenants.DefaultSlug,
+            Plan = SeedTenants.DefaultPlan,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+        await db.SaveChangesAsync(ct);
     }
 
     private async Task EnsureScopeAsync(string name, string resource)

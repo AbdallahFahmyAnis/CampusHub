@@ -93,9 +93,13 @@
           @if (session.roleLabel(); as role) {
             <span class="who-role">{{ role }}</span>
           }
+          @if (session.session().tenantName) {
+            <span class="who-role">{{ session.session().tenantName }} · {{ session.session().plan }}</span>
+          }
         </a>
         <button type="button" class="sign-out" (click)="session.logout()">Sign out</button>
       } @else {
+        <a class="btn secondary" routerLink="/signup">Create a campus</a>
         <button type="button" (click)="session.login()">Sign in</button>
       }
     </div>

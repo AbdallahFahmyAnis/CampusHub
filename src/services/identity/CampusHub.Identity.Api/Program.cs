@@ -31,6 +31,7 @@ app.MapDefaultEndpoints();
 app.MapRazorPages();
 app.MapControllers();
 app.MapIdentityUserEndpoints();
+app.MapTenantEndpoints();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {

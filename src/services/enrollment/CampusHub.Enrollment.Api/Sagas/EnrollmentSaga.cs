@@ -23,6 +23,7 @@ public sealed class EnrollmentSaga(
         string studentId,
         string studentEmail,
         string studentName,
+        Guid tenantId,
         string accessToken,
         string simulateOutcome,
         CancellationToken ct)
@@ -52,7 +53,8 @@ public sealed class EnrollmentSaga(
                 FailureReason = "Course is full or not published.",
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
-                IdempotencyKey = idempotencyKey
+                IdempotencyKey = idempotencyKey,
+                TenantId = tenantId
             };
             rejected.Status = EnrollmentStatus.Rejected;
             rejected.FailureReason = "Course is full or not published.";
@@ -78,7 +80,8 @@ public sealed class EnrollmentSaga(
             Status = EnrollmentStatus.Started,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
-            IdempotencyKey = idempotencyKey
+            IdempotencyKey = idempotencyKey,
+            TenantId = tenantId
         };
 
         if (existing is null)
@@ -91,6 +94,10 @@ public sealed class EnrollmentSaga(
             enrollment.FailureReason = null;
             enrollment.PaymentId = null;
             enrollment.UpdatedAt = DateTimeOffset.UtcNow;
+            if (enrollment.TenantId == Guid.Empty)
+            {
+                enrollment.TenantId = tenantId;
+            }
         }
 
         await db.SaveChangesAsync(ct);

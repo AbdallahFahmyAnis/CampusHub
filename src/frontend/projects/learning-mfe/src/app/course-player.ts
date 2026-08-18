@@ -13,6 +13,7 @@ import {
   starSlots,
 } from '../../../catalog-mfe/src/app/catalog.api';
 import { VideoEmbed } from '../../../catalog-mfe/src/app/video-embed';
+import { SessionService } from '../../../shell/src/app/session';
 
 @Component({
   selector: 'app-course-player',
@@ -100,7 +101,11 @@ import { VideoEmbed } from '../../../catalog-mfe/src/app/video-embed';
           }
 
           @if (tab() === 'ask') {
-            <p class="muted">Ask about this lecture. Answers stay inside the course materials{{ tutorSource() === 'model' ? ' and an AI model.' : '.' }}</p>
+            @if (!allowModelAi()) {
+              <p class="muted">Free plan answers come from this course’s materials. Upgrade to Campus for the AI tutor.</p>
+            } @else {
+              <p class="muted">Ask about this lecture. Answers stay inside the course materials{{ tutorSource() === 'model' ? ' and an AI model.' : '.' }}</p>
+            }
             <form class="form stacked" (submit)="askTutor($event)">
               <label>Question
                 <textarea name="ask" rows="3" [(ngModel)]="askQuestion" required placeholder="What is the main idea of this lecture?"></textarea>
@@ -206,6 +211,8 @@ export class CoursePlayer implements OnDestroy {
   readonly askBusy = signal(false);
   readonly askAnswer = signal<string | null>(null);
   readonly tutorSource = signal('catalog');
+  readonly session = inject(SessionService);
+  readonly allowModelAi = computed(() => this.session.session().plan !== 'free');
   readonly progress = computed(() => {
     const lectures = (this.curriculum()?.sections ?? []).flatMap((section) => section.lectures);
     const total = lectures.length;

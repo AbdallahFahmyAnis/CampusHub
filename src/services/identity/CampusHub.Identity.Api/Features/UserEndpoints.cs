@@ -80,7 +80,8 @@ public static class UserEndpoints
             UserName = email,
             Email = email,
             EmailConfirmed = true,
-            DisplayName = displayName
+            DisplayName = displayName,
+            TenantId = Guid.TryParse(request.TenantId, out var tenantId) ? tenantId : Tenancy.DefaultTenantId
         };
 
         var created = await users.CreateAsync(user, request.Password);
@@ -198,7 +199,7 @@ public static class UserEndpoints
 
 public sealed record IdentityUserDto(string Id, string Email, string DisplayName, string[] Roles);
 
-public sealed record CreateIdentityUserRequest(string Email, string DisplayName, string Password, string Role);
+public sealed record CreateIdentityUserRequest(string Email, string DisplayName, string Password, string Role, string? TenantId = null);
 
 public sealed record UpdateIdentityUserRequest(string DisplayName);
 

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CampusHub.BuildingBlocks.Security;
 using CampusHub.Enrollment.Api.Infrastructure;
 using CampusHub.Enrollment.Api.Sagas;
 using Microsoft.AspNetCore.Mvc;
@@ -26,16 +27,48 @@ public static class EnrollmentEndpoints
     private static async Task<IResult> Start(
         StartEnrollmentRequest request,
         EnrollmentSaga saga,
+        EnrollmentDbContext db,
         HttpContext http,
         CancellationToken ct)
     {
         var token = http.Request.Headers.Authorization.ToString().Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase);
         var (id, email, name) = Caller(http.User);
+        var tenantId = Tenancy.TenantId(http.User);
+        var plan = Tenancy.Plan(http.User);
+        var cap = Plans.SeatCap(plan);
+        if (cap < int.MaxValue)
+        {
+            var alreadySeated = await db.Enrollments.AnyAsync(
+                e => e.TenantId == tenantId
+                     && e.StudentId == id
+                     && e.Status != CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Rejected
+                     && e.Status != CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Compensated,
+                ct);
+            if (!alreadySeated)
+            {
+                var used = await db.Enrollments
+                    .Where(e => e.TenantId == tenantId
+                                && e.Status != CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Rejected
+                                && e.Status != CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Compensated)
+                    .Select(e => e.StudentId)
+                    .Distinct()
+                    .CountAsync(ct);
+                if (used >= cap)
+                {
+                    return Results.Conflict(new
+                    {
+                        error = $"This campus plan allows {cap} seats. Upgrade to add more students."
+                    });
+                }
+            }
+        }
+
         var enrollment = await saga.StartAsync(
             request.CourseId,
             id,
             email,
             name,
+            tenantId,
             token,
             string.IsNullOrWhiteSpace(request.SimulatePayment) ? "Succeeded" : request.SimulatePayment,
             ct);
@@ -46,8 +79,9 @@ public static class EnrollmentEndpoints
     private static async Task<IResult> Mine(EnrollmentDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
         var (id, email, _) = Caller(user);
+        var tenantId = Tenancy.TenantId(user);
         var items = (await db.Enrollments.AsNoTracking()
-                .Where(e => e.StudentId == id || e.StudentEmail == email)
+                .Where(e => e.TenantId == tenantId && (e.StudentId == id || e.StudentEmail == email))
                 .ToListAsync(ct))
             .OrderByDescending(e => e.CreatedAt)
             .Select(ToDto);
@@ -89,9 +123,12 @@ public static class EnrollmentEndpoints
         return Results.Ok(new { confirmed });
     }
 
-    private static async Task<IResult> ListAll(EnrollmentDbContext db, CancellationToken ct)
+    private static async Task<IResult> ListAll(EnrollmentDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
-        var items = (await db.Enrollments.AsNoTracking().ToListAsync(ct))
+        var tenantId = Tenancy.TenantId(user);
+        var items = (await db.Enrollments.AsNoTracking()
+                .Where(e => e.TenantId == tenantId)
+                .ToListAsync(ct))
             .OrderByDescending(e => e.CreatedAt)
             .Take(200)
             .Select(ToDto);
@@ -107,6 +144,11 @@ public static class EnrollmentEndpoints
         }
 
         var (userId, email, _) = Caller(user);
+        if (enrollment.TenantId != Tenancy.TenantId(user))
+        {
+            return Results.NotFound();
+        }
+
         if (enrollment.StudentId != userId &&
             !string.Equals(enrollment.StudentEmail, email, StringComparison.OrdinalIgnoreCase) &&
             !user.IsInRole(CampusHub.BuildingBlocks.Security.Roles.Administrator))

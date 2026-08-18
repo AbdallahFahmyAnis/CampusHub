@@ -1,9 +1,11 @@
 using System.Security.Claims;
+using CampusHub.BuildingBlocks.Security;
 using CampusHub.Identity.Api.Data;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
@@ -13,7 +15,8 @@ namespace CampusHub.Identity.Api.Controllers;
 
 public sealed class AuthorizationController(
     UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager) : Controller
+    SignInManager<ApplicationUser> signInManager,
+    IdentityDbContext db) : Controller
 {
     [HttpGet("~/connect/authorize")]
     [HttpPost("~/connect/authorize")]
@@ -43,11 +46,18 @@ public sealed class AuthorizationController(
             nameType: Claims.Name,
             roleType: Claims.Role);
 
+        var tenantId = user.TenantId == Guid.Empty ? Tenancy.DefaultTenantId : user.TenantId;
+        var tenant = await db.Tenants.AsNoTracking().SingleOrDefaultAsync(t => t.Id == tenantId)
+                     ?? await db.Tenants.AsNoTracking().SingleOrDefaultAsync(t => t.Id == Tenancy.DefaultTenantId);
+
         identity
             .SetClaim(Claims.Subject, await userManager.GetUserIdAsync(user))
             .SetClaim(Claims.Email, await userManager.GetEmailAsync(user))
             .SetClaim(Claims.Name, user.DisplayName)
             .SetClaim(Claims.PreferredUsername, await userManager.GetUserNameAsync(user))
+            .SetClaim(Tenancy.TenantIdClaim, tenantId.ToString())
+            .SetClaim(Tenancy.TenantNameClaim, tenant?.Name ?? SeedTenants.DefaultName)
+            .SetClaim(Tenancy.PlanClaim, tenant?.Plan ?? SeedTenants.DefaultPlan)
             .SetClaims(Claims.Role, [.. await userManager.GetRolesAsync(user)]);
 
         identity.SetDestinations(GetDestinations);
@@ -74,6 +84,7 @@ public sealed class AuthorizationController(
         return claim.Type switch
         {
             Claims.Name or Claims.PreferredUsername or Claims.Role or Claims.Email
+                or Tenancy.TenantIdClaim or Tenancy.TenantNameClaim or Tenancy.PlanClaim
                 => [Destinations.AccessToken, Destinations.IdentityToken],
             _ => [Destinations.AccessToken]
         };

@@ -92,14 +92,16 @@ public static class CatalogEndpoints
 
         if (!string.IsNullOrWhiteSpace(q) && subjectId is null)
         {
-            var ranked = await search.TrySearchAsync(q.Trim(), category, publishedOnly, page, pageSize, ct);
+            var ranked = await search.TrySearchAsync(q.Trim(), category, publishedOnly, Tenancy.TenantId(user), page, pageSize, ct);
             if (ranked is not null)
             {
                 return await PageFromIds(db, user, ranked.Ids, page, pageSize, ranked.Total, ct);
             }
         }
 
-        var query = db.Courses.AsNoTracking().Include(c => c.Subject).AsQueryable();
+        var tenantId = Tenancy.TenantId(user);
+        var query = db.Courses.AsNoTracking().Include(c => c.Subject)
+            .Where(c => c.TenantId == tenantId || (c.TenantId == Guid.Empty && tenantId == Tenancy.DefaultTenantId));
         if (publishedOnly)
         {
             query = query.Where(c => c.Status == CourseStatus.Published);
@@ -146,7 +148,7 @@ public static class CatalogEndpoints
     {
         var courses = await db.Courses.AsNoTracking()
             .Include(c => c.Subject)
-            .Where(c => ids.Contains(c.Id))
+            .Where(c => ids.Contains(c.Id) && (c.TenantId == Tenancy.TenantId(user) || c.TenantId == Guid.Empty))
             .ToListAsync(ct);
         var order = ids.Select((courseId, index) => (courseId, index)).ToDictionary(x => x.courseId, x => x.index);
         courses.Sort((a, b) => order[a.Id].CompareTo(order[b.Id]));
@@ -175,9 +177,10 @@ public static class CatalogEndpoints
     private static async Task<IResult> ListMine(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
         var (id, email) = Caller(user);
+        var tenantId = Tenancy.TenantId(user);
         var courses = await db.Courses.AsNoTracking()
             .Include(c => c.Subject)
-            .Where(c => c.TeacherId == id || c.TeacherEmail == email)
+            .Where(c => c.TenantId == tenantId && (c.TeacherId == id || c.TeacherEmail == email))
             .OrderBy(c => c.Title)
             .ToListAsync(ct);
         var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
@@ -195,7 +198,7 @@ public static class CatalogEndpoints
     {
         var course = await db.Courses.AsNoTracking()
             .Include(c => c.Subject)
-            .SingleOrDefaultAsync(c => c.Id == id, ct);
+            .SingleOrDefaultAsync(c => c.Id == id && (c.TenantId == Tenancy.TenantId(user) || c.TenantId == Guid.Empty), ct);
 
         if (course is null)
         {
@@ -251,7 +254,8 @@ public static class CatalogEndpoints
             Outcomes = request.Outcomes?.Trim(),
             Requirements = request.Requirements?.Trim(),
             Status = CourseStatus.Draft,
-            CreatedAt = DateTimeOffset.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            TenantId = Tenancy.TenantId(user)
         };
 
         db.Courses.Add(course);
@@ -270,7 +274,7 @@ public static class CatalogEndpoints
         CancellationToken ct)
     {
         var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
-        if (course is null)
+        if (course is null || course.TenantId != Tenancy.TenantId(user))
         {
             return Results.NotFound();
         }
@@ -312,7 +316,7 @@ public static class CatalogEndpoints
     private static async Task<IResult> PublishCourse(Guid id, CatalogDbContext db, CourseSearch search, ClaimsPrincipal user, CancellationToken ct)
     {
         var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
-        if (course is null)
+        if (course is null || course.TenantId != Tenancy.TenantId(user))
         {
             return Results.NotFound();
         }
@@ -344,7 +348,7 @@ public static class CatalogEndpoints
     private static async Task<IResult> ArchiveCourse(Guid id, CatalogDbContext db, CourseSearch search, ClaimsPrincipal user, CancellationToken ct)
     {
         var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
-        if (course is null)
+        if (course is null || course.TenantId != Tenancy.TenantId(user))
         {
             return Results.NotFound();
         }

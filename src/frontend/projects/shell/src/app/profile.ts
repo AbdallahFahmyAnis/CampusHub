@@ -33,6 +33,9 @@ interface Profile {
         <p class="card-kicker">{{ session.roleLabel() }}</p>
         <h2>{{ item.displayName }}</h2>
         <p class="muted">{{ item.email }}</p>
+        @if (session.session().tenantName) {
+          <p class="muted">{{ session.session().tenantName }} · {{ session.session().plan }} plan</p>
+        }
         <p class="muted">Signed in as {{ item.roles.join(', ') || 'Student' }}</p>
         <div class="actions">
           <a class="btn secondary" routerLink="/learn/inbox">Inbox</a>

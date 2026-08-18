@@ -1,5 +1,6 @@
 using CampusHub.Catalog.Api.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CampusHub.Catalog.Api.Infrastructure;
 
@@ -36,11 +37,12 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
             entity.Property(x => x.TeacherName).HasMaxLength(200);
             entity.Property(x => x.TeacherEmail).HasMaxLength(256);
             entity.Property(x => x.Price).HasPrecision(12, 2);
+            entity.Property(x => x.TenantId).HasConversion(GuidAsText);
             entity.HasOne(x => x.Subject)
                 .WithMany()
                 .HasForeignKey(x => x.SubjectId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.HasIndex(x => new { x.Status, x.SubjectId });
+            entity.HasIndex(x => new { x.TenantId, x.Status, x.SubjectId });
         });
 
         modelBuilder.Entity<CourseSection>(entity =>
@@ -126,4 +128,11 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
+
+    private static readonly ValueConverter<Guid, string> GuidAsText = new(
+        id => id.ToString("D"),
+        value => ParseGuid(value));
+
+    private static Guid ParseGuid(string? value) =>
+        Guid.TryParse(value, out var parsed) ? parsed : Guid.Empty;
 }

@@ -12,10 +12,10 @@ public sealed class CourseTutor(HttpClient http, IConfiguration config, ILogger<
         !string.IsNullOrWhiteSpace(config["Ai:ApiKey"]) &&
         !string.IsNullOrWhiteSpace(config["Ai:BaseUrl"]);
 
-    public async Task<string> AnswerAsync(string question, Course course, Lecture? lecture, CancellationToken ct)
+    public async Task<string> AnswerAsync(string question, Course course, Lecture? lecture, bool allowModel, CancellationToken ct)
     {
         var materials = BuildMaterials(course, lecture);
-        if (ModelEnabled)
+        if (ModelEnabled && allowModel)
         {
             try
             {

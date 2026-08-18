@@ -8,11 +8,25 @@ export interface Session {
   email: string | null;
   sub: string | null;
   roles: string[];
+  tenantId: string | null;
+  tenantName: string | null;
+  plan: string | null;
 }
+
+const anonymousSession: Session = {
+  authenticated: false,
+  name: null,
+  email: null,
+  sub: null,
+  roles: [],
+  tenantId: null,
+  tenantName: null,
+  plan: null,
+};
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
-  private readonly state = signal<Session>({ authenticated: false, name: null, email: null, sub: null, roles: [] });
+  private readonly state = signal<Session>(anonymousSession);
 
   readonly session = this.state.asReadonly();
   readonly isTeacher = computed(() => {
@@ -41,7 +55,7 @@ export class SessionService {
       this.state.set(session);
       return session;
     } catch {
-      const anonymous = { authenticated: false, name: null, email: null, sub: null, roles: [] };
+      const anonymous = { ...anonymousSession };
       this.state.set(anonymous);
       return anonymous;
     }

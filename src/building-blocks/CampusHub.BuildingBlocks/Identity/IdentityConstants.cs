@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 namespace CampusHub.BuildingBlocks.Security;
 
 public static class Roles
@@ -46,3 +48,51 @@ public static class SeedUsers
     public const string TeacherEmail = "teacher@campushub.local";
     public const string StudentEmail = "student@campushub.local";
 }
+
+public static class SeedTenants
+{
+    public const string DefaultId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+    public const string DefaultSlug = "campushub";
+    public const string DefaultName = "CampusHub Demo";
+    public const string DefaultPlan = Plans.Campus;
+}
+
+public static class Plans
+{
+    public const string Free = "free";
+    public const string Campus = "campus";
+    public const string Enterprise = "enterprise";
+
+    public static int SeatCap(string plan) =>
+        plan.ToLowerInvariant() switch
+        {
+            Enterprise => int.MaxValue,
+            Campus => 500,
+            _ => 25
+        };
+
+    public static bool AllowsModelAi(string plan) =>
+        !string.Equals(plan, Free, StringComparison.OrdinalIgnoreCase);
+}
+
+public static class Tenancy
+{
+    public const string TenantIdClaim = "tenant_id";
+    public const string TenantNameClaim = "tenant_name";
+    public const string PlanClaim = "plan";
+
+    public static Guid DefaultTenantId => Guid.Parse(SeedTenants.DefaultId);
+
+    public static Guid TenantId(ClaimsPrincipal user)
+    {
+        var raw = user.FindFirstValue(TenantIdClaim);
+        return Guid.TryParse(raw, out var id) ? id : DefaultTenantId;
+    }
+
+    public static string Plan(ClaimsPrincipal user) =>
+        user.FindFirstValue(PlanClaim) is { Length: > 0 } plan ? plan : SeedTenants.DefaultPlan;
+
+    public static string TenantName(ClaimsPrincipal user) =>
+        user.FindFirstValue(TenantNameClaim) ?? SeedTenants.DefaultName;
+}
+

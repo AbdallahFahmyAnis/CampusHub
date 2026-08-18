@@ -1,3 +1,4 @@
+using CampusHub.BuildingBlocks.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Infrastructure;
@@ -76,6 +77,11 @@ internal static class CatalogSchema
             );
             """, ct);
         await TryAsync(db, "ALTER TABLE Lectures ADD COLUMN VideoUrl TEXT", ct);
+        await TryAsync(db, "ALTER TABLE Courses ADD COLUMN TenantId TEXT", ct);
+        await TryAsync(db, $"""
+            UPDATE Courses SET TenantId = '{SeedTenants.DefaultId}'
+            WHERE TenantId IS NULL OR TenantId = '' OR TenantId = '00000000-0000-0000-0000-000000000000';
+            """, ct);
         await TryAsync(db, """
             CREATE TABLE IF NOT EXISTS CourseWishlists (
                 Id TEXT NOT NULL CONSTRAINT PK_CourseWishlists PRIMARY KEY,

@@ -24,7 +24,11 @@ app.MapEnrollmentEndpoints();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<EnrollmentDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    await EnrollmentSchema.EnsureAsync(db, app.Lifetime.ApplicationStopping);
+    await db.Enrollments
+        .Where(e => e.TenantId == Guid.Empty)
+        .ExecuteUpdateAsync(
+            setters => setters.SetProperty(e => e.TenantId, CampusHub.BuildingBlocks.Security.Tenancy.DefaultTenantId));
 }
 
 app.Run();

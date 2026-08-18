@@ -33,7 +33,7 @@ public static class CourseLearningEndpoints
 
     private static async Task<IResult> GetCurriculum(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
-        if (!await CourseVisible(db, id, ct))
+        if (!await CourseVisible(db, id, user, ct))
         {
             return Results.NotFound();
         }
@@ -114,7 +114,7 @@ public static class CourseLearningEndpoints
         }
 
         var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
-        if (course is null || !await CourseVisible(db, id, ct))
+        if (course is null || !await CourseVisible(db, id, user, ct))
         {
             return Results.NotFound();
         }
@@ -139,8 +139,9 @@ public static class CourseLearningEndpoints
             }
         }
 
-        var answer = await tutor.AnswerAsync(request.Question.Trim(), course, lecture, ct);
-        return Results.Ok(new AskCourseResponse(answer, tutor.ModelEnabled ? "model" : "catalog"));
+        var allowModel = Plans.AllowsModelAi(Tenancy.Plan(user));
+        var answer = await tutor.AnswerAsync(request.Question.Trim(), course, lecture, allowModel, ct);
+        return Results.Ok(new AskCourseResponse(answer, allowModel && tutor.ModelEnabled ? "model" : "catalog"));
     }
 
     private static async Task<IResult> CompleteLecture(
@@ -201,7 +202,7 @@ public static class CourseLearningEndpoints
             .ToList();
         var courses = await db.Courses.AsNoTracking()
             .Include(c => c.Subject)
-            .Where(c => ids.Contains(c.Id))
+            .Where(c => ids.Contains(c.Id) && c.TenantId == Tenancy.TenantId(user))
             .ToListAsync(ct);
         var order = ids.Select((courseId, index) => (courseId, index)).ToDictionary(x => x.courseId, x => x.index);
         courses.Sort((a, b) => order[a.Id].CompareTo(order[b.Id]));
@@ -211,7 +212,7 @@ public static class CourseLearningEndpoints
 
     private static async Task<IResult> AddWishlist(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
-        if (!await CourseVisible(db, id, ct))
+        if (!await CourseVisible(db, id, user, ct))
         {
             return Results.NotFound();
         }
@@ -330,7 +331,7 @@ public static class CourseLearningEndpoints
 
     private static async Task<IResult> ListReviews(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
-        if (!await CourseVisible(db, id, ct))
+        if (!await CourseVisible(db, id, user, ct))
         {
             return Results.NotFound();
         }
@@ -396,9 +397,9 @@ public static class CourseLearningEndpoints
         return Results.Ok(CatalogMappings.ToReview(existing, studentId));
     }
 
-    private static async Task<IResult> ListQuestions(Guid id, CatalogDbContext db, CancellationToken ct)
+    private static async Task<IResult> ListQuestions(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
-        if (!await CourseVisible(db, id, ct))
+        if (!await CourseVisible(db, id, user, ct))
         {
             return Results.NotFound();
         }
@@ -498,6 +499,11 @@ public static class CourseLearningEndpoints
         return Results.Ok(CatalogMappings.ToQuestion(question));
     }
 
-    private static Task<bool> CourseVisible(CatalogDbContext db, Guid id, CancellationToken ct) =>
-        db.Courses.AsNoTracking().AnyAsync(c => c.Id == id, ct);
+    private static Task<bool> CourseVisible(CatalogDbContext db, Guid id, ClaimsPrincipal user, CancellationToken ct)
+    {
+        var tenantId = Tenancy.TenantId(user);
+        return db.Courses.AsNoTracking().AnyAsync(
+            c => c.Id == id && (c.TenantId == tenantId || (c.TenantId == Guid.Empty && tenantId == Tenancy.DefaultTenantId)),
+            ct);
+    }
 }

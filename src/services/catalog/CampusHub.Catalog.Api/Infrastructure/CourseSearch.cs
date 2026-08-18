@@ -22,6 +22,7 @@ public sealed class CourseSearch(HttpClient http, IConfiguration config, ILogger
         string query,
         string? category,
         bool publishedOnly,
+        Guid tenantId,
         int page,
         int pageSize,
         CancellationToken ct)
@@ -33,7 +34,7 @@ public sealed class CourseSearch(HttpClient http, IConfiguration config, ILogger
 
         try
         {
-            var filters = new List<string>();
+            var filters = new List<string> { $"tenantId = \"{tenantId}\"" };
             if (publishedOnly)
             {
                 filters.Add("status = Published");
@@ -142,7 +143,7 @@ public sealed class CourseSearch(HttpClient http, IConfiguration config, ILogger
                 {
                     "title", "subtitle", "description", "subjectName", "subjectCode", "teacherName", "level", "outcomes"
                 },
-                filterableAttributes = new[] { "status", "subjectCode" },
+                filterableAttributes = new[] { "status", "subjectCode", "tenantId" },
                 displayedAttributes = new[] { "id", "title", "subjectCode" }
             },
             Json,
@@ -161,7 +162,8 @@ public sealed class CourseSearch(HttpClient http, IConfiguration config, ILogger
             course.TeacherName,
             course.Level ?? "",
             course.Outcomes ?? "",
-            course.Status.ToString());
+            course.Status.ToString(),
+            course.TenantId.ToString());
 
     public sealed record SearchPage(IReadOnlyList<Guid> Ids, int Total);
 
@@ -175,7 +177,8 @@ public sealed class CourseSearch(HttpClient http, IConfiguration config, ILogger
         string TeacherName,
         string Level,
         string Outcomes,
-        string Status);
+        string Status,
+        string TenantId);
 
     private sealed class MeiliSearchResponse
     {
