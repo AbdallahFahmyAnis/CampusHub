@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.4.1" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsAspireHost>true</IsAspireHost>
+    <UserSecretsId>campushub-apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\gateway\CampusHub.Gateway\CampusHub.Gateway.csproj" />
+    <ProjectReference Include="..\..\services\identity\CampusHub.Identity.Api\CampusHub.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\services\catalog\CampusHub.Catalog.Api\CampusHub.Catalog.Api.csproj" />
+    <ProjectReference Include="..\..\services\enrollment\CampusHub.Enrollment.Api\CampusHub.Enrollment.Api.csproj" />
+    <ProjectReference Include="..\..\services\payment\CampusHub.Payment.Api\CampusHub.Payment.Api.csproj" />
+    <ProjectReference Include="..\..\services\notification\CampusHub.Notification.Api\CampusHub.Notification.Api.csproj" />
+    <ProjectReference Include="..\..\services\access\CampusHub.Access.Api\CampusHub.Access.Api.csproj" />
+  </ItemGroup>
+</Project>

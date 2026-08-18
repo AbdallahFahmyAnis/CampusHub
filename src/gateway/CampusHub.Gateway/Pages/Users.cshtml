@@ -1,0 +1,30 @@
+@page "/ops/users"
+@model UsersModel
+@{
+    ViewData["Title"] = "Ops users";
+}
+
+<h1 class="mb-2">Users</h1>
+<p class="ops-lede">Identity directory via the internal service key. Password for seeded accounts is <code>CampusHub!123</code>.</p>
+
+<div class="table-panel">
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Roles</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var user in Model.Users)
+    {
+        <tr>
+            <td>@user.DisplayName</td>
+            <td>@user.Email</td>
+            <td>@string.Join(", ", user.Roles)</td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>

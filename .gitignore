@@ -1,0 +1,46 @@
+# Build
+bin/
+obj/
+artifacts/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/
+*.userprefs
+
+# Secrets & local data
+appsettings.*.local.json
+*.db
+*.db-shm
+*.db-wal
+DataProtection-Keys/
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Node
+node_modules/
+dist/
+.angular/
+.nx/
+src/services/chat/data/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Test / coverage
+TestResults/
+coverage/
+*.trx
+*.coverage
+
+# Aspire
+.aspire/

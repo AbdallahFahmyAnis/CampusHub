@@ -1,0 +1,40 @@
+@page "/ops/enrollments"
+@model EnrollmentsModel
+@{
+    ViewData["Title"] = "Ops enrollments";
+}
+
+<h1 class="mb-2">Enrollments</h1>
+<p class="ops-lede">Live saga state for every student enrollment, including compensation when payment fails.</p>
+
+<div class="table-panel">
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Course</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.Items)
+    {
+        <tr>
+            <td>@item.StudentName<br /><span class="text-muted">@item.StudentEmail</span></td>
+            <td>@item.CourseTitle</td>
+            <td>@item.Amount.ToString("0.00")</td>
+            <td>
+                <span class="pill @(item.Status == "Confirmed" ? "ready" : item.Status is "Rejected" or "Compensated" ? "down" : "")">@item.Status</span>
+                @if (!string.IsNullOrWhiteSpace(item.FailureReason))
+                {
+                    <div class="text-danger small mt-1">@item.FailureReason</div>
+                }
+            </td>
+            <td>@item.UpdatedAt.ToLocalTime().ToString("g")</td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>

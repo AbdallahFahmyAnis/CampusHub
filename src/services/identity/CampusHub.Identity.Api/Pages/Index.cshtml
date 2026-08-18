@@ -1,0 +1,15 @@
+@page
+@model CampusHub.Identity.Api.Pages.IndexModel
+@{
+    ViewData["Title"] = "Identity";
+}
+
+<div class="auth-card">
+    <h1>CampusHub Identity</h1>
+    <p class="muted">OpenID Connect / OAuth2 authorization server (OpenIddict).</p>
+    <ul>
+        <li><a href="/.well-known/openid-configuration">Discovery document</a></li>
+        <li><a href="/health/ready">Ready</a></li>
+        <li><a href="/Account/Login">Login</a></li>
+    </ul>
+</div>

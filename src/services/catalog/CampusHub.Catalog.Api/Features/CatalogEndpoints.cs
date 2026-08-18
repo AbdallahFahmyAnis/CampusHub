@@ -1,0 +1,327 @@
+using System.Security.Claims;
+using CampusHub.BuildingBlocks.Security;
+using CampusHub.Catalog.Api.Contracts;
+using CampusHub.Catalog.Api.Domain;
+using CampusHub.Catalog.Api.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+
+namespace CampusHub.Catalog.Api.Features;
+
+public static class CatalogEndpoints
+{
+    public static IEndpointRouteBuilder MapCatalogEndpoints(this IEndpointRouteBuilder app)
+    {
+        var api = app.MapGroup("/api/catalog").RequireAuthorization();
+
+        api.MapGet("/subjects", ListSubjects);
+        api.MapPost("/subjects", CreateSubject).RequireAuthorization("CanManageCatalog");
+
+        api.MapGet("/courses", ListCourses);
+        api.MapGet("/courses/mine", ListMine).RequireAuthorization("CanManageCatalog");
+        api.MapGet("/courses/{id:guid}", GetCourse);
+        api.MapPost("/courses", CreateCourse).RequireAuthorization("CanManageCatalog");
+        api.MapPut("/courses/{id:guid}", UpdateCourse).RequireAuthorization("CanManageCatalog");
+        api.MapPost("/courses/{id:guid}/publish", PublishCourse).RequireAuthorization("CanManageCatalog");
+        api.MapPost("/courses/{id:guid}/archive", ArchiveCourse).RequireAuthorization("CanManageCatalog");
+
+        api.MapPost("/courses/{id:guid}/reservations", ReserveSeat).AllowAnonymous();
+        api.MapDelete("/courses/{id:guid}/reservations", ReleaseSeat).AllowAnonymous();
+
+        api.MapCourseLearningEndpoints();
+
+        return app;
+    }
+
+    private static async Task<IResult> ListSubjects(CatalogDbContext db, CancellationToken ct)
+    {
+        var items = await db.Subjects
+            .OrderBy(s => s.Code)
+            .Select(s => new SubjectDto(s.Id, s.Code, s.Name, s.Description))
+            .ToListAsync(ct);
+
+        return Results.Ok(items);
+    }
+
+    private static async Task<IResult> CreateSubject(CreateSubjectRequest request, CatalogDbContext db, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Code) || string.IsNullOrWhiteSpace(request.Name))
+        {
+            return Results.BadRequest(new { error = "Code and name are required." });
+        }
+
+        var subject = new Subject
+        {
+            Id = Guid.NewGuid(),
+            Code = request.Code.Trim().ToUpperInvariant(),
+            Name = request.Name.Trim(),
+            Description = request.Description?.Trim()
+        };
+
+        db.Subjects.Add(subject);
+        await db.SaveChangesAsync(ct);
+        return Results.Created($"/api/catalog/subjects/{subject.Id}",
+            new SubjectDto(subject.Id, subject.Code, subject.Name, subject.Description));
+    }
+
+    private static async Task<IResult> ListCourses(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    {
+        var query = db.Courses.AsNoTracking().Include(c => c.Subject).AsQueryable();
+        if (!CanManage(user))
+        {
+            query = query.Where(c => c.Status == CourseStatus.Published);
+        }
+
+        var courses = await query
+            .OrderBy(c => c.Title)
+            .ToListAsync(ct);
+        var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
+
+        return Results.Ok(courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id))));
+    }
+
+    private static async Task<IResult> ListMine(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    {
+        var (id, email) = Caller(user);
+        var courses = await db.Courses.AsNoTracking()
+            .Include(c => c.Subject)
+            .Where(c => c.TeacherId == id || c.TeacherEmail == email)
+            .OrderBy(c => c.Title)
+            .ToListAsync(ct);
+        var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
+
+        return Results.Ok(courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id))));
+    }
+
+    private static async Task<IResult> GetCourse(
+        Guid id,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        EnrollmentGateway enrollment,
+        CancellationToken ct)
+    {
+        var course = await db.Courses.AsNoTracking()
+            .Include(c => c.Subject)
+            .SingleOrDefaultAsync(c => c.Id == id, ct);
+
+        if (course is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (course.Status != CourseStatus.Published && !CanManage(user) && !IsOwner(course, user))
+        {
+            return Results.NotFound();
+        }
+
+        var (studentId, _) = Caller(user);
+        var enrolled = CanManage(user) || IsOwner(course, user) || await enrollment.IsConfirmedAsync(studentId, id, ct);
+        var stats = await CatalogMappings.LoadStats(db, [id], ct);
+        return Results.Ok(CatalogMappings.ToDetail(course, stats.GetValueOrDefault(id), enrolled));
+    }
+
+    private static async Task<IResult> CreateCourse(
+        CreateCourseRequest request,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+    {
+        if (request.Capacity < 1)
+        {
+            return Results.BadRequest(new { error = "Capacity must be at least 1." });
+        }
+
+        var subject = await db.Subjects.SingleOrDefaultAsync(s => s.Id == request.SubjectId, ct);
+        if (subject is null)
+        {
+            return Results.BadRequest(new { error = "Unknown subject." });
+        }
+
+        var (id, email) = Caller(user);
+        var course = new Course
+        {
+            Id = Guid.NewGuid(),
+            SubjectId = subject.Id,
+            Title = request.Title.Trim(),
+            Description = request.Description?.Trim(),
+            TeacherId = id,
+            TeacherName = user.Identity?.Name ?? "Teacher",
+            TeacherEmail = email,
+            Capacity = request.Capacity,
+            RemainingSeats = request.Capacity,
+            Price = request.Price,
+            Subtitle = request.Subtitle?.Trim(),
+            Level = request.Level?.Trim(),
+            Language = request.Language?.Trim(),
+            Outcomes = request.Outcomes?.Trim(),
+            Requirements = request.Requirements?.Trim(),
+            Status = CourseStatus.Draft,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        db.Courses.Add(course);
+        await db.SaveChangesAsync(ct);
+        course.Subject = subject;
+        return Results.Created($"/api/catalog/courses/{course.Id}", CatalogMappings.ToDetail(course, null, true));
+    }
+
+    private static async Task<IResult> UpdateCourse(
+        Guid id,
+        UpdateCourseRequest request,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+    {
+        var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (!IsOwner(course, user) && !user.IsInRole(Roles.Administrator))
+        {
+            return Results.Forbid();
+        }
+
+        var subject = await db.Subjects.SingleOrDefaultAsync(s => s.Id == request.SubjectId, ct);
+        if (subject is null)
+        {
+            return Results.BadRequest(new { error = "Unknown subject." });
+        }
+
+        var occupied = course.Capacity - course.RemainingSeats;
+        if (request.Capacity < occupied)
+        {
+            return Results.BadRequest(new { error = "Capacity cannot be below current enrollments." });
+        }
+
+        course.SubjectId = subject.Id;
+        course.Title = request.Title.Trim();
+        course.Description = request.Description?.Trim();
+        course.Price = request.Price;
+        course.Subtitle = request.Subtitle?.Trim();
+        course.Level = request.Level?.Trim();
+        course.Language = request.Language?.Trim();
+        course.Outcomes = request.Outcomes?.Trim();
+        course.Requirements = request.Requirements?.Trim();
+        course.RemainingSeats += request.Capacity - course.Capacity;
+        course.Capacity = request.Capacity;
+        await db.SaveChangesAsync(ct);
+        course.Subject = subject;
+        return Results.Ok(CatalogMappings.ToDetail(course, null, true));
+    }
+
+    private static async Task<IResult> PublishCourse(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    {
+        var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (!IsOwner(course, user) && !user.IsInRole(Roles.Administrator))
+        {
+            return Results.Forbid();
+        }
+
+        try
+        {
+            if (course.RemainingSeats == 0)
+            {
+                course.RemainingSeats = course.Capacity;
+            }
+
+            course.Publish();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(CatalogMappings.ToDetail(course, null, true));
+    }
+
+    private static async Task<IResult> ArchiveCourse(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    {
+        var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (!IsOwner(course, user) && !user.IsInRole(Roles.Administrator))
+        {
+            return Results.Forbid();
+        }
+
+        course.Status = CourseStatus.Archived;
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(CatalogMappings.ToDetail(course, null, true));
+    }
+
+    private static async Task<IResult> ReserveSeat(Guid id, HttpContext http, IConfiguration config, CatalogDbContext db, CancellationToken ct)
+    {
+        if (!IsUserOrInternal(http, config))
+        {
+            return Results.Unauthorized();
+        }
+
+        var updated = await db.Courses
+            .Where(c => c.Id == id && c.Status == CourseStatus.Published && c.RemainingSeats > 0)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.RemainingSeats, c => c.RemainingSeats - 1), ct);
+
+        return updated == 1
+            ? Results.Ok(new { reserved = true })
+            : Results.Conflict(new { error = "No seats remaining or course is not published." });
+    }
+
+    private static async Task<IResult> ReleaseSeat(Guid id, HttpContext http, IConfiguration config, CatalogDbContext db, CancellationToken ct)
+    {
+        if (!IsUserOrInternal(http, config))
+        {
+            return Results.Unauthorized();
+        }
+
+        var updated = await db.Courses
+            .Where(c => c.Id == id && c.RemainingSeats < c.Capacity)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.RemainingSeats, c => c.RemainingSeats + 1), ct);
+
+        return updated == 1
+            ? Results.Ok(new { released = true })
+            : Results.Conflict(new { error = "Seat could not be released." });
+    }
+
+    private static bool IsUserOrInternal(HttpContext http, IConfiguration config)
+    {
+        var expected = config["Internal:ApiKey"] ?? "campus-dev-internal";
+        if (http.Request.Headers.TryGetValue("X-Internal-Key", out var provided) &&
+            string.Equals(provided.ToString(), expected, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return http.User.Identity?.IsAuthenticated == true;
+    }
+
+    internal static bool CanManage(ClaimsPrincipal user) =>
+        user.IsInRole(Roles.Teacher) || user.IsInRole(Roles.Administrator);
+
+    internal static bool IsOwner(Course course, ClaimsPrincipal user)
+    {
+        var (id, email) = Caller(user);
+        return course.TeacherId == id || string.Equals(course.TeacherEmail, email, StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static (string Id, string Email) Caller(ClaimsPrincipal user)
+    {
+        var id = user.FindFirstValue("sub") ?? user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var email = user.FindFirstValue("email")
+                    ?? user.FindFirstValue("preferred_username")
+                    ?? user.Identity?.Name
+                    ?? string.Empty;
+        return (id, email);
+    }
+
+    internal static string DisplayName(ClaimsPrincipal user) =>
+        user.FindFirstValue("name") ?? user.Identity?.Name ?? Caller(user).Email;
+}

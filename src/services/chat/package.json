@@ -1,0 +1,14 @@
+{
+  "name": "campushub-chat",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "jose": "^6.0.12",
+    "socket.io": "^4.8.1"
+  }
+}

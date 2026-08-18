@@ -1,0 +1,46 @@
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/catalog">
+      <span class="brand-mark" aria-hidden="true">C</span>
+      <span class="brand-name">CampusHub</span>
+    </a>
+    <button
+      class="nav-toggle"
+      type="button"
+      (click)="menuOpen.set(!menuOpen())"
+      [attr.aria-expanded]="menuOpen()"
+    >
+      Menu
+    </button>
+    <nav [class.open]="menuOpen()" aria-label="Primary">
+      <a routerLink="/catalog" routerLinkActive="active">Catalog</a>
+      <a routerLink="/enroll" routerLinkActive="active">Enrollments</a>
+      <a routerLink="/learn" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Pass</a>
+      <a routerLink="/learn/inbox" routerLinkActive="active">Inbox</a>
+      <a routerLink="/chat" routerLinkActive="active">Chat</a>
+      @if (session.isTeacher()) {
+        <a routerLink="/catalog/mine" routerLinkActive="active">My courses</a>
+        <a routerLink="/learn/attendance" routerLinkActive="active">Attendance</a>
+      }
+      @if (session.isAdmin()) {
+        <a href="/ops">Ops</a>
+      }
+    </nav>
+    <div class="session" [class.open]="menuOpen()">
+      @if (session.session().authenticated) {
+        <span class="who">
+          <span class="who-name">{{ session.session().name }}</span>
+          @if (session.roleLabel(); as role) {
+            <span class="who-role">{{ role }}</span>
+          }
+        </span>
+        <button type="button" (click)="session.logout()">Sign out</button>
+      } @else {
+        <button type="button" (click)="session.login()">Sign in</button>
+      }
+    </div>
+  </header>
+  <main [class.bleed]="bleed()">
+    <router-outlet />
+  </main>
+</div>

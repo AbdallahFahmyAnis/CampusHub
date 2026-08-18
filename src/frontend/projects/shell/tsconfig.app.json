@@ -1,0 +1,30 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../out-tsc/app",
+    "types": [],
+    "baseUrl": ".",
+    "paths": {
+      "catalog-mfe": ["../catalog-mfe/src/app/remote.routes.ts"],
+      "enrollment-mfe": ["../enrollment-mfe/src/app/remote.routes.ts"],
+      "learning-mfe": ["../learning-mfe/src/app/remote.routes.ts"],
+      "chat-mfe": ["../chat-mfe/src/app/remote.routes.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "../catalog-mfe/src/app/**/*.ts",
+    "../enrollment-mfe/src/app/**/*.ts",
+    "../learning-mfe/src/app/**/*.ts",
+    "../chat-mfe/src/app/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "../catalog-mfe/src/**/*.spec.ts",
+    "../enrollment-mfe/src/**/*.spec.ts",
+    "../learning-mfe/src/**/*.spec.ts",
+    "../chat-mfe/src/**/*.spec.ts"
+  ]
+}

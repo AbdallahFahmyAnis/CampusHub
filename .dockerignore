@@ -1,0 +1,16 @@
+**/.git
+**/.vs
+**/.idea
+**/bin
+**/obj
+**/node_modules
+**/.angular
+**/dist
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/TestResults
+**/.aspire
+**/agent-transcripts
+**/*.user
+src/services/chat/data

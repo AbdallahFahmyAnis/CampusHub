@@ -1,0 +1,37 @@
+﻿@page "/ops"
+@model IndexModel
+@{
+    ViewData["Title"] = "Ops dashboard";
+}
+
+<h1 class="mb-2">Operations</h1>
+<p class="ops-lede">Administrator console. Downstream readiness is probed live; catalog and enrollment actions go through the BFF with the signed-in access token.</p>
+
+<div class="row g-3 mb-4">
+    @foreach (var service in Model.Services)
+    {
+        <div class="col-md-4">
+            <div class="card ops-card">
+                <div class="card-body">
+                    <h2 class="h5 mb-2">@service.Name</h2>
+                    @if (service.Ready)
+                    {
+                        <span class="pill ready">ready @service.StatusCode</span>
+                    }
+                    else
+                    {
+                        <span class="pill down">down @service.StatusCode</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<p class="d-flex flex-wrap gap-2">
+    <a class="btn btn-primary" asp-page="/Catalog">Catalog</a>
+    <a class="btn btn-outline-primary" asp-page="/Enrollments">Enrollments</a>
+    <a class="btn btn-outline-primary" asp-page="/Users">Users</a>
+    <a class="btn btn-outline-secondary" href="/whoami">whoami</a>
+    <a class="btn btn-outline-secondary" href="/">Student UI</a>
+</p>

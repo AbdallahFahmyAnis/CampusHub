@@ -1,0 +1,50 @@
+@page "/ops/catalog"
+@model CatalogModel
+@{
+    ViewData["Title"] = "Ops catalog";
+}
+
+<h1 class="mb-2">Catalog</h1>
+<p class="ops-lede">Publish or archive courses. Actions go through the signed-in BFF session.</p>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="alert alert-info">@message</div>
+}
+
+<div class="table-panel">
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Seats</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var course in Model.Courses)
+    {
+        <tr>
+            <td>@course.Title</td>
+            <td>@course.SubjectCode</td>
+            <td>@course.TeacherName</td>
+            <td>@course.RemainingSeats / @course.Capacity</td>
+            <td><span class="pill @(course.Status == "Published" ? "ready" : "")">@course.Status</span></td>
+            <td class="text-nowrap">
+                <form method="post" asp-page-handler="Publish" class="d-inline">
+                    <input type="hidden" name="id" value="@course.Id" />
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Publish</button>
+                </form>
+                <form method="post" asp-page-handler="Archive" class="d-inline">
+                    <input type="hidden" name="id" value="@course.Id" />
+                    <button class="btn btn-sm btn-outline-secondary" type="submit">Archive</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>

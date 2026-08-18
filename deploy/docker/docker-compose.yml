@@ -1,0 +1,36 @@
+# Optional infrastructure for later phases.
+# Phase 0 does not require Docker — identity uses SQLite.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: campushub
+      POSTGRES_PASSWORD: campushub
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - campushub-pg:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: campushub
+      RABBITMQ_DEFAULT_PASS: campushub
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+
+volumes:
+  campushub-pg:

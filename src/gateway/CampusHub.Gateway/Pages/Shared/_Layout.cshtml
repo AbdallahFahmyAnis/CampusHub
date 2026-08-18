@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CampusHub Ops</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,650;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="ops-topbar">
+        <a class="brand" href="/ops">
+            <span class="brand-mark" aria-hidden="true">C</span>
+            <span class="brand-name">CampusHub <em>Ops</em></span>
+        </a>
+        <nav>
+            <a asp-page="/Index" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" ? "active" : null)">Dashboard</a>
+            <a asp-page="/Catalog" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Catalog" ? "active" : null)">Catalog</a>
+            <a asp-page="/Enrollments" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Enrollments" ? "active" : null)">Enrollments</a>
+            <a asp-page="/Users" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Users" ? "active" : null)">Users</a>
+            <a href="/">Student UI</a>
+        </nav>
+        <div class="session">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <span class="who">
+                    <span class="who-name">@User.Identity.Name</span>
+                    <span class="who-role">Administrator</span>
+                </span>
+                <form method="post" action="/logout">
+                    <button class="btn btn-navy" type="submit">Sign out</button>
+                </form>
+            }
+            else
+            {
+                <a class="btn btn-navy" href="/login">Sign in</a>
+            }
+        </div>
+    </header>
+    <div class="ops-wrap">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
