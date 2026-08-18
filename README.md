@@ -4,6 +4,8 @@ Production-shaped educational platform: polyglot microservices (.NET + Node.js),
 
 **Phase 6** is in place: identity, gateway/BFF, catalog, enrollment saga, mock payments, notifications, QR/access, Node.js live chat, Razor ops console, Angular MFEs, resilience defaults, Dockerfiles, Kubernetes manifests, and GitHub Actions CI.
 
+High-level diagram and request flows: [docs/architecture.md](docs/architecture.md).
+
 ## What runs today
 
 | Service | URL | Role |
@@ -48,6 +50,37 @@ Open http://localhost:5000. Sign in as **admin** and open **Ops** (or http://loc
 Students and teachers still use the Angular shell. Course chat, QR passes, and inbox are unchanged.
 
 If you already had a browser session from an earlier phase, sign out and sign in again.
+
+## Screens
+
+Snapshots of the current student UI live in [`docs/screenshots`](docs/screenshots).
+
+| Screen | Snapshot |
+|---|---|
+| Catalog | ![Catalog](docs/screenshots/catalog.png) |
+| Course | ![Course landing](docs/screenshots/course.png) |
+| Player | ![Course player](docs/screenshots/player.png) |
+| Notifications | ![Notifications](docs/screenshots/notifications.png) |
+
+## Search (Meilisearch) and Ask AI
+
+Catalog search uses [Meilisearch](https://www.meilisearch.com/) when it is running, and falls back to SQL if it is not.
+
+```powershell
+docker compose -f deploy/docker/docker-compose.yml up -d meilisearch
+```
+
+Then restart Catalog (`http://localhost:5102`). Header search and `/catalog?q=` rank by title, subtitle, description, category, and outcomes.
+
+Ask AI is the **Ask AI** tab in the course player. It answers from that course’s materials. Without an API key it quotes the catalog text. To use a model:
+
+```powershell
+$env:Ai__ApiKey = "sk-..."
+$env:Ai__BaseUrl = "https://api.openai.com/v1"
+$env:Ai__Model = "gpt-4o-mini"
+```
+
+Any OpenAI-compatible endpoint works (`Ai__BaseUrl`). Do not commit keys.
 
 ## Health
 

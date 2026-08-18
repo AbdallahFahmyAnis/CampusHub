@@ -32,5 +32,16 @@ services:
     ports:
       - "27017:27017"
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.11
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: campushub-dev-meili
+      MEILI_ENV: development
+    volumes:
+      - campushub-meili:/meili_data
+
 volumes:
   campushub-pg:
+  campushub-meili:

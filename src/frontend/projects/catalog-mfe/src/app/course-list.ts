@@ -12,6 +12,9 @@ import { CatalogApi, CourseListItemDto, SubjectDto, hoursLabel, starSlots } from
         <div>
           <h1>{{ heading() }}</h1>
           <p class="page-kicker">{{ kicker() }}</p>
+          @if (searchEngine() === 'meilisearch' && query()) {
+            <p class="muted">Ranked by Meilisearch.</p>
+          }
         </div>
         @if (totalCount()) {
           <p class="muted catalog-count">{{ totalCount() }} course{{ totalCount() === 1 ? '' : 's' }}</p>
@@ -114,6 +117,7 @@ export class CourseList {
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize)));
   readonly starSlots = starSlots;
   readonly hoursLabel = hoursLabel;
+  readonly searchEngine = signal('sql');
   readonly heading = computed(() => {
     if (this.saved()) {
       return 'Wishlist';
@@ -133,6 +137,9 @@ export class CourseList {
   constructor() {
     void this.api.subjects()
       .then((items) => this.subjects.set(items))
+      .catch(() => undefined);
+    void this.api.capabilities()
+      .then((caps) => this.searchEngine.set(caps.search))
       .catch(() => undefined);
 
     this.route.queryParamMap.subscribe((params) => {

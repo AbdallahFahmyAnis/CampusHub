@@ -16,6 +16,7 @@ public static class CatalogEndpoints
         api.MapGet("/subjects", ListSubjects);
         api.MapPost("/subjects", CreateSubject).RequireAuthorization("CanManageCatalog");
 
+        api.MapGet("/capabilities", GetCapabilities);
         api.MapGet("/courses", ListCourses);
         api.MapGet("/courses/mine", ListMine).RequireAuthorization("CanManageCatalog");
         api.MapGet("/courses/{id:guid}", GetCourse);
@@ -69,9 +70,15 @@ public static class CatalogEndpoints
             new SubjectDto(subject.Id, subject.Code, subject.Name, subject.Description));
     }
 
+    private static IResult GetCapabilities(CourseSearch search, CourseTutor tutor) =>
+        Results.Ok(new CatalogCapabilitiesDto(
+            search.Enabled ? "meilisearch" : "sql",
+            tutor.ModelEnabled ? "model" : "catalog"));
+
     private static async Task<IResult> ListCourses(
         CatalogDbContext db,
         ClaimsPrincipal user,
+        CourseSearch search,
         Guid? subjectId,
         string? category,
         string? q,
@@ -81,9 +88,19 @@ public static class CatalogEndpoints
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 48);
+        var publishedOnly = !CanManage(user);
+
+        if (!string.IsNullOrWhiteSpace(q) && subjectId is null)
+        {
+            var ranked = await search.TrySearchAsync(q.Trim(), category, publishedOnly, page, pageSize, ct);
+            if (ranked is not null)
+            {
+                return await PageFromIds(db, user, ranked.Ids, page, pageSize, ranked.Total, ct);
+            }
+        }
 
         var query = db.Courses.AsNoTracking().Include(c => c.Subject).AsQueryable();
-        if (!CanManage(user))
+        if (publishedOnly)
         {
             query = query.Where(c => c.Status == CourseStatus.Published);
         }
@@ -115,10 +132,39 @@ public static class CatalogEndpoints
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
+        return await ToPaged(db, user, courses, page, pageSize, total, ct);
+    }
+
+    private static async Task<IResult> PageFromIds(
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        IReadOnlyList<Guid> ids,
+        int page,
+        int pageSize,
+        int total,
+        CancellationToken ct)
+    {
+        var courses = await db.Courses.AsNoTracking()
+            .Include(c => c.Subject)
+            .Where(c => ids.Contains(c.Id))
+            .ToListAsync(ct);
+        var order = ids.Select((courseId, index) => (courseId, index)).ToDictionary(x => x.courseId, x => x.index);
+        courses.Sort((a, b) => order[a.Id].CompareTo(order[b.Id]));
+        return await ToPaged(db, user, courses, page, pageSize, total, ct);
+    }
+
+    private static async Task<IResult> ToPaged(
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        List<Course> courses,
+        int page,
+        int pageSize,
+        int total,
+        CancellationToken ct)
+    {
         var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
         var (studentId, _) = Caller(user);
         var wished = await CatalogMappings.WishlistIds(db, studentId, courses.Select(c => c.Id), ct);
-
         return Results.Ok(new PagedCoursesDto(
             courses.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id), wished.Contains(c.Id))).ToList(),
             page,
@@ -171,6 +217,7 @@ public static class CatalogEndpoints
     private static async Task<IResult> CreateCourse(
         CreateCourseRequest request,
         CatalogDbContext db,
+        CourseSearch search,
         ClaimsPrincipal user,
         CancellationToken ct)
     {
@@ -210,6 +257,7 @@ public static class CatalogEndpoints
         db.Courses.Add(course);
         await db.SaveChangesAsync(ct);
         course.Subject = subject;
+        await search.UpsertAsync(course, ct);
         return Results.Created($"/api/catalog/courses/{course.Id}", CatalogMappings.ToDetail(course, null, true));
     }
 
@@ -217,6 +265,7 @@ public static class CatalogEndpoints
         Guid id,
         UpdateCourseRequest request,
         CatalogDbContext db,
+        CourseSearch search,
         ClaimsPrincipal user,
         CancellationToken ct)
     {
@@ -256,10 +305,11 @@ public static class CatalogEndpoints
         course.Capacity = request.Capacity;
         await db.SaveChangesAsync(ct);
         course.Subject = subject;
+        await search.UpsertAsync(course, ct);
         return Results.Ok(CatalogMappings.ToDetail(course, null, true));
     }
 
-    private static async Task<IResult> PublishCourse(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    private static async Task<IResult> PublishCourse(Guid id, CatalogDbContext db, CourseSearch search, ClaimsPrincipal user, CancellationToken ct)
     {
         var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
         if (course is null)
@@ -287,10 +337,11 @@ public static class CatalogEndpoints
         }
 
         await db.SaveChangesAsync(ct);
+        await search.UpsertAsync(course, ct);
         return Results.Ok(CatalogMappings.ToDetail(course, null, true));
     }
 
-    private static async Task<IResult> ArchiveCourse(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
+    private static async Task<IResult> ArchiveCourse(Guid id, CatalogDbContext db, CourseSearch search, ClaimsPrincipal user, CancellationToken ct)
     {
         var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
         if (course is null)
@@ -305,6 +356,7 @@ public static class CatalogEndpoints
 
         course.Status = CourseStatus.Archived;
         await db.SaveChangesAsync(ct);
+        await search.UpsertAsync(course, ct);
         return Results.Ok(CatalogMappings.ToDetail(course, null, true));
     }
 

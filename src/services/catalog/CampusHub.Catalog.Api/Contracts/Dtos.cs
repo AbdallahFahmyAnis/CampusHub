@@ -53,6 +53,12 @@ public sealed record CourseDetailDto(
     int DurationMinutes,
     bool Wishlisted);
 
+public sealed record AskCourseRequest(string Question, Guid? LectureId);
+
+public sealed record AskCourseResponse(string Answer, string Source);
+
+public sealed record CatalogCapabilitiesDto(string Search, string Tutor);
+
 public sealed record CreateSubjectRequest(string Code, string Name, string? Description);
 
 public sealed record CreateCourseRequest(

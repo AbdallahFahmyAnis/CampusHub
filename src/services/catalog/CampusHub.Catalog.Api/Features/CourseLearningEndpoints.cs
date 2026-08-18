@@ -14,6 +14,7 @@ public static class CourseLearningEndpoints
         api.MapGet("/courses/{id:guid}/curriculum", GetCurriculum);
         api.MapGet("/courses/{id:guid}/lectures/{lectureId:guid}", GetLecture);
         api.MapPost("/courses/{id:guid}/lectures/{lectureId:guid}/complete", CompleteLecture);
+        api.MapPost("/courses/{id:guid}/ask", AskCourse);
         api.MapPost("/courses/{id:guid}/sections", CreateSection).RequireAuthorization("CanManageCatalog");
         api.MapPost("/courses/{id:guid}/sections/{sectionId:guid}/lectures", CreateLecture).RequireAuthorization("CanManageCatalog");
 
@@ -96,6 +97,50 @@ public static class CourseLearningEndpoints
             lecture.SortOrder,
             unlocked ? lecture.VideoUrl : null,
             completed));
+    }
+
+    private static async Task<IResult> AskCourse(
+        Guid id,
+        AskCourseRequest request,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        EnrollmentGateway enrollment,
+        CourseTutor tutor,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Question))
+        {
+            return Results.BadRequest(new { error = "Ask a question about this course." });
+        }
+
+        var course = await db.Courses.Include(c => c.Subject).SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null || !await CourseVisible(db, id, ct))
+        {
+            return Results.NotFound();
+        }
+
+        Lecture? lecture = null;
+        if (request.LectureId is Guid lectureId)
+        {
+            lecture = await db.Lectures
+                .Include(l => l.Section)
+                .SingleOrDefaultAsync(l => l.Id == lectureId && l.Section.CourseId == id, ct);
+            if (lecture is not null)
+            {
+                var (studentId, _) = CatalogEndpoints.Caller(user);
+                var unlocked = lecture.IsPreview
+                               || CatalogEndpoints.CanManage(user)
+                               || CatalogEndpoints.IsOwner(course, user)
+                               || await enrollment.IsConfirmedAsync(studentId, id, ct);
+                if (!unlocked)
+                {
+                    lecture.Body = null;
+                }
+            }
+        }
+
+        var answer = await tutor.AnswerAsync(request.Question.Trim(), course, lecture, ct);
+        return Results.Ok(new AskCourseResponse(answer, tutor.ModelEnabled ? "model" : "catalog"));
     }
 
     private static async Task<IResult> CompleteLecture(

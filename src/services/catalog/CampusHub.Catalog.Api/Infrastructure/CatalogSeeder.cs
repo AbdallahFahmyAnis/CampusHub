@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Infrastructure;
 
-public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> logger)
+public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILogger<CatalogSeeder> logger)
 {
     private static readonly Guid AlgorithmsId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1");
     private static readonly Guid LinearId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2");
@@ -18,6 +18,7 @@ public sealed class CatalogSeeder(CatalogDbContext db, ILogger<CatalogSeeder> lo
         await SeedCurriculumAsync(cancellationToken);
         await EnsureVideoUrlsAsync(cancellationToken);
         await SeedCommunityAsync(cancellationToken);
+        await search.RebuildAsync(db, cancellationToken);
         logger.LogInformation(
             "Catalog seed completed with {CourseCount} courses",
             await db.Courses.CountAsync(cancellationToken));

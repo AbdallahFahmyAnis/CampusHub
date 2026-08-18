@@ -46,6 +46,7 @@ import { VideoEmbed } from '../../../catalog-mfe/src/app/video-embed';
           <div class="player-tabs">
             <button type="button" [class.active]="tab() === 'lecture'" (click)="tab.set('lecture')">Lecture</button>
             <button type="button" [class.active]="tab() === 'notes'" (click)="tab.set('notes')">Notes</button>
+            <button type="button" [class.active]="tab() === 'ask'" (click)="tab.set('ask')">Ask AI</button>
             <button type="button" [class.active]="tab() === 'qa'" (click)="tab.set('qa')">Q&amp;A</button>
             <button type="button" [class.active]="tab() === 'reviews'" (click)="tab.set('reviews')">Reviews</button>
           </div>
@@ -95,6 +96,22 @@ import { VideoEmbed } from '../../../catalog-mfe/src/app/video-embed';
                   <textarea class="notes-box" rows="10" [(ngModel)]="noteDraft" (ngModelChange)="saveNote()" placeholder="Capture a timestamp, a question, or the idea you want to keep."></textarea>
                 </label>
               }
+            }
+          }
+
+          @if (tab() === 'ask') {
+            <p class="muted">Ask about this lecture. Answers stay inside the course materials{{ tutorSource() === 'model' ? ' and an AI model.' : '.' }}</p>
+            <form class="form stacked" (submit)="askTutor($event)">
+              <label>Question
+                <textarea name="ask" rows="3" [(ngModel)]="askQuestion" required placeholder="What is the main idea of this lecture?"></textarea>
+              </label>
+              <button class="btn" type="submit" [disabled]="askBusy()">Ask</button>
+            </form>
+            @if (askAnswer()) {
+              <article class="qa">
+                <h3>Answer</h3>
+                <p>{{ askAnswer() }}</p>
+              </article>
             }
           }
 
@@ -183,9 +200,12 @@ export class CoursePlayer implements OnDestroy {
   readonly lectureId = signal<string | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly questions = signal<QuestionDto[]>([]);
-  readonly tab = signal<'lecture' | 'notes' | 'qa' | 'reviews'>('lecture');
+  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'qa' | 'reviews'>('lecture');
   readonly error = signal<string | null>(null);
   readonly starSlots = starSlots;
+  readonly askBusy = signal(false);
+  readonly askAnswer = signal<string | null>(null);
+  readonly tutorSource = signal('catalog');
   readonly progress = computed(() => {
     const lectures = (this.curriculum()?.sections ?? []).flatMap((section) => section.lectures);
     const total = lectures.length;
@@ -199,8 +219,12 @@ export class CoursePlayer implements OnDestroy {
   reviewBody = '';
   replies: Record<string, string> = {};
   noteDraft = '';
+  askQuestion = '';
 
   constructor() {
+    void this.api.capabilities()
+      .then((caps) => this.tutorSource.set(caps.tutor))
+      .catch(() => undefined);
     this.sub = this.route.paramMap.subscribe((params) => {
       const courseId = params.get('courseId');
       const lectureId = params.get('lectureId');
@@ -216,6 +240,26 @@ export class CoursePlayer implements OnDestroy {
 
   paragraphs(body?: string | null): string[] {
     return (body ?? '').split(/\n\n+/).map((part) => part.trim()).filter(Boolean);
+  }
+
+  async askTutor(event: Event): Promise<void> {
+    event.preventDefault();
+    const courseId = this.course()?.id;
+    const question = this.askQuestion.trim();
+    if (!courseId || !question) {
+      return;
+    }
+    this.askBusy.set(true);
+    this.error.set(null);
+    try {
+      const result = await this.api.ask(courseId, { question, lectureId: this.lecture()?.id });
+      this.askAnswer.set(result.answer);
+      this.tutorSource.set(result.source);
+    } catch {
+      this.error.set('Could not answer from this course yet.');
+    } finally {
+      this.askBusy.set(false);
+    }
   }
 
   async markComplete(): Promise<void> {

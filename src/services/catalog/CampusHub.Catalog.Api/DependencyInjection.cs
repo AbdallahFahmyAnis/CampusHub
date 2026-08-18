@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using CampusHub.BuildingBlocks.Security;
 using CampusHub.Catalog.Api.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -58,6 +59,27 @@ public static class DependencyInjection
         {
             client.BaseAddress = new Uri(builder.Configuration["Enrollment:BaseUrl"] ?? "http://localhost:5103");
             client.Timeout = TimeSpan.FromSeconds(5);
+        });
+        builder.Services.AddHttpClient<CourseSearch>(client =>
+        {
+            client.BaseAddress = new Uri(builder.Configuration["MeiliSearch:Url"] ?? "http://localhost:7700");
+            client.Timeout = TimeSpan.FromSeconds(2);
+            var key = builder.Configuration["MeiliSearch:ApiKey"];
+            if (!string.IsNullOrWhiteSpace(key))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+            }
+        });
+        builder.Services.AddHttpClient<CourseTutor>(client =>
+        {
+            var baseUrl = builder.Configuration["Ai:BaseUrl"] ?? "https://api.openai.com/v1/";
+            if (!baseUrl.EndsWith('/'))
+            {
+                baseUrl += "/";
+            }
+
+            client.BaseAddress = new Uri(baseUrl);
+            client.Timeout = TimeSpan.FromSeconds(20);
         });
         return builder;
     }

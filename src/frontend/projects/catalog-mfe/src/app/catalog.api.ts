@@ -235,6 +235,16 @@ export class CatalogApi {
       this.http.post<{ completed: boolean }>(`/api/catalog/courses/${courseId}/lectures/${lectureId}/complete`, {}),
     );
   }
+
+  capabilities() {
+    return firstValueFrom(this.http.get<{ search: string; tutor: string }>('/api/catalog/capabilities'));
+  }
+
+  ask(courseId: string, body: { question: string; lectureId?: string | null }) {
+    return firstValueFrom(
+      this.http.post<{ answer: string; source: string }>(`/api/catalog/courses/${courseId}/ask`, body),
+    );
+  }
 }
 
 export function starSlots(rating: number): { on: boolean }[] {
