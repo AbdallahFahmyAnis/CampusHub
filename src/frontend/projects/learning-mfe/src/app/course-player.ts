@@ -12,6 +12,7 @@ import {
   QuizDetailDto,
   QuizSummaryDto,
   AssignmentSummaryDto,
+  AnnouncementDto,
   QuestionDto,
   ReviewDto,
   starSlots,
@@ -61,6 +62,7 @@ import { SessionService } from '../../../shell/src/app/session';
             <button type="button" [class.active]="tab() === 'ask'" (click)="tab.set('ask')">Ask AI</button>
             <button type="button" [class.active]="tab() === 'quiz'" (click)="tab.set('quiz')">Quiz</button>
             <button type="button" [class.active]="tab() === 'work'" (click)="tab.set('work')">Assignments</button>
+            <button type="button" [class.active]="tab() === 'news'" (click)="tab.set('news')">Announcements</button>
             <button type="button" [class.active]="tab() === 'qa'" (click)="tab.set('qa')">Q&amp;A</button>
             <button type="button" [class.active]="tab() === 'reviews'" (click)="tab.set('reviews')">Reviews</button>
           </div>
@@ -216,6 +218,19 @@ import { SessionService } from '../../../shell/src/app/session';
             }
           }
 
+          @if (tab() === 'news') {
+            @if (announcements().length === 0) {
+              <p class="muted">No announcements yet from the instructor.</p>
+            }
+            @for (post of announcements(); track post.id) {
+              <article class="qa">
+                <h3>{{ post.title }}</h3>
+                <p>{{ post.body }}</p>
+                <p class="muted">{{ post.authorName }} · {{ post.createdAt | date: 'medium' }}</p>
+              </article>
+            }
+          }
+
           @if (tab() === 'qa') {
             @if (item.enrolled) {
               <form class="form stacked" (submit)="ask($event)">
@@ -301,9 +316,10 @@ export class CoursePlayer implements OnDestroy {
   readonly lectureId = signal<string | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly questions = signal<QuestionDto[]>([]);
-  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'work' | 'qa' | 'reviews'>('lecture');
+  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'work' | 'news' | 'qa' | 'reviews'>('lecture');
   readonly quizzes = signal<QuizSummaryDto[]>([]);
   readonly assignments = signal<AssignmentSummaryDto[]>([]);
+  readonly announcements = signal<AnnouncementDto[]>([]);
   readonly activeQuiz = signal<QuizDetailDto | null>(null);
   readonly quizResult = signal<QuizAttemptDto | null>(null);
   readonly quizBusy = signal(false);
@@ -551,13 +567,14 @@ export class CoursePlayer implements OnDestroy {
   private async open(courseId: string, lectureId: string | null): Promise<void> {
     try {
       if (!this.course() || this.course()?.id !== courseId) {
-        const [course, curriculum, reviews, questions, quizzes, assignments] = await Promise.all([
+        const [course, curriculum, reviews, questions, quizzes, assignments, announcements] = await Promise.all([
           this.api.course(courseId),
           this.api.curriculum(courseId),
           this.api.reviews(courseId),
           this.api.questions(courseId),
           this.api.quizzes(courseId).catch(() => []),
           this.api.assignments(courseId).catch(() => []),
+          this.api.announcements(courseId).catch(() => []),
         ]);
         this.course.set(course);
         this.curriculum.set(curriculum);
@@ -565,6 +582,7 @@ export class CoursePlayer implements OnDestroy {
         this.questions.set(questions);
         this.quizzes.set(quizzes);
         this.assignments.set(assignments);
+        this.announcements.set(announcements);
       }
       const first = this.curriculum()?.sections[0]?.lectures[0]?.id ?? null;
       const target = lectureId ?? first;

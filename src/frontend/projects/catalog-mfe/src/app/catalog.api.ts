@@ -234,6 +234,14 @@ export interface LectureNoteListItemDto {
   updatedAt: string;
 }
 
+export interface AnnouncementDto {
+  id: string;
+  title: string;
+  body: string;
+  authorName: string;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
   private readonly http = inject(HttpClient);
@@ -437,6 +445,16 @@ export class CatalogApi {
 
   myNotes() {
     return firstValueFrom(this.http.get<LectureNoteListItemDto[]>('/api/catalog/notes/mine'));
+  }
+
+  announcements(courseId: string) {
+    return firstValueFrom(this.http.get<AnnouncementDto[]>(`/api/catalog/courses/${courseId}/announcements`));
+  }
+
+  createAnnouncement(courseId: string, payload: { title: string; body: string }) {
+    return firstValueFrom(
+      this.http.post<AnnouncementDto>(`/api/catalog/courses/${courseId}/announcements`, payload),
+    );
   }
 }
 

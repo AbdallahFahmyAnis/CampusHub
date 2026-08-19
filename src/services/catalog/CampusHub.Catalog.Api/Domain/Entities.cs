@@ -222,3 +222,14 @@ public sealed class LectureNote
     public required string Body { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
+
+public sealed class CourseAnnouncement
+{
+    public Guid Id { get; set; }
+    public Guid CourseId { get; set; }
+    public Course Course { get; set; } = null!;
+    public required string Title { get; set; }
+    public required string Body { get; set; }
+    public required string AuthorName { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}

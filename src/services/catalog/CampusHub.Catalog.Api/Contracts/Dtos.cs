@@ -234,6 +234,15 @@ public sealed record AssignmentSummaryDto(
 
 public sealed record CreateAssignmentRequest(string Title, string Instructions, int MaxScore);
 
+public sealed record AnnouncementDto(
+    Guid Id,
+    string Title,
+    string Body,
+    string AuthorName,
+    DateTimeOffset CreatedAt);
+
+public sealed record CreateAnnouncementRequest(string Title, string Body);
+
 public sealed record SubmitAssignmentRequest(string Body);
 
 public sealed record AssignmentSubmissionDto(

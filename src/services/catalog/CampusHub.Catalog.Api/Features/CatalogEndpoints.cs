@@ -33,6 +33,7 @@ public static class CatalogEndpoints
         api.MapQuizEndpoints();
         api.MapAssignmentEndpoints();
         api.MapNoteEndpoints();
+        api.MapAnnouncementEndpoints();
 
         return app;
     }

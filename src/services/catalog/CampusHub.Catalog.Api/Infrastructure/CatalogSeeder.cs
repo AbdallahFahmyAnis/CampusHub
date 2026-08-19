@@ -23,6 +23,7 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
         await SeedCommunityAsync(cancellationToken);
         await SeedQuizzesAsync(cancellationToken);
         await SeedAssignmentsAsync(cancellationToken);
+        await SeedAnnouncementsAsync(cancellationToken);
         await search.RebuildAsync(db, cancellationToken);
         logger.LogInformation(
             "Catalog seed completed with {CourseCount} courses",
@@ -347,6 +348,42 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
             MaxScore = 100,
             CreatedAt = DateTimeOffset.UtcNow,
         });
+        await db.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedAnnouncementsAsync(CancellationToken ct)
+    {
+        try
+        {
+            if (await db.CourseAnnouncements.AnyAsync(ct))
+            {
+                return;
+            }
+        }
+        catch
+        {
+            return;
+        }
+
+        db.CourseAnnouncements.AddRange(
+            new CourseAnnouncement
+            {
+                Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeee00"),
+                CourseId = DistributedId,
+                Title = "Welcome to the studio",
+                Body = "Office hours are Thursdays after lecture. Post questions in Q&A; use the assignment tab for the written checkpoint.",
+                AuthorName = "Alex Rivera",
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
+            new CourseAnnouncement
+            {
+                Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01"),
+                CourseId = LinearId,
+                Title = "Checkpoint this week",
+                Body = "Submit the span-and-basis write-up from the Assignments tab before Friday. Bring questions to office hours.",
+                AuthorName = "Alex Rivera",
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
         await db.SaveChangesAsync(ct);
     }
 

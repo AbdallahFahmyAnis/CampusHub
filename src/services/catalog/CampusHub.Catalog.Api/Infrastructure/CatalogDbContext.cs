@@ -20,6 +20,7 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
     public DbSet<CourseAssignment> CourseAssignments => Set<CourseAssignment>();
     public DbSet<CourseAssignmentSubmission> CourseAssignmentSubmissions => Set<CourseAssignmentSubmission>();
     public DbSet<LectureNote> LectureNotes => Set<LectureNote>();
+    public DbSet<CourseAnnouncement> CourseAnnouncements => Set<CourseAnnouncement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -197,6 +198,20 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
             entity.Property(x => x.LectureId).HasConversion(GuidAsText);
             entity.Property(x => x.StudentId).HasMaxLength(64);
             entity.HasIndex(x => new { x.CourseId, x.LectureId, x.StudentId }).IsUnique();
+        });
+
+        modelBuilder.Entity<CourseAnnouncement>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasConversion(GuidAsText);
+            entity.Property(x => x.CourseId).HasConversion(GuidAsText);
+            entity.Property(x => x.Title).HasMaxLength(200);
+            entity.Property(x => x.AuthorName).HasMaxLength(200);
+            entity.HasOne(x => x.Course)
+                .WithMany()
+                .HasForeignKey(x => x.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => x.CourseId);
         });
     }
 

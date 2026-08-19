@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CatalogApi, AssignmentSubmissionDto, AssignmentSummaryDto, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog.api';
+import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummaryDto, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog.api';
 
 @Component({
   selector: 'app-course-editor',
@@ -172,6 +172,22 @@ import { CatalogApi, AssignmentSubmissionDto, AssignmentSummaryDto, CurriculumDt
           <button class="btn" type="submit">Add assignment</button>
         </form>
       </section>
+      <section class="panel" style="margin-top: 24px; max-width: 720px;">
+        <h2>Announcements</h2>
+        <p class="muted">Posts appear in the course player for enrolled students.</p>
+        @for (post of announcements(); track post.id) {
+          <article class="qa">
+            <h3>{{ post.title }}</h3>
+            <p>{{ post.body }}</p>
+            <p class="muted">{{ post.authorName }}</p>
+          </article>
+        }
+        <form class="form stacked" (submit)="addAnnouncement($event)">
+          <label>Title <input name="ntitle" [(ngModel)]="announcementTitle" /></label>
+          <label>Message <textarea name="nbody" rows="3" [(ngModel)]="announcementBody"></textarea></label>
+          <button class="btn" type="submit">Post announcement</button>
+        </form>
+      </section>
     }
   `,
 })
@@ -188,6 +204,7 @@ export class CourseEditor {
   readonly curriculum = signal<CurriculumDto | null>(null);
   readonly quizzes = signal<QuizSummaryDto[]>([]);
   readonly assignments = signal<AssignmentSummaryDto[]>([]);
+  readonly announcements = signal<AnnouncementDto[]>([]);
   readonly saving = signal(false);
   sectionTitle = '';
   quizTitle = '';
@@ -199,6 +216,8 @@ export class CourseEditor {
   assignmentTitle = '';
   assignmentInstructions = '';
   assignmentMax = 100;
+  announcementTitle = '';
+  announcementBody = '';
   assignmentSubs: Record<string, AssignmentSubmissionDto[]> = {};
   gradeScore: Record<string, number> = {};
   gradeFeedback: Record<string, string> = {};
@@ -237,6 +256,7 @@ export class CourseEditor {
     this.curriculum.set(await this.api.curriculum(id));
     this.quizzes.set(await this.api.quizzes(id));
     this.assignments.set(await this.api.assignments(id).catch(() => []));
+    this.announcements.set(await this.api.announcements(id).catch(() => []));
     this.form.patchValue({
       subjectId: course.subjectId,
       title: course.title,
@@ -376,6 +396,27 @@ export class CourseEditor {
       this.error.set(null);
     } catch {
       this.error.set('Could not save the assignment.');
+    }
+  }
+
+  async addAnnouncement(event: Event): Promise<void> {
+    event.preventDefault();
+    const id = this.id();
+    if (!id || !this.announcementTitle.trim() || !this.announcementBody.trim()) {
+      this.error.set('Add an announcement title and message.');
+      return;
+    }
+    try {
+      await this.api.createAnnouncement(id, {
+        title: this.announcementTitle.trim(),
+        body: this.announcementBody.trim(),
+      });
+      this.announcementTitle = '';
+      this.announcementBody = '';
+      this.announcements.set(await this.api.announcements(id));
+      this.error.set(null);
+    } catch {
+      this.error.set('Could not post the announcement.');
     }
   }
 
