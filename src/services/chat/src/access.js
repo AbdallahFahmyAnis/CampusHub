@@ -19,7 +19,7 @@ export async function listAccessibleRooms(user) {
     kind: "campus",
   }];
   const courses = isAdmin(user)
-    ? await getJson(`${catalogBase}/api/catalog/courses`, user.accessToken)
+    ? (await getJson(`${catalogBase}/api/catalog/courses?pageSize=100`, user.accessToken)).items ?? []
     : isStaff(user)
       ? await getJson(`${catalogBase}/api/catalog/courses/mine`, user.accessToken)
       : confirmedCourses(await getJson(`${enrollmentBase}/api/enrollments/mine`, user.accessToken));

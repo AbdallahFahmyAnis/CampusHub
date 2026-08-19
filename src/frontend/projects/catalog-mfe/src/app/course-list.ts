@@ -194,9 +194,9 @@ export class CourseList {
   filterMaxPrice: number | null = null;
   filterSort = '';
 
-  readonly hasActiveFilters = computed(() =>
-    !!this.filterLevel || this.filterMinRating != null || this.filterMaxPrice != null || !!this.filterSort
-  );
+  hasActiveFilters(): boolean {
+    return !!this.filterLevel || this.filterMinRating != null || this.filterMaxPrice != null || !!this.filterSort;
+  }
 
   readonly heading = computed(() => {
     if (this.saved()) {
@@ -246,8 +246,15 @@ export class CourseList {
   }
 
   applyFilters(): void {
-    this.page.set(1);
-    void this.load();
+    if (this.page() !== 1) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { page: 1 },
+        queryParamsHandling: 'merge',
+      });
+    } else {
+      void this.load();
+    }
   }
 
   clearFilters(): void {
@@ -255,7 +262,15 @@ export class CourseList {
     this.filterMinRating = null;
     this.filterMaxPrice = null;
     this.filterSort = '';
-    void this.load();
+    if (this.page() !== 1) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { page: 1 },
+        queryParamsHandling: 'merge',
+      });
+    } else {
+      void this.load();
+    }
   }
 
   emptyTitle(): string {
