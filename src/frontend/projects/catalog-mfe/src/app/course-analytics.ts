@@ -13,7 +13,10 @@ import { CatalogApi, CourseStatsDto } from './catalog.api';
         <p class="page-kicker">Enrollment, revenue, and completion data for this course.</p>
       </div>
       @if (courseId()) {
-        <a class="btn secondary" [routerLink]="['/catalog', courseId(), 'edit']">Edit course</a>
+        <div class="actions" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <a class="btn secondary" [routerLink]="['/catalog', courseId(), 'edit']">Edit course</a>
+          <a class="btn secondary" [routerLink]="['/catalog', courseId(), 'gradebook']">Gradebook</a>
+        </div>
       }
     </div>
     @if (error()) {

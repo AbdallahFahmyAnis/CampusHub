@@ -13,6 +13,7 @@ import {
   QuizSummaryDto,
   AssignmentSummaryDto,
   AnnouncementDto,
+  GradebookDto,
   QuestionDto,
   ReviewDto,
   starSlots,
@@ -63,6 +64,7 @@ import { SessionService } from '../../../shell/src/app/session';
             <button type="button" [class.active]="tab() === 'quiz'" (click)="tab.set('quiz')">Quiz</button>
             <button type="button" [class.active]="tab() === 'work'" (click)="tab.set('work')">Assignments</button>
             <button type="button" [class.active]="tab() === 'news'" (click)="tab.set('news')">Announcements</button>
+            <button type="button" [class.active]="tab() === 'grades'" (click)="tab.set('grades')">Grades</button>
             <button type="button" [class.active]="tab() === 'qa'" (click)="tab.set('qa')">Q&amp;A</button>
             <button type="button" [class.active]="tab() === 'reviews'" (click)="tab.set('reviews')">Reviews</button>
           </div>
@@ -231,6 +233,45 @@ import { SessionService } from '../../../shell/src/app/session';
             }
           }
 
+          @if (tab() === 'grades') {
+            @if (!item.enrolled && !session.isTeacher()) {
+              <p class="muted">Enroll to see your grades for this course.</p>
+            } @else if (grades(); as g) {
+              @if (g.columns.length === 0) {
+                <p class="muted">No quizzes or assignments in this course yet.</p>
+              } @else if (g.rows[0]; as row) {
+                <p class="muted" style="margin-bottom:1rem;">
+                  Overall
+                  @if (row.percent != null) {
+                    <strong>{{ row.percent }}%</strong>
+                  } @else {
+                    not scored yet
+                  }
+                </p>
+                @for (col of g.columns; track col.id; let i = $index) {
+                  <article class="qa">
+                    <h3>{{ col.title }}</h3>
+                    <p class="muted">{{ col.kind === 'quiz' ? 'Quiz' : 'Assignment' }}</p>
+                    @if (row.cells[i]; as cell) {
+                      @if (cell.score != null) {
+                        <p><strong>{{ cell.score }}</strong>
+                          @if (col.kind === 'assignment') { / {{ cell.maxScore }} }
+                          @if (col.kind === 'quiz') { % }
+                        </p>
+                      } @else if (cell.submitted) {
+                        <p class="muted">Submitted — waiting for a grade.</p>
+                      } @else {
+                        <p class="muted">Not submitted.</p>
+                      }
+                    }
+                  </article>
+                }
+              }
+            } @else {
+              <p class="muted">Loading grades…</p>
+            }
+          }
+
           @if (tab() === 'qa') {
             @if (item.enrolled) {
               <form class="form stacked" (submit)="ask($event)">
@@ -316,10 +357,11 @@ export class CoursePlayer implements OnDestroy {
   readonly lectureId = signal<string | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly questions = signal<QuestionDto[]>([]);
-  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'work' | 'news' | 'qa' | 'reviews'>('lecture');
+  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'work' | 'news' | 'grades' | 'qa' | 'reviews'>('lecture');
   readonly quizzes = signal<QuizSummaryDto[]>([]);
   readonly assignments = signal<AssignmentSummaryDto[]>([]);
   readonly announcements = signal<AnnouncementDto[]>([]);
+  readonly grades = signal<GradebookDto | null>(null);
   readonly activeQuiz = signal<QuizDetailDto | null>(null);
   readonly quizResult = signal<QuizAttemptDto | null>(null);
   readonly quizBusy = signal(false);
@@ -567,7 +609,7 @@ export class CoursePlayer implements OnDestroy {
   private async open(courseId: string, lectureId: string | null): Promise<void> {
     try {
       if (!this.course() || this.course()?.id !== courseId) {
-        const [course, curriculum, reviews, questions, quizzes, assignments, announcements] = await Promise.all([
+        const [course, curriculum, reviews, questions, quizzes, assignments, announcements, grades] = await Promise.all([
           this.api.course(courseId),
           this.api.curriculum(courseId),
           this.api.reviews(courseId),
@@ -575,6 +617,7 @@ export class CoursePlayer implements OnDestroy {
           this.api.quizzes(courseId).catch(() => []),
           this.api.assignments(courseId).catch(() => []),
           this.api.announcements(courseId).catch(() => []),
+          this.api.myGrades(courseId).catch(() => null),
         ]);
         this.course.set(course);
         this.curriculum.set(curriculum);
@@ -583,6 +626,7 @@ export class CoursePlayer implements OnDestroy {
         this.quizzes.set(quizzes);
         this.assignments.set(assignments);
         this.announcements.set(announcements);
+        this.grades.set(grades);
       }
       const first = this.curriculum()?.sections[0]?.lectures[0]?.id ?? null;
       const target = lectureId ?? first;

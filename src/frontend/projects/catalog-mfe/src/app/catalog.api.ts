@@ -242,6 +242,34 @@ export interface AnnouncementDto {
   createdAt: string;
 }
 
+export interface GradebookColumnDto {
+  kind: string;
+  id: string;
+  title: string;
+  maxScore: number;
+}
+
+export interface GradebookCellDto {
+  itemId: string;
+  score: number | null;
+  maxScore: number;
+  submitted: boolean;
+}
+
+export interface GradebookRowDto {
+  studentId: string;
+  studentName: string;
+  cells: GradebookCellDto[];
+  percent: number | null;
+}
+
+export interface GradebookDto {
+  courseId: string;
+  courseTitle: string;
+  columns: GradebookColumnDto[];
+  rows: GradebookRowDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
   private readonly http = inject(HttpClient);
@@ -455,6 +483,14 @@ export class CatalogApi {
     return firstValueFrom(
       this.http.post<AnnouncementDto>(`/api/catalog/courses/${courseId}/announcements`, payload),
     );
+  }
+
+  gradebook(courseId: string) {
+    return firstValueFrom(this.http.get<GradebookDto>(`/api/catalog/courses/${courseId}/gradebook`));
+  }
+
+  myGrades(courseId: string) {
+    return firstValueFrom(this.http.get<GradebookDto>(`/api/catalog/courses/${courseId}/grades`));
   }
 }
 

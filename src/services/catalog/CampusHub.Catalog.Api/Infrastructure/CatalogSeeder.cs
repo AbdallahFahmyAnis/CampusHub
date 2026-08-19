@@ -24,6 +24,7 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
         await SeedQuizzesAsync(cancellationToken);
         await SeedAssignmentsAsync(cancellationToken);
         await SeedAnnouncementsAsync(cancellationToken);
+        await SeedGradebookDemoAsync(cancellationToken);
         await search.RebuildAsync(db, cancellationToken);
         logger.LogInformation(
             "Catalog seed completed with {CourseCount} courses",
@@ -385,6 +386,105 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
                 CreatedAt = DateTimeOffset.UtcNow,
             });
         await db.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedGradebookDemoAsync(CancellationToken ct)
+    {
+        try
+        {
+            if (await db.CourseQuizAttempts.AnyAsync(ct) || await db.CourseAssignmentSubmissions.AnyAsync(ct))
+            {
+                return;
+            }
+        }
+        catch
+        {
+            return;
+        }
+
+        try
+        {
+            var quiz = (await db.CourseQuizzes.AsNoTracking()
+                    .Where(q => q.CourseId == AlgorithmsId)
+                    .ToListAsync(ct))
+                .FirstOrDefault();
+            if (quiz is not null)
+            {
+                db.CourseQuizAttempts.Add(new CourseQuizAttempt
+                {
+                    Id = Guid.Parse("ffffffff-ffff-ffff-ffff-fffffffffff0"),
+                    QuizId = quiz.Id,
+                    CourseId = quiz.CourseId,
+                    StudentId = SeedUsers.StudentId,
+                    Score = 2,
+                    Total = 3,
+                    Passed = false,
+                    AnswersJson = "[]",
+                    SubmittedAt = DateTimeOffset.UtcNow.AddDays(-1),
+                });
+                db.CourseQuizAttempts.Add(new CourseQuizAttempt
+                {
+                    Id = Guid.Parse("ffffffff-ffff-ffff-ffff-fffffffffff1"),
+                    QuizId = quiz.Id,
+                    CourseId = quiz.CourseId,
+                    StudentId = "reviewer-noah",
+                    Score = 3,
+                    Total = 3,
+                    Passed = true,
+                    AnswersJson = "[]",
+                    SubmittedAt = DateTimeOffset.UtcNow.AddDays(-2),
+                });
+                try
+                {
+                    await db.SaveChangesAsync(ct);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Demo quiz attempts skipped");
+                    db.ChangeTracker.Clear();
+                }
+            }
+
+            var assignment = (await db.CourseAssignments.AsNoTracking()
+                    .Where(a => a.CourseId == LinearId)
+                    .ToListAsync(ct))
+                .FirstOrDefault();
+            if (assignment is not null)
+            {
+                db.CourseAssignmentSubmissions.Add(new CourseAssignmentSubmission
+                {
+                    Id = Guid.Parse("ffffffff-ffff-ffff-ffff-fffffffffff2"),
+                    AssignmentId = assignment.Id,
+                    CourseId = assignment.CourseId,
+                    StudentId = SeedUsers.StudentId,
+                    StudentName = "Sam Student",
+                    Body = "A basis is a linearly independent spanning set. Campus paths from the quad to two halls that are not collinear span the walkable plane.",
+                    Score = 88,
+                    Feedback = "Clear example. Add one sentence on uniqueness of coordinates.",
+                    SubmittedAt = DateTimeOffset.UtcNow.AddDays(-3),
+                    GradedAt = DateTimeOffset.UtcNow.AddDays(-2),
+                });
+                db.CourseAssignmentSubmissions.Add(new CourseAssignmentSubmission
+                {
+                    Id = Guid.Parse("ffffffff-ffff-ffff-ffff-fffffffffff3"),
+                    AssignmentId = assignment.Id,
+                    CourseId = assignment.CourseId,
+                    StudentId = "reviewer-noah",
+                    StudentName = "Noah Okonkwo",
+                    Body = "Draft: span is every linear combination. Basis next.",
+                    Score = null,
+                    Feedback = null,
+                    SubmittedAt = DateTimeOffset.UtcNow.AddHours(-6),
+                });
+            }
+
+            await db.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Gradebook demo seed skipped");
+            db.ChangeTracker.Clear();
+        }
     }
 
     private async Task SeedCommunityAsync(CancellationToken ct)

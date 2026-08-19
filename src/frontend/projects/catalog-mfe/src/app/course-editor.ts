@@ -13,7 +13,15 @@ import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummary
         <h1>{{ id() ? 'Edit course' : 'Create course' }}</h1>
         <p class="page-kicker">{{ id() ? 'Update the syllabus, seats, and price, then publish when it is ready.' : 'Start as a draft. Students see it only after you publish.' }}</p>
       </div>
-      @if (status(); as current) {
+      @if (id(); as courseId) {
+        <div class="actions" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+          @if (status(); as current) {
+            <span class="pill" [attr.data-status]="current">{{ current }}</span>
+          }
+          <a class="btn secondary" [routerLink]="['/catalog', courseId, 'gradebook']">Gradebook</a>
+          <a class="btn secondary" [routerLink]="['/catalog', courseId, 'analytics']">Analytics</a>
+        </div>
+      } @else if (status(); as current) {
         <span class="pill" [attr.data-status]="current">{{ current }}</span>
       }
     </div>

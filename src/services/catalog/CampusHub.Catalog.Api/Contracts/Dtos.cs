@@ -243,6 +243,22 @@ public sealed record AnnouncementDto(
 
 public sealed record CreateAnnouncementRequest(string Title, string Body);
 
+public sealed record GradebookColumnDto(string Kind, Guid Id, string Title, int MaxScore);
+
+public sealed record GradebookCellDto(Guid ItemId, int? Score, int MaxScore, bool Submitted);
+
+public sealed record GradebookRowDto(
+    string StudentId,
+    string StudentName,
+    IReadOnlyList<GradebookCellDto> Cells,
+    double? Percent);
+
+public sealed record GradebookDto(
+    Guid CourseId,
+    string CourseTitle,
+    IReadOnlyList<GradebookColumnDto> Columns,
+    IReadOnlyList<GradebookRowDto> Rows);
+
 public sealed record SubmitAssignmentRequest(string Body);
 
 public sealed record AssignmentSubmissionDto(

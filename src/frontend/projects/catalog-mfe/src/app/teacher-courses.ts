@@ -35,6 +35,7 @@ import { CatalogApi, CourseListItemDto } from './catalog.api';
             </div>
             <div class="actions" style="display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap;">
               <a class="btn secondary" [routerLink]="['/catalog', course.id, 'edit']">Edit</a>
+              <a class="btn secondary" [routerLink]="['/catalog', course.id, 'gradebook']">Gradebook</a>
               <a class="btn secondary" [routerLink]="['/catalog', course.id, 'analytics']">Analytics</a>
             </div>
           </div>
