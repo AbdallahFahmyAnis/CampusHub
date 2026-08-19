@@ -6,6 +6,12 @@ Production-shaped educational platform: polyglot microservices (.NET + Node.js),
 
 High-level diagram and request flows: [docs/architecture.md](docs/architecture.md).
 
+## Spec-driven development
+
+New slices start as a spec, not as ad-hoc code. Constitution: [`.specify/memory/constitution.md`](.specify/memory/constitution.md). Product baseline and backlog: [`specs/000-product/spec.md`](specs/000-product/spec.md).
+
+In Cursor, use the project skills `speckit-specify`, `speckit-plan`, `speckit-tasks`, `speckit-implement`, then `speckit-converge`. “Proceed to next” means the next backlog item in the product spec.
+
 ## What runs today
 
 | Service | URL | Role |
