@@ -17,6 +17,8 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
     public DbSet<LectureProgress> LectureProgress => Set<LectureProgress>();
     public DbSet<CourseQuiz> CourseQuizzes => Set<CourseQuiz>();
     public DbSet<CourseQuizAttempt> CourseQuizAttempts => Set<CourseQuizAttempt>();
+    public DbSet<CourseAssignment> CourseAssignments => Set<CourseAssignment>();
+    public DbSet<CourseAssignmentSubmission> CourseAssignmentSubmissions => Set<CourseAssignmentSubmission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -156,6 +158,34 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
                 .HasForeignKey(x => x.QuizId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(x => new { x.QuizId, x.StudentId, x.SubmittedAt });
+        });
+
+        modelBuilder.Entity<CourseAssignment>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasConversion(GuidAsText);
+            entity.Property(x => x.CourseId).HasConversion(GuidAsText);
+            entity.Property(x => x.Title).HasMaxLength(200);
+            entity.HasOne(x => x.Course)
+                .WithMany()
+                .HasForeignKey(x => x.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => x.CourseId);
+        });
+
+        modelBuilder.Entity<CourseAssignmentSubmission>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasConversion(GuidAsText);
+            entity.Property(x => x.AssignmentId).HasConversion(GuidAsText);
+            entity.Property(x => x.CourseId).HasConversion(GuidAsText);
+            entity.Property(x => x.StudentId).HasMaxLength(64);
+            entity.Property(x => x.StudentName).HasMaxLength(200);
+            entity.HasOne(x => x.Assignment)
+                .WithMany()
+                .HasForeignKey(x => x.AssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.AssignmentId, x.StudentId }).IsUnique();
         });
     }
 

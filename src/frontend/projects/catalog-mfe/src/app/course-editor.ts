@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CatalogApi, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog.api';
+import { CatalogApi, AssignmentSubmissionDto, AssignmentSummaryDto, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog.api';
 
 @Component({
   selector: 'app-course-editor',
@@ -139,6 +139,39 @@ import { CatalogApi, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog
           <button class="btn" type="submit">Add quiz</button>
         </form>
       </section>
+      <section class="panel" style="margin-top: 24px; max-width: 720px;">
+        <h2>Assignments</h2>
+        <p class="muted">Written work. Students submit from the course player; you grade here.</p>
+        @for (a of assignments(); track a.id) {
+          <details>
+            <summary>{{ a.title }} <span class="muted">· {{ a.submissionCount }} submission{{ a.submissionCount === 1 ? '' : 's' }} · {{ a.maxScore }} pts</span></summary>
+            <p>{{ a.instructions }}</p>
+            @for (sub of assignmentSubs[a.id] ?? []; track sub.id) {
+              <article class="qa">
+                <strong>{{ sub.studentName }}</strong>
+                <p>{{ sub.body }}</p>
+                @if (sub.score != null) {
+                  <p class="muted">Score {{ sub.score }} / {{ a.maxScore }}
+                    @if (sub.feedback) { · {{ sub.feedback }} }
+                  </p>
+                }
+                <form class="inline-reply" (submit)="grade($event, a.id, sub.id)">
+                  <input type="number" [name]="'sc-' + sub.id" [(ngModel)]="gradeScore[sub.id]" [placeholder]="'0–' + a.maxScore" />
+                  <input [name]="'fb-' + sub.id" [(ngModel)]="gradeFeedback[sub.id]" placeholder="Feedback" />
+                  <button class="btn secondary" type="submit">Grade</button>
+                </form>
+              </article>
+            }
+            <button type="button" class="btn secondary" (click)="loadSubs(a.id)">Refresh submissions</button>
+          </details>
+        }
+        <form class="form stacked" (submit)="addAssignment($event)">
+          <label>Title <input name="atitle" [(ngModel)]="assignmentTitle" /></label>
+          <label>Instructions <textarea name="ainstr" rows="3" [(ngModel)]="assignmentInstructions"></textarea></label>
+          <label>Max score <input type="number" name="amax" [(ngModel)]="assignmentMax" /></label>
+          <button class="btn" type="submit">Add assignment</button>
+        </form>
+      </section>
     }
   `,
 })
@@ -154,6 +187,7 @@ export class CourseEditor {
   readonly error = signal<string | null>(null);
   readonly curriculum = signal<CurriculumDto | null>(null);
   readonly quizzes = signal<QuizSummaryDto[]>([]);
+  readonly assignments = signal<AssignmentSummaryDto[]>([]);
   readonly saving = signal(false);
   sectionTitle = '';
   quizTitle = '';
@@ -162,6 +196,12 @@ export class CourseEditor {
     { prompt: '', choices: ['', '', '', ''], correctIndex: 0 },
     { prompt: '', choices: ['', '', '', ''], correctIndex: 0 },
   ];
+  assignmentTitle = '';
+  assignmentInstructions = '';
+  assignmentMax = 100;
+  assignmentSubs: Record<string, AssignmentSubmissionDto[]> = {};
+  gradeScore: Record<string, number> = {};
+  gradeFeedback: Record<string, string> = {};
   lectureTitle: Record<string, string> = {};
   lectureKind: Record<string, string> = {};
   lectureVideo: Record<string, string> = {};
@@ -196,6 +236,7 @@ export class CourseEditor {
     this.status.set(course.status);
     this.curriculum.set(await this.api.curriculum(id));
     this.quizzes.set(await this.api.quizzes(id));
+    this.assignments.set(await this.api.assignments(id).catch(() => []));
     this.form.patchValue({
       subjectId: course.subjectId,
       title: course.title,
@@ -313,6 +354,55 @@ export class CourseEditor {
       this.error.set(null);
     } catch {
       this.error.set('Could not save the quiz.');
+    }
+  }
+
+  async addAssignment(event: Event): Promise<void> {
+    event.preventDefault();
+    const id = this.id();
+    if (!id || !this.assignmentTitle.trim() || !this.assignmentInstructions.trim()) {
+      this.error.set('Add an assignment title and instructions.');
+      return;
+    }
+    try {
+      await this.api.createAssignment(id, {
+        title: this.assignmentTitle.trim(),
+        instructions: this.assignmentInstructions.trim(),
+        maxScore: this.assignmentMax || 100,
+      });
+      this.assignmentTitle = '';
+      this.assignmentInstructions = '';
+      this.assignments.set(await this.api.assignments(id));
+      this.error.set(null);
+    } catch {
+      this.error.set('Could not save the assignment.');
+    }
+  }
+
+  async loadSubs(assignmentId: string): Promise<void> {
+    const id = this.id();
+    if (!id) {
+      return;
+    }
+    this.assignmentSubs[assignmentId] = await this.api.assignmentSubmissions(id, assignmentId);
+  }
+
+  async grade(event: Event, assignmentId: string, submissionId: string): Promise<void> {
+    event.preventDefault();
+    const id = this.id();
+    if (!id) {
+      return;
+    }
+    try {
+      const updated = await this.api.gradeAssignment(id, assignmentId, submissionId, {
+        score: Number(this.gradeScore[submissionId] ?? 0),
+        feedback: this.gradeFeedback[submissionId],
+      });
+      this.assignmentSubs[assignmentId] = (this.assignmentSubs[assignmentId] ?? []).map((s) =>
+        s.id === updated.id ? updated : s,
+      );
+    } catch {
+      this.error.set('Could not save the grade.');
     }
   }
 }

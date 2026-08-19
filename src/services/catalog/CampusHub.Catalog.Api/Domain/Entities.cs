@@ -186,3 +186,29 @@ public sealed class CourseQuizAttempt
     public required string AnswersJson { get; set; }
     public DateTimeOffset SubmittedAt { get; set; }
 }
+
+public sealed class CourseAssignment
+{
+    public Guid Id { get; set; }
+    public Guid CourseId { get; set; }
+    public Course Course { get; set; } = null!;
+    public required string Title { get; set; }
+    public required string Instructions { get; set; }
+    public int MaxScore { get; set; } = 100;
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class CourseAssignmentSubmission
+{
+    public Guid Id { get; set; }
+    public Guid AssignmentId { get; set; }
+    public CourseAssignment Assignment { get; set; } = null!;
+    public Guid CourseId { get; set; }
+    public required string StudentId { get; set; }
+    public required string StudentName { get; set; }
+    public required string Body { get; set; }
+    public int? Score { get; set; }
+    public string? Feedback { get; set; }
+    public DateTimeOffset SubmittedAt { get; set; }
+    public DateTimeOffset? GradedAt { get; set; }
+}

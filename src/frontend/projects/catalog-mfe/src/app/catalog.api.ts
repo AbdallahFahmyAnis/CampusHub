@@ -195,6 +195,29 @@ export interface QuizAttemptDto {
   submittedAt: string;
 }
 
+export interface AssignmentSummaryDto {
+  id: string;
+  title: string;
+  instructions: string;
+  maxScore: number;
+  submitted: boolean;
+  score: number | null;
+  feedback: string | null;
+  submissionCount: number;
+}
+
+export interface AssignmentSubmissionDto {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  studentName: string;
+  body: string;
+  score: number | null;
+  feedback: string | null;
+  submittedAt: string;
+  gradedAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
   private readonly http = inject(HttpClient);
@@ -352,6 +375,35 @@ export class CatalogApi {
   submitQuiz(courseId: string, quizId: string, answers: { questionId: string; choiceIndex: number }[]) {
     return firstValueFrom(
       this.http.post<QuizAttemptDto>(`/api/catalog/courses/${courseId}/quizzes/${quizId}/submit`, { answers }),
+    );
+  }
+
+  assignments(courseId: string) {
+    return firstValueFrom(this.http.get<AssignmentSummaryDto[]>(`/api/catalog/courses/${courseId}/assignments`));
+  }
+
+  createAssignment(courseId: string, body: { title: string; instructions: string; maxScore: number }) {
+    return firstValueFrom(this.http.post<AssignmentSummaryDto>(`/api/catalog/courses/${courseId}/assignments`, body));
+  }
+
+  submitAssignment(courseId: string, assignmentId: string, body: string) {
+    return firstValueFrom(
+      this.http.post<AssignmentSubmissionDto>(`/api/catalog/courses/${courseId}/assignments/${assignmentId}/submit`, { body }),
+    );
+  }
+
+  assignmentSubmissions(courseId: string, assignmentId: string) {
+    return firstValueFrom(
+      this.http.get<AssignmentSubmissionDto[]>(`/api/catalog/courses/${courseId}/assignments/${assignmentId}/submissions`),
+    );
+  }
+
+  gradeAssignment(courseId: string, assignmentId: string, submissionId: string, body: { score: number; feedback?: string }) {
+    return firstValueFrom(
+      this.http.post<AssignmentSubmissionDto>(
+        `/api/catalog/courses/${courseId}/assignments/${assignmentId}/submissions/${submissionId}/grade`,
+        body,
+      ),
     );
   }
 }

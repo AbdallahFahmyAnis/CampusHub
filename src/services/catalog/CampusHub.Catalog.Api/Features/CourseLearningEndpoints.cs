@@ -77,6 +77,30 @@ public static class CourseLearningEndpoints
             attempts = [];
         }
 
+        List<CourseAssignment> assignmentRows;
+        try
+        {
+            assignmentRows = await db.CourseAssignments.AsNoTracking()
+                .Where(a => courseIds.Contains(a.CourseId))
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            assignmentRows = [];
+        }
+
+        List<CourseAssignmentSubmission> assignmentSubs;
+        try
+        {
+            assignmentSubs = await db.CourseAssignmentSubmissions.AsNoTracking()
+                .Where(s => s.StudentId == studentId && courseIds.Contains(s.CourseId))
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            assignmentSubs = [];
+        }
+
         var items = new List<CourseProgressDto>();
         foreach (var course in courses)
         {
@@ -107,6 +131,9 @@ public static class CourseLearningEndpoints
                 ? null
                 : courseAttempts.Max(a => a.Total <= 0 ? 0 : (int)Math.Round(a.Score * 100.0 / a.Total));
 
+            var courseAssignmentIds = assignmentRows.Where(a => a.CourseId == course.Id).Select(a => a.Id).ToHashSet();
+            var submittedCount = assignmentSubs.Count(s => courseAssignmentIds.Contains(s.AssignmentId));
+
             items.Add(new CourseProgressDto(
                 course.Id,
                 course.Title,
@@ -118,7 +145,9 @@ public static class CourseLearningEndpoints
                 continueLectureId,
                 courseQuizIds.Count,
                 quizzesPassed,
-                bestQuiz));
+                bestQuiz,
+                courseAssignmentIds.Count,
+                submittedCount));
         }
 
         // Sort: in-progress first (not 100%), then completed

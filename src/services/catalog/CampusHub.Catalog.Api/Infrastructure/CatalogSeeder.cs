@@ -22,6 +22,7 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
         await EnsureVideoUrlsAsync(cancellationToken);
         await SeedCommunityAsync(cancellationToken);
         await SeedQuizzesAsync(cancellationToken);
+        await SeedAssignmentsAsync(cancellationToken);
         await search.RebuildAsync(db, cancellationToken);
         logger.LogInformation(
             "Catalog seed completed with {CourseCount} courses",
@@ -318,6 +319,32 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
             Title = "Algorithms checkpoint",
             PassPercent = 70,
             QuestionsJson = System.Text.Json.JsonSerializer.Serialize(questions),
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedAssignmentsAsync(CancellationToken ct)
+    {
+        try
+        {
+            if (await db.CourseAssignments.AnyAsync(ct))
+            {
+                return;
+            }
+        }
+        catch
+        {
+            return;
+        }
+
+        db.CourseAssignments.Add(new CourseAssignment
+        {
+            Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddd00"),
+            CourseId = LinearId,
+            Title = "Span and basis write-up",
+            Instructions = "In your own words, explain what a basis is and give one campus-life example of a 2D span. 150–300 words.",
+            MaxScore = 100,
             CreatedAt = DateTimeOffset.UtcNow,
         });
         await db.SaveChangesAsync(ct);

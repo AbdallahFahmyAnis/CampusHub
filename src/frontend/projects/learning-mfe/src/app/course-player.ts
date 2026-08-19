@@ -11,6 +11,7 @@ import {
   QuizAttemptDto,
   QuizDetailDto,
   QuizSummaryDto,
+  AssignmentSummaryDto,
   QuestionDto,
   ReviewDto,
   starSlots,
@@ -59,6 +60,7 @@ import { SessionService } from '../../../shell/src/app/session';
             <button type="button" [class.active]="tab() === 'notes'" (click)="tab.set('notes')">Notes</button>
             <button type="button" [class.active]="tab() === 'ask'" (click)="tab.set('ask')">Ask AI</button>
             <button type="button" [class.active]="tab() === 'quiz'" (click)="tab.set('quiz')">Quiz</button>
+            <button type="button" [class.active]="tab() === 'work'" (click)="tab.set('work')">Assignments</button>
             <button type="button" [class.active]="tab() === 'qa'" (click)="tab.set('qa')">Q&amp;A</button>
             <button type="button" [class.active]="tab() === 'reviews'" (click)="tab.set('reviews')">Reviews</button>
           </div>
@@ -182,6 +184,37 @@ import { SessionService } from '../../../shell/src/app/session';
             }
           }
 
+          @if (tab() === 'work') {
+            @if (!item.enrolled && !session.isTeacher()) {
+              <p class="muted">Enroll to submit assignments.</p>
+            } @else {
+              @if (assignments().length === 0) {
+                <p class="muted">No assignments yet for this course.</p>
+              }
+              @for (a of assignments(); track a.id) {
+                <article class="qa">
+                  <h3>{{ a.title }}</h3>
+                  <p>{{ a.instructions }}</p>
+                  <p class="muted">{{ a.maxScore }} points
+                    @if (a.submitted) { · Submitted }
+                    @if (a.score != null) { · Score {{ a.score }} / {{ a.maxScore }} }
+                  </p>
+                  @if (a.feedback) {
+                    <p><em>{{ a.feedback }}</em></p>
+                  }
+                  @if (item.enrolled || session.isTeacher()) {
+                    <form class="form stacked" (submit)="submitAssignment($event, a.id)">
+                      <label>Your work
+                        <textarea rows="5" [name]="'asg-' + a.id" [(ngModel)]="assignmentDraft[a.id]" required></textarea>
+                      </label>
+                      <button class="btn" type="submit">{{ a.submitted ? 'Resubmit' : 'Submit' }}</button>
+                    </form>
+                  }
+                </article>
+              }
+            }
+          }
+
           @if (tab() === 'qa') {
             @if (item.enrolled) {
               <form class="form stacked" (submit)="ask($event)">
@@ -267,12 +300,14 @@ export class CoursePlayer implements OnDestroy {
   readonly lectureId = signal<string | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly questions = signal<QuestionDto[]>([]);
-  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'qa' | 'reviews'>('lecture');
+  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'work' | 'qa' | 'reviews'>('lecture');
   readonly quizzes = signal<QuizSummaryDto[]>([]);
+  readonly assignments = signal<AssignmentSummaryDto[]>([]);
   readonly activeQuiz = signal<QuizDetailDto | null>(null);
   readonly quizResult = signal<QuizAttemptDto | null>(null);
   readonly quizBusy = signal(false);
   quizAnswers: Record<string, number> = {};
+  assignmentDraft: Record<string, string> = {};
   readonly error = signal<string | null>(null);
   readonly starSlots = starSlots;
   readonly askBusy = signal(false);
@@ -453,21 +488,39 @@ export class CoursePlayer implements OnDestroy {
     }
   }
 
+  async submitAssignment(event: Event, assignmentId: string): Promise<void> {
+    event.preventDefault();
+    const courseId = this.course()?.id;
+    const body = (this.assignmentDraft[assignmentId] ?? '').trim();
+    if (!courseId || !body) {
+      return;
+    }
+    try {
+      await this.api.submitAssignment(courseId, assignmentId, body);
+      this.assignments.set(await this.api.assignments(courseId));
+      this.assignmentDraft[assignmentId] = '';
+    } catch {
+      this.error.set('Could not submit the assignment. Confirm you are enrolled.');
+    }
+  }
+
   private async open(courseId: string, lectureId: string | null): Promise<void> {
     try {
       if (!this.course() || this.course()?.id !== courseId) {
-        const [course, curriculum, reviews, questions, quizzes] = await Promise.all([
+        const [course, curriculum, reviews, questions, quizzes, assignments] = await Promise.all([
           this.api.course(courseId),
           this.api.curriculum(courseId),
           this.api.reviews(courseId),
           this.api.questions(courseId),
-          this.api.quizzes(courseId),
+          this.api.quizzes(courseId).catch(() => []),
+          this.api.assignments(courseId).catch(() => []),
         ]);
         this.course.set(course);
         this.curriculum.set(curriculum);
         this.reviews.set(reviews);
         this.questions.set(questions);
         this.quizzes.set(quizzes);
+        this.assignments.set(assignments);
       }
       const first = this.curriculum()?.sections[0]?.lectures[0]?.id ?? null;
       const target = lectureId ?? first;

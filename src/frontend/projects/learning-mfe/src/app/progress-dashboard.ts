@@ -93,6 +93,9 @@ import { LearningApi, ProgressDashboardDto } from './learning.api';
                     @if (course.quizCount) {
                       · Quizzes {{ course.quizzesPassed }}/{{ course.quizCount }}
                     }
+                    @if (course.assignmentCount) {
+                      · Assignments {{ course.assignmentsSubmitted }}/{{ course.assignmentCount }}
+                    }
                     @if (course.bestQuizPercent != null) {
                       · Best quiz {{ course.bestQuizPercent }}%
                     }

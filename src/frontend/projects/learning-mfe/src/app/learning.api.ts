@@ -36,6 +36,8 @@ export interface CourseProgressDto {
   quizCount: number;
   quizzesPassed: number;
   bestQuizPercent: number | null;
+  assignmentCount: number;
+  assignmentsSubmitted: number;
 }
 
 export interface ProgressDashboardDto {

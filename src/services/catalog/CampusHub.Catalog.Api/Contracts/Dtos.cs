@@ -171,7 +171,9 @@ public sealed record CourseProgressDto(
     Guid? ContinueLectureId,
     int QuizCount,
     int QuizzesPassed,
-    int? BestQuizPercent);
+    int? BestQuizPercent,
+    int AssignmentCount,
+    int AssignmentsSubmitted);
 
 public sealed record StudentProgressDashboardDto(
     IReadOnlyList<CourseProgressDto> Courses,
@@ -218,6 +220,33 @@ public sealed record QuizAttemptDto(
     int Percent,
     bool Passed,
     DateTimeOffset SubmittedAt);
+
+public sealed record AssignmentSummaryDto(
+    Guid Id,
+    string Title,
+    string Instructions,
+    int MaxScore,
+    bool Submitted,
+    int? Score,
+    string? Feedback,
+    int SubmissionCount);
+
+public sealed record CreateAssignmentRequest(string Title, string Instructions, int MaxScore);
+
+public sealed record SubmitAssignmentRequest(string Body);
+
+public sealed record AssignmentSubmissionDto(
+    Guid Id,
+    Guid AssignmentId,
+    string StudentId,
+    string StudentName,
+    string Body,
+    int? Score,
+    string? Feedback,
+    DateTimeOffset SubmittedAt,
+    DateTimeOffset? GradedAt);
+
+public sealed record GradeAssignmentRequest(int Score, string? Feedback);
 
 public sealed record LectureStatDto(
     Guid Id,
