@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummary
 
 @Component({
   selector: 'app-course-editor',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, DatePipe],
   template: `
     <a class="back-link" routerLink="/catalog/mine">Back to my courses</a>
     <div class="page-head">
@@ -152,7 +153,8 @@ import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummary
         <p class="muted">Written work. Students submit from the course player; you grade here.</p>
         @for (a of assignments(); track a.id) {
           <details>
-            <summary>{{ a.title }} <span class="muted">· {{ a.submissionCount }} submission{{ a.submissionCount === 1 ? '' : 's' }} · {{ a.maxScore }} pts</span></summary>
+            <summary>{{ a.title }} <span class="muted">· {{ a.submissionCount }} submission{{ a.submissionCount === 1 ? '' : 's' }} · {{ a.maxScore }} pts
+              @if (a.dueAt) { · due {{ a.dueAt | date: 'mediumDate' }} }</span></summary>
             <p>{{ a.instructions }}</p>
             @for (sub of assignmentSubs[a.id] ?? []; track sub.id) {
               <article class="qa">
@@ -177,6 +179,7 @@ import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummary
           <label>Title <input name="atitle" [(ngModel)]="assignmentTitle" /></label>
           <label>Instructions <textarea name="ainstr" rows="3" [(ngModel)]="assignmentInstructions"></textarea></label>
           <label>Max score <input type="number" name="amax" [(ngModel)]="assignmentMax" /></label>
+          <label>Due date (optional) <input type="datetime-local" name="adue" [(ngModel)]="assignmentDue" /></label>
           <button class="btn" type="submit">Add assignment</button>
         </form>
       </section>
@@ -224,6 +227,7 @@ export class CourseEditor {
   assignmentTitle = '';
   assignmentInstructions = '';
   assignmentMax = 100;
+  assignmentDue = '';
   announcementTitle = '';
   announcementBody = '';
   assignmentSubs: Record<string, AssignmentSubmissionDto[]> = {};
@@ -397,9 +401,11 @@ export class CourseEditor {
         title: this.assignmentTitle.trim(),
         instructions: this.assignmentInstructions.trim(),
         maxScore: this.assignmentMax || 100,
+        dueAt: this.assignmentDue ? new Date(this.assignmentDue).toISOString() : null,
       });
       this.assignmentTitle = '';
       this.assignmentInstructions = '';
+      this.assignmentDue = '';
       this.assignments.set(await this.api.assignments(id));
       this.error.set(null);
     } catch {

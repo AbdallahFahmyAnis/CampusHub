@@ -230,9 +230,22 @@ public sealed record AssignmentSummaryDto(
     bool Submitted,
     int? Score,
     string? Feedback,
-    int SubmissionCount);
+    int SubmissionCount,
+    DateTimeOffset? DueAt,
+    bool Overdue,
+    bool Late);
 
-public sealed record CreateAssignmentRequest(string Title, string Instructions, int MaxScore);
+public sealed record CreateAssignmentRequest(string Title, string Instructions, int MaxScore, DateTimeOffset? DueAt);
+
+public sealed record CalendarItemDto(
+    Guid CourseId,
+    string CourseTitle,
+    Guid AssignmentId,
+    string Title,
+    DateTimeOffset DueAt,
+    bool Submitted,
+    bool Overdue,
+    bool Late);
 
 public sealed record AnnouncementDto(
     Guid Id,

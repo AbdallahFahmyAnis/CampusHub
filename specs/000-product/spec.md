@@ -58,6 +58,7 @@ Treat these as done unless a new spec changes them:
 13. Lecture notes
 14. Course announcements
 15. Course gradebook
+16. Assignment due dates + student calendar
 
 ## Requirements
 
@@ -75,7 +76,6 @@ Treat these as done unless a new spec changes them:
 
 Pick one, write `specs/NNN-slug/spec.md`, then implement:
 
-- Assignment due dates + a student calendar on My learning
 - Course resources (syllabus links / extra materials)
 - Waitlist when a course is full
 - Teacher roster from enrollments (cross-service)

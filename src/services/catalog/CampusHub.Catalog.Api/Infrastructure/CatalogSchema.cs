@@ -148,8 +148,12 @@ internal static class CatalogSchema
                 Title TEXT NOT NULL,
                 Instructions TEXT NOT NULL,
                 MaxScore INTEGER NOT NULL,
-                CreatedAt TEXT NOT NULL
+                CreatedAt TEXT NOT NULL,
+                DueAt TEXT NULL
             );
+            """, ct);
+        await TryAsync(db, """
+            ALTER TABLE CourseAssignments ADD COLUMN DueAt TEXT;
             """, ct);
         await TryAsync(db, """
             CREATE TABLE IF NOT EXISTS CourseAssignmentSubmissions (

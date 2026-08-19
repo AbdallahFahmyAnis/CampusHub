@@ -11,6 +11,7 @@ public static class AssignmentEndpoints
     public static RouteGroupBuilder MapAssignmentEndpoints(this RouteGroupBuilder api)
     {
         api.MapGet("/courses/{id:guid}/assignments", ListAssignments);
+        api.MapGet("/calendar", ListCalendar);
         api.MapPost("/courses/{id:guid}/assignments", CreateAssignment).RequireAuthorization("CanManageCatalog");
         api.MapPost("/courses/{id:guid}/assignments/{assignmentId:guid}/submit", SubmitAssignment);
         api.MapGet("/courses/{id:guid}/assignments/{assignmentId:guid}/submissions", ListSubmissions)
@@ -73,7 +74,10 @@ public static class AssignmentEndpoints
                 mine is not null,
                 mine?.Score,
                 mine?.Feedback,
-                staff ? count : 0);
+                staff ? count : 0,
+                a.DueAt,
+                Overdue(a.DueAt, mine is not null),
+                Late(a.DueAt, mine?.SubmittedAt));
         }).ToList();
 
         return Results.Ok(result);
@@ -109,13 +113,111 @@ public static class AssignmentEndpoints
             Title = request.Title.Trim(),
             Instructions = request.Instructions.Trim(),
             MaxScore = request.MaxScore <= 0 ? 100 : request.MaxScore,
+            DueAt = request.DueAt,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         db.CourseAssignments.Add(assignment);
         await db.SaveChangesAsync(ct);
         return Results.Created(
             $"/api/catalog/courses/{id}/assignments/{assignment.Id}",
-            new AssignmentSummaryDto(assignment.Id, assignment.Title, assignment.Instructions, assignment.MaxScore, false, null, null, 0));
+            new AssignmentSummaryDto(
+                assignment.Id,
+                assignment.Title,
+                assignment.Instructions,
+                assignment.MaxScore,
+                false,
+                null,
+                null,
+                0,
+                assignment.DueAt,
+                Overdue(assignment.DueAt, false),
+                false));
+    }
+
+    private static async Task<IResult> ListCalendar(
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+    {
+        var (studentId, _) = CatalogEndpoints.Caller(user);
+        if (string.IsNullOrEmpty(studentId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var progressIds = await db.LectureProgress.AsNoTracking()
+            .Where(p => p.StudentId == studentId)
+            .Select(p => p.CourseId)
+            .Distinct()
+            .ToListAsync(ct);
+        List<Guid> submissionIds;
+        try
+        {
+            submissionIds = await db.CourseAssignmentSubmissions.AsNoTracking()
+                .Where(s => s.StudentId == studentId)
+                .Select(s => s.CourseId)
+                .Distinct()
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            submissionIds = [];
+        }
+
+        var courseIds = progressIds.Concat(submissionIds).Distinct().ToList();
+        if (courseIds.Count == 0)
+        {
+            return Results.Ok(Array.Empty<CalendarItemDto>());
+        }
+
+        List<CourseAssignment> assignments;
+        try
+        {
+            assignments = await db.CourseAssignments.AsNoTracking()
+                .Where(a => courseIds.Contains(a.CourseId))
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            return Results.Ok(Array.Empty<CalendarItemDto>());
+        }
+
+        assignments = [.. assignments.Where(a => a.DueAt is not null)];
+        var titles = await db.Courses.AsNoTracking()
+            .Where(c => courseIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.Title })
+            .ToListAsync(ct);
+        var titleById = titles.ToDictionary(c => c.Id, c => c.Title);
+
+        List<CourseAssignmentSubmission> mine;
+        try
+        {
+            mine = await db.CourseAssignmentSubmissions.AsNoTracking()
+                .Where(s => s.StudentId == studentId && courseIds.Contains(s.CourseId))
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            mine = [];
+        }
+
+        var items = assignments
+            .Select(a =>
+            {
+                var sub = mine.FirstOrDefault(s => s.AssignmentId == a.Id);
+                return new CalendarItemDto(
+                    a.CourseId,
+                    titleById.GetValueOrDefault(a.CourseId, "Course"),
+                    a.Id,
+                    a.Title,
+                    a.DueAt!.Value,
+                    sub is not null,
+                    Overdue(a.DueAt, sub is not null),
+                    Late(a.DueAt, sub?.SubmittedAt));
+            })
+            .OrderBy(i => i.DueAt)
+            .ToList();
+        return Results.Ok(items);
     }
 
     private static async Task<IResult> SubmitAssignment(
@@ -240,6 +342,12 @@ public static class AssignmentEndpoints
         await db.SaveChangesAsync(ct);
         return Results.Ok(ToDto(submission));
     }
+
+    private static bool Overdue(DateTimeOffset? dueAt, bool submitted) =>
+        dueAt is not null && !submitted && DateTimeOffset.UtcNow > dueAt;
+
+    private static bool Late(DateTimeOffset? dueAt, DateTimeOffset? submittedAt) =>
+        dueAt is not null && submittedAt is not null && submittedAt > dueAt;
 
     private static AssignmentSubmissionDto ToDto(CourseAssignmentSubmission s) =>
         new(s.Id, s.AssignmentId, s.StudentId, s.StudentName, s.Body, s.Score, s.Feedback, s.SubmittedAt, s.GradedAt);

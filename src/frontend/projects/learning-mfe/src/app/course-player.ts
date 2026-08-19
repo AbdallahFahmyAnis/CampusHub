@@ -201,6 +201,11 @@ import { SessionService } from '../../../shell/src/app/session';
                   <h3>{{ a.title }}</h3>
                   <p>{{ a.instructions }}</p>
                   <p class="muted">{{ a.maxScore }} points
+                    @if (a.dueAt) {
+                      · Due {{ a.dueAt | date: 'medium' }}
+                    }
+                    @if (a.overdue) { · Overdue }
+                    @if (a.late) { · Late }
                     @if (a.submitted) { · Submitted }
                     @if (a.score != null) { · Score {{ a.score }} / {{ a.maxScore }} }
                   </p>

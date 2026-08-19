@@ -204,6 +204,20 @@ export interface AssignmentSummaryDto {
   score: number | null;
   feedback: string | null;
   submissionCount: number;
+  dueAt: string | null;
+  overdue: boolean;
+  late: boolean;
+}
+
+export interface CalendarItemDto {
+  courseId: string;
+  courseTitle: string;
+  assignmentId: string;
+  title: string;
+  dueAt: string;
+  submitted: boolean;
+  overdue: boolean;
+  late: boolean;
 }
 
 export interface AssignmentSubmissionDto {
@@ -434,8 +448,12 @@ export class CatalogApi {
     return firstValueFrom(this.http.get<AssignmentSummaryDto[]>(`/api/catalog/courses/${courseId}/assignments`));
   }
 
-  createAssignment(courseId: string, body: { title: string; instructions: string; maxScore: number }) {
+  createAssignment(courseId: string, body: { title: string; instructions: string; maxScore: number; dueAt?: string | null }) {
     return firstValueFrom(this.http.post<AssignmentSummaryDto>(`/api/catalog/courses/${courseId}/assignments`, body));
+  }
+
+  calendar() {
+    return firstValueFrom(this.http.get<CalendarItemDto[]>('/api/catalog/calendar'));
   }
 
   submitAssignment(courseId: string, assignmentId: string, body: string) {

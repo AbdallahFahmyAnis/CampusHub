@@ -195,6 +195,7 @@ public sealed class CourseAssignment
     public required string Title { get; set; }
     public required string Instructions { get; set; }
     public int MaxScore { get; set; } = 100;
+    public DateTimeOffset? DueAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
 
