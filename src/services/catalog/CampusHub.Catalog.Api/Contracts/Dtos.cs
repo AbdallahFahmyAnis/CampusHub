@@ -159,3 +159,26 @@ public sealed record QuestionDto(
 public sealed record CreateQuestionRequest(string Title, string Body);
 
 public sealed record CreateAnswerRequest(string Body);
+
+public sealed record LectureStatDto(
+    Guid Id,
+    string Title,
+    string SectionTitle,
+    int DurationMinutes,
+    int CompletionCount);
+
+public sealed record MonthlyEnrollmentDto(string Month, int Count, decimal Revenue);
+
+public sealed record CourseStatsDto(
+    Guid CourseId,
+    string CourseTitle,
+    int TotalLectures,
+    int StudentsCompletedAll,
+    double AverageRating,
+    int ReviewCount,
+    IReadOnlyList<LectureStatDto> LectureStats,
+    int TotalEnrollments,
+    int ConfirmedEnrollments,
+    int CancelledEnrollments,
+    decimal TotalRevenue,
+    IReadOnlyList<MonthlyEnrollmentDto> MonthlyBreakdown);

@@ -127,6 +127,35 @@ export interface QuestionDto {
   answers: AnswerDto[];
 }
 
+export interface LectureStatDto {
+  id: string;
+  title: string;
+  sectionTitle: string;
+  durationMinutes: number;
+  completionCount: number;
+}
+
+export interface MonthlyEnrollmentDto {
+  month: string;
+  count: number;
+  revenue: number;
+}
+
+export interface CourseStatsDto {
+  courseId: string;
+  courseTitle: string;
+  totalLectures: number;
+  studentsCompletedAll: number;
+  averageRating: number;
+  reviewCount: number;
+  lectureStats: LectureStatDto[];
+  totalEnrollments: number;
+  confirmedEnrollments: number;
+  cancelledEnrollments: number;
+  totalRevenue: number;
+  monthlyBreakdown: MonthlyEnrollmentDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
   private readonly http = inject(HttpClient);
@@ -234,6 +263,10 @@ export class CatalogApi {
     return firstValueFrom(
       this.http.post<{ completed: boolean }>(`/api/catalog/courses/${courseId}/lectures/${lectureId}/complete`, {}),
     );
+  }
+
+  courseStats(courseId: string) {
+    return firstValueFrom(this.http.get<CourseStatsDto>(`/api/catalog/courses/${courseId}/stats`));
   }
 
   capabilities() {

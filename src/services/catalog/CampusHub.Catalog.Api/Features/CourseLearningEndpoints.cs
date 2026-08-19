@@ -15,6 +15,7 @@ public static class CourseLearningEndpoints
         api.MapGet("/courses/{id:guid}/curriculum", GetCurriculum);
         api.MapGet("/courses/{id:guid}/lectures/{lectureId:guid}", GetLecture);
         api.MapPost("/courses/{id:guid}/lectures/{lectureId:guid}/complete", CompleteLecture);
+        api.MapGet("/courses/{id:guid}/stats", GetCourseStats).RequireAuthorization("CanManageCatalog");
         api.MapPost("/courses/{id:guid}/ask", AskCourse);
         api.MapPost("/courses/{id:guid}/sections", CreateSection).RequireAuthorization("CanManageCatalog");
         api.MapPost("/courses/{id:guid}/sections/{sectionId:guid}/lectures", CreateLecture).RequireAuthorization("CanManageCatalog");
@@ -98,6 +99,82 @@ public static class CourseLearningEndpoints
             lecture.SortOrder,
             unlocked ? lecture.VideoUrl : null,
             completed));
+    }
+
+    private static async Task<IResult> GetCourseStats(
+        Guid id,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        EnrollmentGateway enrollment,
+        CancellationToken ct)
+    {
+        var course = await db.Courses
+            .AsNoTracking()
+            .Include(c => c.Reviews)
+            .Include(c => c.Sections)
+            .ThenInclude(s => s.Lectures)
+            .SingleOrDefaultAsync(c => c.Id == id, ct);
+
+        if (course is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (!CatalogEndpoints.IsOwner(course, user) && !CatalogEndpoints.CanManage(user))
+        {
+            return Results.Forbid();
+        }
+
+        var lectureIds = course.Sections.SelectMany(s => s.Lectures).Select(l => l.Id).ToList();
+        var totalLectures = lectureIds.Count;
+
+        // Completion: count students who have completed all lectures
+        var completedAllCount = totalLectures == 0 ? 0 :
+            await db.LectureProgress.AsNoTracking()
+                .Where(p => p.CourseId == id)
+                .GroupBy(p => p.StudentId)
+                .CountAsync(g => g.Count() >= totalLectures, ct);
+
+        // Average rating
+        var avgRating = course.Reviews.Count > 0
+            ? Math.Round(course.Reviews.Average(r => r.Rating), 1)
+            : 0.0;
+
+        // Lecture completion counts (top completed lectures)
+        var lectureCompletions = await db.LectureProgress.AsNoTracking()
+            .Where(p => p.CourseId == id)
+            .GroupBy(p => p.LectureId)
+            .Select(g => new { LectureId = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var lectureStats = (from section in course.Sections
+                            from lecture in section.Lectures
+                            let completions = lectureCompletions.FirstOrDefault(x => x.LectureId == lecture.Id)?.Count ?? 0
+                            select new LectureStatDto(
+                                lecture.Id,
+                                lecture.Title,
+                                section.Title,
+                                lecture.DurationMinutes,
+                                completions))
+                          .OrderByDescending(x => x.CompletionCount)
+                          .ToList();
+
+        // Enrollment stats from the enrollment service
+        var enrollStats = await enrollment.GetStatsAsync(id, ct);
+
+        return Results.Ok(new CourseStatsDto(
+            id,
+            course.Title,
+            totalLectures,
+            completedAllCount,
+            avgRating,
+            course.Reviews.Count,
+            lectureStats,
+            enrollStats?.TotalEnrollments ?? 0,
+            enrollStats?.ConfirmedEnrollments ?? 0,
+            enrollStats?.CancelledEnrollments ?? 0,
+            enrollStats?.TotalRevenue ?? 0m,
+            enrollStats?.MonthlyBreakdown?.Select(m => new MonthlyEnrollmentDto(m.Month, m.Count, m.Revenue)).ToList() ?? []));
     }
 
     private static async Task<IResult> AskCourse(

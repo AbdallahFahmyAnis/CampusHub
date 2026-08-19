@@ -21,6 +21,7 @@ public static class EnrollmentEndpoints
         api.MapGet("/{id:guid}", Get).RequireAuthorization();
         api.MapPost("/internal/payments/succeeded", PaymentSucceeded).AllowAnonymous();
         api.MapPost("/internal/payments/failed", PaymentFailed).AllowAnonymous();
+        api.MapGet("/internal/stats", InternalStats).AllowAnonymous();
         return app;
     }
 
@@ -192,6 +193,51 @@ public static class EnrollmentEndpoints
         return Results.Ok();
     }
 
+    private static async Task<IResult> InternalStats(
+        Guid courseId,
+        HttpContext http,
+        IConfiguration config,
+        EnrollmentDbContext db,
+        CancellationToken ct)
+    {
+        if (!IsInternal(http, config))
+        {
+            return Results.Unauthorized();
+        }
+
+        var rows = await db.Enrollments.AsNoTracking()
+            .Where(e => e.CourseId == courseId)
+            .ToListAsync(ct);
+
+        var confirmed = rows.Where(e => e.Status == CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Confirmed).ToList();
+        var total = rows.Count;
+        var confirmedCount = confirmed.Count;
+        var revenue = confirmed.Sum(e => e.Amount);
+        var cancelledCount = rows.Count(e =>
+            e.Status == CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Compensated ||
+            e.Status == CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Rejected);
+
+        // Monthly enrollment breakdown (last 6 months)
+        var now = DateTimeOffset.UtcNow;
+        var months = Enumerable.Range(0, 6)
+            .Select(i => now.AddMonths(-i))
+            .Select(d => new { Year = d.Year, Month = d.Month })
+            .Reverse()
+            .Select(m => new EnrollmentMonthDto(
+                $"{m.Year}-{m.Month:D2}",
+                rows.Count(e => e.CreatedAt.Year == m.Year && e.CreatedAt.Month == m.Month),
+                confirmed.Where(e => e.CreatedAt.Year == m.Year && e.CreatedAt.Month == m.Month).Sum(e => e.Amount)))
+            .ToList();
+
+        return Results.Ok(new CourseEnrollmentStatsDto(
+            courseId,
+            total,
+            confirmedCount,
+            cancelledCount,
+            revenue,
+            months));
+    }
+
     private static bool IsInternal(HttpContext http, IConfiguration config)
     {
         var expected = config["Internal:ApiKey"] ?? "campus-dev-internal";
@@ -212,6 +258,15 @@ public static class EnrollmentEndpoints
         return (id, email, name);
     }
 }
+
+public sealed record EnrollmentMonthDto(string Month, int Count, decimal Revenue);
+public sealed record CourseEnrollmentStatsDto(
+    Guid CourseId,
+    int TotalEnrollments,
+    int ConfirmedEnrollments,
+    int CancelledEnrollments,
+    decimal TotalRevenue,
+    IReadOnlyList<EnrollmentMonthDto> MonthlyBreakdown);
 
 public sealed record StartEnrollmentRequest(Guid CourseId, string? SimulatePayment);
 public sealed record PaymentCallbackRequest(Guid EnrollmentId, Guid PaymentId, string? Reason);

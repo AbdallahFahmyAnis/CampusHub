@@ -25,14 +25,19 @@ import { CatalogApi, CourseListItemDto } from './catalog.api';
     } @else {
       <div class="cards catalog">
         @for (course of courses(); track course.id) {
-          <a class="card" [routerLink]="['/catalog', course.id, 'edit']">
+          <div class="card">
             <div class="card-kicker">{{ course.subjectCode }}</div>
             <h2>{{ course.title }}</h2>
             <div class="meta">
               <span class="pill" [attr.data-status]="course.status">{{ course.status }}</span>
               <span>{{ course.remainingSeats }} of {{ course.capacity }} seats left</span>
+              <span>{{ course.ratingCount }} review{{ course.ratingCount === 1 ? '' : 's' }}</span>
             </div>
-          </a>
+            <div class="actions" style="display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap;">
+              <a class="btn secondary" [routerLink]="['/catalog', course.id, 'edit']">Edit</a>
+              <a class="btn secondary" [routerLink]="['/catalog', course.id, 'analytics']">Analytics</a>
+            </div>
+          </div>
         }
       </div>
     }
