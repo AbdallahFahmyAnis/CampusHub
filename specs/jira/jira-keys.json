@@ -1,0 +1,117 @@
+{
+    "site":  "https://abdallah-fahmy.atlassian.net",
+    "project":  "MDP",
+    "items":  [
+                  {
+                      "jira":  "MDP-9",
+                      "id":  "platform",
+                      "kind":  "plan"
+                  },
+                  {
+                      "jira":  "MDP-10",
+                      "id":  "learn",
+                      "kind":  "plan"
+                  },
+                  {
+                      "jira":  "MDP-11",
+                      "id":  "discovery",
+                      "kind":  "plan"
+                  },
+                  {
+                      "jira":  "MDP-12",
+                      "kind":  "story",
+                      "id":  "CH-S01",
+                      "spec":  "specs/003-tenants-plans/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-13",
+                      "kind":  "story",
+                      "id":  "CH-S02",
+                      "spec":  "specs/004-invites-people/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-14",
+                      "kind":  "story",
+                      "id":  "CH-S03",
+                      "spec":  "specs/005-mock-billing/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-15",
+                      "kind":  "story",
+                      "id":  "CH-S04",
+                      "spec":  "specs/006-ops-campus/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-16",
+                      "kind":  "story",
+                      "id":  "CH-S05",
+                      "spec":  "specs/007-notifications/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-17",
+                      "kind":  "story",
+                      "id":  "CH-S06",
+                      "spec":  "specs/008-certificates/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-18",
+                      "kind":  "story",
+                      "id":  "CH-S07",
+                      "spec":  "specs/009-course-analytics/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-19",
+                      "kind":  "story",
+                      "id":  "CH-S08",
+                      "spec":  "specs/010-chat-ai-tutor/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-20",
+                      "kind":  "story",
+                      "id":  "CH-S09",
+                      "spec":  "specs/011-catalog-discovery/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-21",
+                      "kind":  "story",
+                      "id":  "CH-S10",
+                      "spec":  "specs/012-progress-dashboard/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-22",
+                      "kind":  "story",
+                      "id":  "CH-S11",
+                      "spec":  "specs/013-quizzes/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-23",
+                      "kind":  "story",
+                      "id":  "CH-S12",
+                      "spec":  "specs/014-assignments/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-24",
+                      "kind":  "story",
+                      "id":  "CH-S13",
+                      "spec":  "specs/015-lecture-notes/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-25",
+                      "kind":  "story",
+                      "id":  "CH-S14",
+                      "spec":  "specs/016-announcements/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-26",
+                      "kind":  "story",
+                      "id":  "CH-S15",
+                      "spec":  "specs/001-course-gradebook/spec.md"
+                  },
+                  {
+                      "jira":  "MDP-27",
+                      "kind":  "story",
+                      "id":  "CH-S16",
+                      "spec":  "specs/002-assignment-due-dates/spec.md"
+                  }
+              ]
+}

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Features;
 
+/// <summary>SDD CH-S13 / MDP-24 — specs/015-lecture-notes. Per-lecture student notes.</summary>
 public static class NoteEndpoints
 {
     public static RouteGroupBuilder MapNoteEndpoints(this RouteGroupBuilder api)

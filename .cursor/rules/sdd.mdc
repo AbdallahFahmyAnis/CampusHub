@@ -13,8 +13,11 @@ CampusHub follows Spec Kit–style SDD.
 2. Read `specs/000-product/spec.md` (baseline + backlog).
 3. For a **new slice**, create or update `specs/NNN-slug/spec.md` (copy `.specify/templates/spec-template.md`). Set `.specify/feature.json` `feature_directory` to that folder.
 4. Add a short `plan.md` (and `tasks.md` if more than a handful of files).
-5. Implement only what the spec requires.
-6. When the user says **proceed to next**, take the next backlog item in `specs/000-product/spec.md`, specify it, then implement — do not invent a slice with no spec.
+5. Implement only what the spec requires. Cite `CH-Snn` in new code (see `SddStories`).
+6. Add or extend tests with `[Trait("Story", "CH-Snn")]`. Seed mock data so the screens in the spec are clickable.
+7. When the user says **proceed to next**, take the next backlog item in `specs/000-product/spec.md`, specify it, then implement — do not invent a slice with no spec.
+
+Story index: `specs/STORIES.md`. Workflow: `specs/WORKFLOW.md`.
 
 ## Commands (Cursor skills)
 

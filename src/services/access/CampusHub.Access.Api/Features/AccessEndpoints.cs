@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Access.Api.Features;
 
+/// <summary>SDD CH-S06 / MDP-17 — specs/008-certificates. Credentials, QR, completion certs.</summary>
 public static class AccessEndpoints
 {
     public static IEndpointRouteBuilder MapAccessEndpoints(this IEndpointRouteBuilder app)

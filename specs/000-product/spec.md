@@ -60,6 +60,10 @@ Treat these as done unless a new spec changes them:
 15. Course gradebook
 16. Assignment due dates + student calendar
 
+Story index and Jira import: [`specs/jira/README.md`](../jira/README.md). Qualified cards: [`specs/STORIES.md`](../STORIES.md). Workflow: [`specs/WORKFLOW.md`](../WORKFLOW.md).
+
+Each story is **Done** when Specify, Apply, Test, Mock, and Retest are complete. Code cites `CH-Snn` via `SddStories`.
+
 ## Requirements
 
 - **FR-001**: System MUST keep the gateway as the only browser-facing edge.

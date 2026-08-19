@@ -1,3 +1,4 @@
+/** SDD CH-S04 / MDP-15 — campus console vs /ops. /campus */
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';

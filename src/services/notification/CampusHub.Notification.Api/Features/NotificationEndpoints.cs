@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Notification.Api.Features;
 
+/// <summary>SDD CH-S05 / MDP-16 — specs/007-notifications. Inbox and SSE.</summary>
 public static class NotificationEndpoints
 {
     public static IEndpointRouteBuilder MapNotificationEndpoints(this IEndpointRouteBuilder app)

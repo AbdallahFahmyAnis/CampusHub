@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Features;
 
+/// <summary>SDD CH-S09 / MDP-20 — specs/011-catalog-discovery. Catalog list, filters, sort, recommended.</summary>
 public static class CatalogEndpoints
 {
     public static IEndpointRouteBuilder MapCatalogEndpoints(this IEndpointRouteBuilder app)

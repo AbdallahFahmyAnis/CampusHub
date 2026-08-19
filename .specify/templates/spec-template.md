@@ -1,9 +1,29 @@
 # Feature Specification: [FEATURE NAME]
 
+**Story**: CH-Snn  
+**Jira idea**: MDP-nn  
+**Workflow**: Specify → Apply → Test → Mock → Retest → Done  
 **Feature Branch**: `[###-feature-name]`
 **Created**: [DATE]
 **Status**: Draft
 **Input**: User description: "$ARGUMENTS"
+
+## Qualified header *(mandatory)*
+
+| Field | Value |
+|---|---|
+| Persona | [role] |
+| Value | [why] |
+| Screens | [gateway routes] |
+| Code | [files from plan] |
+| Tests | `[Trait("Story", "CH-Snn")]` + screen smoke |
+| Mock | [seed / demo path] |
+
+## Screens *(mandatory)*
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| [Name] | `http://localhost:5000/...` | student/teacher/admin | [visible result] |
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -24,23 +44,24 @@
 ### Edge Cases
 
 - What happens when [boundary]?
-- How does the system handle [error]?
 
 ## Requirements *(mandatory)*
 
-### Functional Requirements
-
 - **FR-001**: System MUST [capability]
-
-### Key Entities *(if data is involved)*
-
-- **[Entity]**: [Meaning and relationships, not table DDL]
 
 ## Success Criteria *(mandatory)*
 
 - **SC-001**: [Observable outcome a human can check in the running app]
 
+## Apply / Test / Mock / Done
+
+- [ ] Specify finished
+- [ ] Apply (code cites CH-Snn)
+- [ ] Test (`dotnet test --filter Story=CH-Snn` and screen smoke)
+- [ ] Mock in progress (seed)
+- [ ] Retest on mock
+- [ ] Done
+
 ## Assumptions
 
 - Existing auth, gateway, and seeded users are reused unless this spec says otherwise.
-- Out of scope: [list]

@@ -1,3 +1,4 @@
+/** SDD CH-S08 ask, CH-S11 quiz, CH-S12 assignments, CH-S13 notes, CH-S14 announcements, CH-S15 grades — player tabs. */
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';

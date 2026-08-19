@@ -1,3 +1,4 @@
+/** SDD CH-S08 / MDP-19 — chat rooms. /chat */
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';

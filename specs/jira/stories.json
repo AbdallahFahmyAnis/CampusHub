@@ -1,0 +1,37 @@
+{
+  "epics": [
+    {
+      "key": "platform",
+      "summary": "CampusHub Platform",
+      "description": "Identity, tenants, invites, billing, ops vs campus.\nSDD: specs/000-product/spec.md"
+    },
+    {
+      "key": "learn",
+      "summary": "CampusHub Teach & learn",
+      "description": "Quizzes, assignments, notes, announcements, gradebook, due dates.\nSDD: specs/000-product/spec.md"
+    },
+    {
+      "key": "discovery",
+      "summary": "CampusHub Discovery & engagement",
+      "description": "Search, progress, notifications, certificates, chat and AI tutor.\nSDD: specs/000-product/spec.md"
+    }
+  ],
+  "stories": [
+    { "id": "CH-S01", "epic": "platform", "summary": "Campus signup, tenants, and plan gates", "spec": "specs/003-tenants-plans/spec.md" },
+    { "id": "CH-S02", "epic": "platform", "summary": "Invites and People", "spec": "specs/004-invites-people/spec.md" },
+    { "id": "CH-S03", "epic": "platform", "summary": "Mock billing", "spec": "specs/005-mock-billing/spec.md" },
+    { "id": "CH-S04", "epic": "platform", "summary": "Platform Ops vs campus console", "spec": "specs/006-ops-campus/spec.md" },
+    { "id": "CH-S05", "epic": "discovery", "summary": "Notifications and SSE", "spec": "specs/007-notifications/spec.md" },
+    { "id": "CH-S06", "epic": "discovery", "summary": "Course completion certificates", "spec": "specs/008-certificates/spec.md" },
+    { "id": "CH-S07", "epic": "learn", "summary": "Teacher course analytics", "spec": "specs/009-course-analytics/spec.md" },
+    { "id": "CH-S08", "epic": "discovery", "summary": "Chat rooms and AI tutor", "spec": "specs/010-chat-ai-tutor/spec.md" },
+    { "id": "CH-S09", "epic": "discovery", "summary": "Catalog filters, sort, and recommended", "spec": "specs/011-catalog-discovery/spec.md" },
+    { "id": "CH-S10", "epic": "discovery", "summary": "Student progress dashboard", "spec": "specs/012-progress-dashboard/spec.md" },
+    { "id": "CH-S11", "epic": "learn", "summary": "Course quizzes", "spec": "specs/013-quizzes/spec.md" },
+    { "id": "CH-S12", "epic": "learn", "summary": "Course assignments", "spec": "specs/014-assignments/spec.md" },
+    { "id": "CH-S13", "epic": "learn", "summary": "Lecture notes", "spec": "specs/015-lecture-notes/spec.md" },
+    { "id": "CH-S14", "epic": "learn", "summary": "Course announcements", "spec": "specs/016-announcements/spec.md" },
+    { "id": "CH-S15", "epic": "learn", "summary": "Course gradebook", "spec": "specs/001-course-gradebook/spec.md" },
+    { "id": "CH-S16", "epic": "learn", "summary": "Assignment due dates and student calendar", "spec": "specs/002-assignment-due-dates/spec.md" }
+  ]
+}

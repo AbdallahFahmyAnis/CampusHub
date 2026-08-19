@@ -1,3 +1,4 @@
+/** SDD CH-S06 / MDP-17 — completion certificates. /learn/certificates */
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';

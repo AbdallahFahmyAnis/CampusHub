@@ -1,3 +1,4 @@
+/** SDD CH-S15 / MDP-26 — teacher gradebook. /catalog/:id/gradebook */
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';

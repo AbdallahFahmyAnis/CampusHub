@@ -1,3 +1,4 @@
+/** SDD CH-S07 / MDP-18 — teacher analytics. /catalog/:id/analytics */
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';

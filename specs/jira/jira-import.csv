@@ -1,0 +1,151 @@
+Epic Name,Summary,Issue Type,Description,Status,Priority,Labels,Spec
+CampusHub Platform,CampusHub Platform,Epic,"Identity tenants invites billing and ops consoles. SDD plan: specs/000-product/spec.md",Done,High,"campushub sdd platform",specs/000-product/spec.md
+CampusHub Teach & learn,CampusHub Teach & learn,Epic,"Teacher and student course work: quizzes assignments notes announcements gradebook due dates. SDD: specs/000-product/spec.md",Done,High,"campushub sdd learn",specs/000-product/spec.md
+CampusHub Discovery & engagement,CampusHub Discovery & engagement,Epic,"Search progress notifications certificates chat and AI tutor. SDD: specs/000-product/spec.md",Done,High,"campushub sdd discovery",specs/000-product/spec.md
+CampusHub Platform,CH-S01 Campus signup tenants and plan gates,Story,"h3. Story
+As a campus owner I can sign up a tenant and stay on a plan with feature gates.
+
+h3. Acceptance
+* Free vs Campus gates apply (Ask AI model vs catalog text seats).
+* Seeded users still sign in with CampusHub!123.
+
+h3. Spec
+specs/003-tenants-plans/spec.md",Done,High,"campushub sdd platform",specs/003-tenants-plans/spec.md
+CampusHub Platform,CH-S02 Invites and People,Story,"h3. Story
+As a campus admin I can invite people and manage the People list.
+
+h3. Acceptance
+* Invite link/token can be accepted.
+* People page lists campus members.
+
+h3. Spec
+specs/004-invites-people/spec.md",Done,High,"campushub sdd platform",specs/004-invites-people/spec.md
+CampusHub Platform,CH-S03 Mock billing,Story,"h3. Story
+As a campus admin I can see mock billing and change plan without a real PSP.
+
+h3. Acceptance
+* Billing UI is reachable from the shell.
+* Plan upgrade is recorded without charging a real card.
+
+h3. Spec
+specs/005-mock-billing/spec.md",Done,High,"campushub sdd platform",specs/005-mock-billing/spec.md
+CampusHub Platform,CH-S04 Platform Ops vs campus console,Story,"h3. Story
+As a platform admin I use /ops; as a campus owner I use /campus.
+
+h3. Acceptance
+* Admin reaches Razor ops at /ops.
+* Campus console is separate from platform ops.
+
+h3. Spec
+specs/006-ops-campus/spec.md",Done,High,"campushub sdd platform",specs/006-ops-campus/spec.md
+CampusHub Discovery & engagement,CH-S05 Notifications and SSE,Story,"h3. Story
+As a student I get in-app notifications and live updates.
+
+h3. Acceptance
+* Inbox at /learn/inbox lists notifications.
+* Unread count/SSE updates the bell when events fire.
+
+h3. Spec
+specs/007-notifications/spec.md",Done,High,"campushub sdd discovery",specs/007-notifications/spec.md
+CampusHub Discovery & engagement,CH-S06 Course completion certificates,Story,"h3. Story
+As a student I receive a certificate when I finish every lecture.
+
+h3. Acceptance
+* Completing all lectures issues a certificate.
+* Certificates page lists issued items.
+
+h3. Spec
+specs/008-certificates/spec.md",Done,High,"campushub sdd discovery",specs/008-certificates/spec.md
+CampusHub Teach & learn,CH-S07 Teacher course analytics,Story,"h3. Story
+As a teacher I open course analytics for enrollments revenue and completions.
+
+h3. Acceptance
+* /catalog/:id/analytics loads stats for a course I own.
+* Completions rating and monthly enrollments are visible.
+
+h3. Spec
+specs/009-course-analytics/spec.md",Done,High,"campushub sdd learn",specs/009-course-analytics/spec.md
+CampusHub Discovery & engagement,CH-S08 Chat rooms and AI tutor,Story,"h3. Story
+As a student I can chat in a course room and ask the tutor from the player.
+
+h3. Acceptance
+* Course chat room exists (tutor:{courseId} or course room).
+* Ask AI answers from materials without a key and from a model when configured.
+
+h3. Spec
+specs/010-chat-ai-tutor/spec.md",Done,High,"campushub sdd discovery",specs/010-chat-ai-tutor/spec.md
+CampusHub Discovery & engagement,CH-S09 Catalog filters sort and recommended,Story,"h3. Story
+As a student I can filter sort and see recommended courses.
+
+h3. Acceptance
+* Catalog query params filter and sort the list.
+* Recommended endpoint returns a list.
+* Empty filter results do not lie about totalCount.
+
+h3. Spec
+specs/011-catalog-discovery/spec.md",Done,High,"campushub sdd discovery",specs/011-catalog-discovery/spec.md
+CampusHub Discovery & engagement,CH-S10 Student progress dashboard,Story,"h3. Story
+As a student I see streak progress bars and continue-learning on My learning.
+
+h3. Acceptance
+* /learn shows enrolled/in-progress courses.
+* Continue deep-links into the player.
+
+h3. Spec
+specs/012-progress-dashboard/spec.md",Done,High,"campushub sdd discovery",specs/012-progress-dashboard/spec.md
+CampusHub Teach & learn,CH-S11 Course quizzes,Story,"h3. Story
+As a teacher I author a quiz; as a student I attempt it in the player.
+
+h3. Acceptance
+* Teacher can add a multiple-choice quiz on edit course.
+* Student can start submit and see a best score.
+* Quiz list must not 500 if attempts table is missing.
+
+h3. Spec
+specs/013-quizzes/spec.md",Done,High,"campushub sdd learn",specs/013-quizzes/spec.md
+CampusHub Teach & learn,CH-S12 Course assignments,Story,"h3. Story
+As a teacher I create written assignments and grade them; as a student I submit.
+
+h3. Acceptance
+* Student submits from the player Assignments tab.
+* Teacher grades from the course editor.
+
+h3. Spec
+specs/014-assignments/spec.md",Done,High,"campushub sdd learn",specs/014-assignments/spec.md
+CampusHub Teach & learn,CH-S13 Lecture notes,Story,"h3. Story
+As a student I persist notes per lecture and see them on My learning.
+
+h3. Acceptance
+* Notes save on the lecture Notes tab.
+* My learning lists note snippets with links back to the lecture.
+
+h3. Spec
+specs/015-lecture-notes/spec.md",Done,High,"campushub sdd learn",specs/015-lecture-notes/spec.md
+CampusHub Teach & learn,CH-S14 Course announcements,Story,"h3. Story
+As a teacher I post an announcement; as a student I read it in the player.
+
+h3. Acceptance
+* Teacher posts from the course editor.
+* Player Announcements tab shows posts including seeded studio/linear posts.
+
+h3. Spec
+specs/016-announcements/spec.md",Done,High,"campushub sdd learn",specs/016-announcements/spec.md
+CampusHub Teach & learn,CH-S15 Course gradebook,Story,"h3. Story
+As a teacher I see a roster of quiz and assignment scores; as a student I see only my grades.
+
+h3. Acceptance
+* Teacher opens /catalog/:id/gradebook.
+* Student Grades tab does not show other students.
+
+h3. Spec
+specs/001-course-gradebook/spec.md",Done,High,"campushub sdd learn",specs/001-course-gradebook/spec.md
+CampusHub Teach & learn,CH-S16 Assignment due dates and student calendar,Story,"h3. Story
+As a teacher I set a due date; as a student I see overdue/late and a calendar on My learning.
+
+h3. Acceptance
+* Optional due date on create assignment.
+* Player shows overdue and late.
+* /learn Calendar lists dated work.
+
+h3. Spec
+specs/002-assignment-due-dates/spec.md",Done,High,"campushub sdd learn",specs/002-assignment-due-dates/spec.md

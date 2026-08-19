@@ -1,3 +1,4 @@
+/** SDD CH-S05 / MDP-16 — notifications inbox. /learn/inbox */
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { NotificationAlerts, NotificationDto } from '../../../shell/src/app/notifications';

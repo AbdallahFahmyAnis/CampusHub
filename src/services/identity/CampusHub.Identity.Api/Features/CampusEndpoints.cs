@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Identity.Api.Features;
 
+/// <summary>SDD CH-S01 tenants, CH-S02 invites, CH-S03 billing — specs/003–005 / MDP-12–14.</summary>
 public static class CampusEndpoints
 {
     public static IEndpointRouteBuilder MapCampusEndpoints(this IEndpointRouteBuilder app)

@@ -1,5 +1,6 @@
 # Feature Specification: Assignment due dates and student calendar
 
+**Story**: CH-S16
 **Feature Branch**: `cursor/sdd-spec-driven-development`
 **Created**: 2026-08-19
 **Status**: Implemented
@@ -65,3 +66,33 @@ A student opens My learning and sees a calendar (upcoming list by date) of assig
 
 - Calendar uses Catalog data (assignments + the student's lecture progress and submissions), not a new Enrollment roster API.
 - Out of scope: quiz due dates, timezone picker, blocking late submits, email reminders.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-27](https://abdallah-fahmy.atlassian.net/browse/MDP-27) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Editor due datetime | `http://localhost:5000/catalog/{id}/edit` | teacher | Optional due on new assignment |
+| Player due/overdue/late | `http://localhost:5000/learn/course/{id}` | student | Due label, overdue, late |
+| Calendar | `http://localhost:5000/learn` | student | Dated assignments grouped by due |
+
+### Apply (code)
+
+- `AssignmentDueRules.cs`, `AssignmentEndpoints` calendar GET (CH-S16)
+- `CourseAssignments.DueAt` + schema ALTER
+- `course-editor.ts`, `course-player.ts`, `progress-dashboard.ts`
+
+### Test
+
+- Automated: `dotnet test --filter Story=CH-S16`
+- Screen: Linear Algebra write-up due in ~5 days on My learning calendar
+
+### Mock
+
+- Seed `EnsureAssignmentDueDatesAsync` sets DueAt +5 days on `dddddddd-dddd-dddd-dddd-dddddddddd00`.
