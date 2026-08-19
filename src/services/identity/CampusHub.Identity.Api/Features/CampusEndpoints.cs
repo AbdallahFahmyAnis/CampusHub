@@ -30,7 +30,7 @@ public static class CampusEndpoints
             return Results.Unauthorized();
         }
 
-        var tenant = await db.Tenants.AsNoTracking().SingleOrDefaultAsync(t => t.Id == tenantId, ct);
+        var tenant = await FindCampusAsync(db, tenantId, ct);
         if (tenant is null)
         {
             return Results.NotFound(new { error = "Campus was not found." });
@@ -72,7 +72,7 @@ public static class CampusEndpoints
             return Results.Unauthorized();
         }
 
-        var tenant = await db.Tenants.AsNoTracking().SingleOrDefaultAsync(t => t.Id == tenantId, ct);
+        var tenant = await FindCampusAsync(db, tenantId, ct);
         if (tenant is null)
         {
             return Results.NotFound(new { error = "Campus was not found." });
@@ -158,7 +158,7 @@ public static class CampusEndpoints
             return Results.NotFound(new { error = "This invite is invalid or has expired." });
         }
 
-        var tenant = await db.Tenants.AsNoTracking().SingleOrDefaultAsync(t => t.Id == invite.TenantId, ct);
+        var tenant = await FindCampusAsync(db, invite.TenantId, ct);
         return Results.Ok(new OpenInviteDto(
             invite.Email,
             invite.DisplayName,
@@ -198,7 +198,7 @@ public static class CampusEndpoints
             return Results.Conflict(new { error = "A user with that email already exists." });
         }
 
-        var tenant = await db.Tenants.AsNoTracking().SingleOrDefaultAsync(t => t.Id == invite.TenantId, ct);
+        var tenant = await FindCampusAsync(db, invite.TenantId, ct);
         if (tenant is not null && invite.Role == Roles.Student)
         {
             var members = await LoadMembersAsync(users, invite.TenantId, ct);
@@ -235,6 +235,28 @@ public static class CampusEndpoints
         return Results.Ok(new { email = user.Email, tenantId = invite.TenantId });
     }
 
+    private static async Task<Tenant?> FindCampusAsync(IdentityDbContext db, Guid tenantId, CancellationToken ct)
+    {
+        var tenants = await db.Tenants.AsNoTracking().ToListAsync(ct);
+        var match = tenants.FirstOrDefault(t => t.Id == tenantId)
+                    ?? tenants.FirstOrDefault(t => tenantId == Tenancy.DefaultTenantId && t.Slug == SeedTenants.DefaultSlug);
+        if (match is not null)
+        {
+            return match;
+        }
+
+        return tenantId == Tenancy.DefaultTenantId
+            ? new Tenant
+            {
+                Id = Tenancy.DefaultTenantId,
+                Name = SeedTenants.DefaultName,
+                Slug = SeedTenants.DefaultSlug,
+                Plan = SeedTenants.DefaultPlan,
+                CreatedAt = DateTimeOffset.UtcNow
+            }
+            : null;
+    }
+
     private static async Task<CampusInvite?> FindOpenInviteAsync(IdentityDbContext db, string token, CancellationToken ct)
     {
         var invite = await db.CampusInvites.SingleOrDefaultAsync(i => i.Token == token, ct);
@@ -251,10 +273,10 @@ public static class CampusEndpoints
         Guid tenantId,
         CancellationToken ct)
     {
-        var people = await users.Users.AsNoTracking()
-            .Where(u => u.TenantId == tenantId)
+        var people = (await users.Users.AsNoTracking().ToListAsync(ct))
+            .Where(u => u.TenantId == tenantId || (tenantId == Tenancy.DefaultTenantId && u.TenantId == Guid.Empty))
             .OrderBy(u => u.DisplayName)
-            .ToListAsync(ct);
+            .ToList();
         var result = new List<CampusMemberDto>(people.Count);
         foreach (var user in people)
         {

@@ -144,8 +144,9 @@ export class PeoplePage {
     try {
       const campus = await firstValueFrom(this.http.get<CampusPeople>('/api/campus/members'));
       this.people.set(campus);
-    } catch {
-      this.error.set('Could not load campus members.');
+    } catch (err: unknown) {
+      const message = (err as { error?: { error?: string } })?.error?.error;
+      this.error.set(message || 'Could not load campus members.');
     }
   }
 }

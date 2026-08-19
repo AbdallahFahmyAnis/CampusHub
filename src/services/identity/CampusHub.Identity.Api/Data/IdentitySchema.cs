@@ -38,6 +38,10 @@ internal static class IdentitySchema
             );
             """, ct);
         await TryAsync(db, "CREATE UNIQUE INDEX IF NOT EXISTS IX_CampusInvites_Token ON CampusInvites (Token);", ct);
+        await TryAsync(db, $"""
+            UPDATE Tenants SET Id = '{SeedTenants.DefaultId}'
+            WHERE Slug = '{SeedTenants.DefaultSlug}';
+            """, ct);
     }
 
     private static async Task TryAsync(IdentityDbContext db, string sql, CancellationToken ct)
