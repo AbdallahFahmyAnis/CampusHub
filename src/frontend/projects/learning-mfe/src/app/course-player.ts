@@ -28,6 +28,13 @@ import { SessionService } from '../../../shell/src/app/session';
             {{ progress().done }} / {{ progress().total }} complete
             <div class="player-progress-bar" aria-hidden="true"><span [style.width.%]="progress().pct"></span></div>
           </div>
+          @if (progress().pct === 100) {
+            <div class="completion-banner">
+              <span aria-hidden="true">🎓</span>
+              <strong>Course complete!</strong>
+              <a routerLink="/learn/certificates">View certificate</a>
+            </div>
+          }
           @for (section of curriculum()?.sections ?? []; track section.id) {
             <p class="player-section">{{ section.title }}</p>
             @for (lecture of section.lectures; track lecture.id) {
@@ -292,6 +299,9 @@ export class CoursePlayer implements OnDestroy {
           })),
         };
       });
+      // If the course is now 100% done, navigate the tab to the lecture view
+      // so the completion banner in the sidebar is visible
+      this.tab.set('lecture');
     } catch {
       this.error.set('Could not mark this lecture complete. Confirm you can open it.');
     }

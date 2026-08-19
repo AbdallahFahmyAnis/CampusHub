@@ -64,6 +64,7 @@ public sealed class NotificationProcessor(
             EventTypes.EnrollmentCancelled => FromCancelled(envelope),
             EventTypes.InviteAccepted => FromInviteAccepted(envelope),
             EventTypes.PlanUpgraded => FromPlanUpgraded(envelope),
+            EventTypes.CourseCompleted => FromCourseCompleted(envelope),
             _ => []
         };
     }
@@ -153,6 +154,25 @@ public sealed class NotificationProcessor(
             Create(envelope, body.AdminId, body.AdminEmail, NotificationChannels.InApp,
                 "Plan upgraded",
                 $"{body.TenantName} is now on the {body.NewPlan} plan. Sign in again to activate new features.")
+        ];
+    }
+
+    private static List<UserNotification> FromCourseCompleted(IntegrationEventDto envelope)
+    {
+        var body = JsonSerializer.Deserialize<CourseCompletedV1>(envelope.Payload, JsonOptions);
+        if (body is null)
+        {
+            return [];
+        }
+
+        return
+        [
+            Create(envelope, body.StudentId, body.StudentEmail, NotificationChannels.InApp,
+                "Course completed 🎓",
+                $"Congratulations! You've completed {body.CourseTitle}. Your certificate has been issued."),
+            Create(envelope, body.StudentId, body.StudentEmail, NotificationChannels.Email,
+                "Course completed",
+                $"You've completed {body.CourseTitle}. Your certificate is available in My Learning.")
         ];
     }
 

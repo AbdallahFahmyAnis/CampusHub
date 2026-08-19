@@ -18,6 +18,7 @@ public sealed class AccessCredential
 public static class CredentialKinds
 {
     public const string CoursePass = "CoursePass";
+    public const string Certificate = "Certificate";
 }
 
 public static class CredentialStatus

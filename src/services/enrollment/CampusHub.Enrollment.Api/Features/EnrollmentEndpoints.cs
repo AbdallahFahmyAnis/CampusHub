@@ -115,12 +115,13 @@ public static class EnrollmentEndpoints
             return Results.Unauthorized();
         }
 
-        var confirmed = await db.Enrollments.AsNoTracking().AnyAsync(
-            e => e.CourseId == courseId
-                 && e.StudentId == studentId
-                 && e.Status == CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Confirmed,
-            ct);
-        return Results.Ok(new { confirmed });
+        var enrollment = await db.Enrollments.AsNoTracking()
+            .FirstOrDefaultAsync(
+                e => e.CourseId == courseId
+                     && e.StudentId == studentId
+                     && e.Status == CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Confirmed,
+                ct);
+        return Results.Ok(new { confirmed = enrollment is not null, enrollmentId = enrollment?.Id });
     }
 
     private static async Task<IResult> ListAll(EnrollmentDbContext db, ClaimsPrincipal user, CancellationToken ct)

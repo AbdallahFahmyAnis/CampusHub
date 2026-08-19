@@ -9,6 +9,7 @@ public static class EventTypes
     public const string PaymentFailed = "edu.payment.failed.v1";
     public const string InviteAccepted = "edu.identity.invite.accepted.v1";
     public const string PlanUpgraded = "edu.identity.plan.upgraded.v1";
+    public const string CourseCompleted = "edu.catalog.course.completed.v1";
 }
 
 public sealed record EnrollmentStartedV1(Guid EnrollmentId, string StudentId, string StudentEmail, string StudentName, Guid CourseId, string CourseTitle, decimal Amount);
@@ -18,6 +19,7 @@ public sealed record PaymentSucceededV1(Guid PaymentId, Guid EnrollmentId);
 public sealed record PaymentFailedV1(Guid PaymentId, Guid EnrollmentId, string Reason);
 public sealed record InviteAcceptedV1(Guid TenantId, string TenantName, string InviteeId, string InviteeEmail, string InviteeName, string AdminId, string AdminEmail, string Role);
 public sealed record PlanUpgradedV1(Guid TenantId, string TenantName, string AdminId, string AdminEmail, string OldPlan, string NewPlan);
+public sealed record CourseCompletedV1(Guid CourseId, string CourseTitle, string StudentId, string StudentEmail, string StudentName, Guid EnrollmentId, DateTimeOffset CompletedAt);
 
 /// <summary>
 /// Transport envelope used until RabbitMQ is available. Payload is the serialized event body.

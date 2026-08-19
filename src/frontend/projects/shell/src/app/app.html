@@ -29,6 +29,7 @@
       <a routerLink="/learn" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">My learning</a>
       <a routerLink="/catalog" [queryParams]="{ saved: '1' }">Wishlist</a>
       <a routerLink="/learn/inbox" routerLinkActive="active">Inbox</a>
+      <a routerLink="/learn/certificates" routerLinkActive="active">Certificates</a>
       <a routerLink="/chat" routerLinkActive="active">Chat</a>
       @if (session.isTeacher()) {
         <a routerLink="/catalog/mine" routerLinkActive="active">My courses</a>

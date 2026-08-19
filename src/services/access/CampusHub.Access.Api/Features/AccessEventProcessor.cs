@@ -43,6 +43,14 @@ public sealed class AccessEventProcessor(
                 await RevokeAsync(body.EnrollmentId, ct);
             }
         }
+        else if (envelope.Type == EventTypes.CourseCompleted)
+        {
+            var body = JsonSerializer.Deserialize<CourseCompletedV1>(envelope.Payload, JsonOptions);
+            if (body is not null)
+            {
+                await IssueCertificateAsync(body, ct);
+            }
+        }
         else
         {
             logger.LogDebug("Access service ignored event {Type}", envelope.Type);
@@ -79,6 +87,36 @@ public sealed class AccessEventProcessor(
             IssuedAt = DateTimeOffset.UtcNow,
             ExpiresAt = expires
         });
+    }
+
+    private async Task IssueCertificateAsync(CourseCompletedV1 body, CancellationToken ct)
+    {
+        // Idempotent: one certificate per enrollment
+        var already = await db.Credentials.AnyAsync(
+            c => c.EnrollmentId == body.EnrollmentId && c.Kind == CredentialKinds.Certificate, ct);
+        if (already)
+        {
+            return;
+        }
+
+        var id = Guid.NewGuid();
+        var expires = body.CompletedAt.AddYears(100); // certificates don't expire
+        var token = signer.Sign(id, body.EnrollmentId, body.CourseId, CredentialKinds.Certificate, expires.ToUnixTimeSeconds());
+        db.Credentials.Add(new AccessCredential
+        {
+            Id = id,
+            EnrollmentId = body.EnrollmentId,
+            StudentId = body.StudentId,
+            StudentName = body.StudentName,
+            CourseId = body.CourseId,
+            CourseTitle = body.CourseTitle,
+            Kind = CredentialKinds.Certificate,
+            Token = token,
+            Status = CredentialStatus.Active,
+            IssuedAt = body.CompletedAt,
+            ExpiresAt = expires
+        });
+        logger.LogInformation("Issued certificate for student {Student} on course {Course}", body.StudentId, body.CourseId);
     }
 
     private async Task RevokeAsync(Guid enrollmentId, CancellationToken ct)

@@ -32,5 +32,33 @@ public sealed class EnrollmentGateway(HttpClient http, IConfiguration configurat
         }
     }
 
-    private sealed record ConfirmedResponse(bool Confirmed);
+    public async Task<Guid?> GetEnrollmentIdAsync(string studentId, Guid courseId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(studentId) || courseId == Guid.Empty)
+        {
+            return null;
+        }
+
+        try
+        {
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"/api/enrollments/internal/confirmed?studentId={Uri.EscapeDataString(studentId)}&courseId={courseId}");
+            request.Headers.Add("X-Internal-Key", configuration["Internal:ApiKey"] ?? "campus-dev-internal");
+            var response = await http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var body = await response.Content.ReadFromJsonAsync<ConfirmedResponse>(ct);
+            return body?.Confirmed == true ? body.EnrollmentId : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed record ConfirmedResponse(bool Confirmed, Guid? EnrollmentId);
 }

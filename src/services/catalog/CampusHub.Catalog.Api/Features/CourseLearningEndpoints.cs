@@ -3,6 +3,7 @@ using CampusHub.BuildingBlocks.Security;
 using CampusHub.Catalog.Api.Contracts;
 using CampusHub.Catalog.Api.Domain;
 using CampusHub.Catalog.Api.Infrastructure;
+using CampusHub.Contracts.Events;
 using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Features;
@@ -150,6 +151,7 @@ public static class CourseLearningEndpoints
         CatalogDbContext db,
         ClaimsPrincipal user,
         EnrollmentGateway enrollment,
+        EventPublisher events,
         CancellationToken ct)
     {
         var lecture = await db.Lectures
@@ -162,10 +164,11 @@ public static class CourseLearningEndpoints
         }
 
         var (studentId, _) = CatalogEndpoints.Caller(user);
+        var enrollmentId = await enrollment.GetEnrollmentIdAsync(studentId, id, ct);
         var allowed = lecture.IsPreview
                       || CatalogEndpoints.CanManage(user)
                       || CatalogEndpoints.IsOwner(lecture.Section.Course, user)
-                      || await enrollment.IsConfirmedAsync(studentId, id, ct);
+                      || enrollmentId is not null;
         if (!allowed)
         {
             return Results.Forbid();
@@ -186,7 +189,23 @@ public static class CourseLearningEndpoints
             await db.SaveChangesAsync(ct);
         }
 
-        return Results.Ok(new { completed = true });
+        // Check if all lectures in the course are now completed
+        var totalLectures = await db.Lectures.CountAsync(
+            l => l.Section.CourseId == id, ct);
+        var completedCount = await db.LectureProgress.CountAsync(
+            p => p.CourseId == id && p.StudentId == studentId, ct);
+
+        var courseComplete = totalLectures > 0 && completedCount >= totalLectures;
+        if (courseComplete && enrollmentId is not null)
+        {
+            var course = lecture.Section.Course;
+            var email = user.FindFirstValue("email") ?? user.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+            var name = user.FindFirstValue("name") ?? user.FindFirstValue(ClaimTypes.Name) ?? studentId;
+            await events.PublishAsync(EventTypes.CourseCompleted, new CourseCompletedV1(
+                id, course.Title, studentId, email, name, enrollmentId.Value, DateTimeOffset.UtcNow), ct);
+        }
+
+        return Results.Ok(new { completed = true, courseComplete });
     }
 
     private static async Task<IResult> ListWishlist(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)

@@ -55,6 +55,15 @@ public static class DependencyInjection
         });
 
         builder.Services.AddScoped<CatalogSeeder>();
+        builder.Services.AddScoped<EventPublisher>();
+        builder.Services.AddHttpClient("notification", client =>
+        {
+            client.BaseAddress = new Uri(builder.Configuration["Services:Notification"] ?? "http://localhost:5105");
+        });
+        builder.Services.AddHttpClient("access", client =>
+        {
+            client.BaseAddress = new Uri(builder.Configuration["Services:Access"] ?? "http://localhost:5106");
+        });
         builder.Services.AddHttpClient<EnrollmentGateway>(client =>
         {
             client.BaseAddress = new Uri(builder.Configuration["Enrollment:BaseUrl"] ?? "http://localhost:5103");
