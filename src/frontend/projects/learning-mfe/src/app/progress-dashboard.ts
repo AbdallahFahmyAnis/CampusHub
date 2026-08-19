@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CatalogApi, LectureNoteListItemDto } from '../../../catalog-mfe/src/app/catalog.api';
+import { CatalogApi, LectureNoteListItemDto, CalendarItemDto } from '../../../catalog-mfe/src/app/catalog.api';
 import { LearningApi, ProgressDashboardDto } from './learning.api';
 
 @Component({
@@ -135,6 +135,27 @@ import { LearningApi, ProgressDashboardDto } from './learning.api';
       <p class="muted">Loading your progress…</p>
     }
 
+    @if (calendar().length) {
+      <section style="margin-top:2rem;">
+        <h2 style="margin-bottom:1rem;">Calendar</h2>
+        <div style="display:flex;flex-direction:column;gap:.75rem;">
+          @for (item of calendar(); track item.assignmentId) {
+            <a class="panel" [routerLink]="['/learn/course', item.courseId]"
+              style="text-decoration:none;color:inherit;display:block;">
+              <p class="card-kicker" style="margin:0;">{{ item.courseTitle }}</p>
+              <p style="margin:.2rem 0;font-weight:600;">{{ item.title }}</p>
+              <p class="muted" style="margin:0;font-size:.9rem;">
+                Due {{ item.dueAt | date:'medium' }}
+                @if (item.overdue) { · Overdue }
+                @if (item.late) { · Late }
+                @if (item.submitted) { · Submitted }
+              </p>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
     @if (notes().length) {
       <section style="margin-top:2rem;">
         <h2 style="margin-bottom:1rem;">Your lecture notes</h2>
@@ -158,6 +179,7 @@ export class ProgressDashboard {
   private readonly catalog = inject(CatalogApi);
   readonly data = signal<ProgressDashboardDto | null>(null);
   readonly notes = signal<LectureNoteListItemDto[]>([]);
+  readonly calendar = signal<CalendarItemDto[]>([]);
   readonly error = signal<string | null>(null);
 
   constructor() {
@@ -166,6 +188,9 @@ export class ProgressDashboard {
       .catch(() => this.error.set('Could not load your progress. Make sure you are signed in.'));
     void this.catalog.myNotes()
       .then((items) => this.notes.set(items))
+      .catch(() => undefined);
+    void this.catalog.calendar()
+      .then((items) => this.calendar.set(items))
       .catch(() => undefined);
   }
 

@@ -23,6 +23,7 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
         await SeedCommunityAsync(cancellationToken);
         await SeedQuizzesAsync(cancellationToken);
         await SeedAssignmentsAsync(cancellationToken);
+        await EnsureAssignmentDueDatesAsync(cancellationToken);
         await SeedAnnouncementsAsync(cancellationToken);
         await SeedGradebookDemoAsync(cancellationToken);
         await search.RebuildAsync(db, cancellationToken);
@@ -347,9 +348,29 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
             Title = "Span and basis write-up",
             Instructions = "In your own words, explain what a basis is and give one campus-life example of a 2D span. 150–300 words.",
             MaxScore = 100,
+            DueAt = DateTimeOffset.UtcNow.AddDays(5),
             CreatedAt = DateTimeOffset.UtcNow,
         });
         await db.SaveChangesAsync(ct);
+    }
+
+    private async Task EnsureAssignmentDueDatesAsync(CancellationToken ct)
+    {
+        try
+        {
+            var linear = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddd00");
+            var row = await db.CourseAssignments.SingleOrDefaultAsync(a => a.Id == linear, ct);
+            if (row is not null && row.DueAt is null)
+            {
+                row.DueAt = DateTimeOffset.UtcNow.AddDays(5);
+                await db.SaveChangesAsync(ct);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Assignment due date seed skipped");
+            db.ChangeTracker.Clear();
+        }
     }
 
     private async Task SeedAnnouncementsAsync(CancellationToken ct)
