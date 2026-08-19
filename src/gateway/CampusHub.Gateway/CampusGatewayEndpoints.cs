@@ -12,6 +12,8 @@ public static class CampusGatewayEndpoints
         var campus = app.MapGroup("/api/campus").RequireAuthorization().DisableAntiforgery();
         campus.MapGet("/members", ListMembers);
         campus.MapPost("/invites", CreateInvite);
+        campus.MapGet("/billing", GetBilling);
+        campus.MapPost("/billing/upgrade", UpgradeBilling);
 
         app.MapGet("/api/invites/{token}", GetInvite).AllowAnonymous();
         app.MapPost("/api/invites/{token}/accept", AcceptInvite).AllowAnonymous().DisableAntiforgery();
@@ -99,6 +101,51 @@ public static class CampusGatewayEndpoints
             : Results.BadRequest(new { error = error ?? "Could not accept the invite." });
     }
 
+    private static async Task<IResult> GetBilling(ClaimsPrincipal user, DownstreamApi api, CancellationToken ct)
+    {
+        if (!user.IsInRole(Roles.Administrator))
+        {
+            return Results.Forbid();
+        }
+
+        var tenantId = Tenancy.TenantId(user);
+        var billing = await api.GetInternalAsync<CampusBillingDto>(
+            "identity",
+            $"/api/identity/tenants/{tenantId}/billing",
+            ct);
+        return billing is null
+            ? Results.NotFound(new { error = "Campus was not found." })
+            : Results.Ok(billing);
+    }
+
+    private static async Task<IResult> UpgradeBilling(ClaimsPrincipal user, DownstreamApi api, CancellationToken ct)
+    {
+        if (!user.IsInRole(Roles.Administrator))
+        {
+            return Results.Forbid();
+        }
+
+        var tenantId = Tenancy.TenantId(user);
+        var (ok, error, body) = await api.PostJsonResultAsync<object, UpgradeBillingResponse>(
+            "identity",
+            $"/api/identity/tenants/{tenantId}/billing/upgrade",
+            new { },
+            ct,
+            internalKey: true);
+        if (!ok || body is null)
+        {
+            return Results.BadRequest(new { error = error ?? "Could not upgrade the plan." });
+        }
+
+        return Results.Ok(new
+        {
+            body.Upgraded,
+            body.Plan,
+            body.Message,
+            billing = body.Billing
+        });
+    }
+
     private sealed record CampusMembersDto(
         Guid TenantId,
         string TenantName,
@@ -119,4 +166,30 @@ public static class CampusGatewayEndpoints
     private sealed record CreateCampusInviteBody(string Email, string DisplayName, string Role, string? CreatedBy);
 
     private sealed record AcceptCampusInviteBody(string Password, string? DisplayName);
+
+    private sealed record CampusBillingDto(
+        Guid TenantId,
+        string TenantName,
+        string Plan,
+        int SeatCap,
+        decimal MonthlyPrice,
+        bool AllowsModelAi,
+        bool AllowsChat,
+        string? NextPlan,
+        decimal? NextPlanPrice,
+        PlanOptionDto[] Options);
+
+    private sealed record PlanOptionDto(
+        string Id,
+        string Name,
+        decimal MonthlyPrice,
+        int SeatCap,
+        bool AllowsModelAi,
+        bool AllowsChat);
+
+    private sealed record UpgradeBillingResponse(
+        bool Upgraded,
+        string Plan,
+        string Message,
+        CampusBillingDto? Billing);
 }

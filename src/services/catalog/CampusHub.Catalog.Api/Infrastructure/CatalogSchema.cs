@@ -82,6 +82,11 @@ internal static class CatalogSchema
             UPDATE Courses SET TenantId = '{SeedTenants.DefaultId}'
             WHERE TenantId IS NULL OR TenantId = '' OR TenantId = '00000000-0000-0000-0000-000000000000';
             """, ct);
+        await TryAsync(db, "ALTER TABLE Subjects ADD COLUMN TenantId TEXT", ct);
+        await TryAsync(db, $"""
+            UPDATE Subjects SET TenantId = '{SeedTenants.DefaultId}'
+            WHERE TenantId IS NULL OR TenantId = '' OR TenantId = '00000000-0000-0000-0000-000000000000';
+            """, ct);
         await TryAsync(db, """
             CREATE TABLE IF NOT EXISTS CourseWishlists (
                 Id TEXT NOT NULL CONSTRAINT PK_CourseWishlists PRIMARY KEY,

@@ -38,7 +38,7 @@ app.get("/api/chat/rooms/:roomId/messages", async (req, res) => {
     if (!access.ok) {
       return res.status(403).json({ error: access.reason });
     }
-    store.ensureRoom(req.params.roomId, access.title, req.params.roomId === "campus" ? "campus" : "course");
+    store.ensureRoom(req.params.roomId, access.title, req.params.roomId.startsWith("campus") ? "campus" : "course");
     res.json(store.recent(req.params.roomId, Number(req.query.limit ?? 50)));
   } catch (error) {
     res.status(502).json({ error: error.message });
@@ -70,7 +70,7 @@ io.on("connection", (socket) => {
         ack?.({ ok: false, error: access.reason });
         return;
       }
-      store.ensureRoom(roomId, access.title, roomId === "campus" ? "campus" : "course");
+      store.ensureRoom(roomId, access.title, roomId.startsWith("campus") ? "campus" : "course");
       socket.join(roomId);
       ack?.({ ok: true, title: access.title, messages: store.recent(roomId, 50) });
     } catch (error) {

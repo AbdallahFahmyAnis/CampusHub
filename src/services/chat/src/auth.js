@@ -34,6 +34,8 @@ function toUser(payload, accessToken) {
     name: payload.name ?? payload.preferred_username ?? payload.email ?? "Campus user",
     email: payload.email ?? "",
     roles,
+    plan: payload.plan ?? "campus",
+    tenantId: payload.tenant_id ?? "",
     accessToken,
   };
 }

@@ -3,6 +3,7 @@ namespace CampusHub.Catalog.Api.Domain;
 public sealed class Subject
 {
     public Guid Id { get; set; }
+    public Guid TenantId { get; set; }
     public required string Code { get; set; }
     public required string Name { get; set; }
     public string? Description { get; set; }

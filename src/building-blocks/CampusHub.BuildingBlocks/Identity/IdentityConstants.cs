@@ -73,6 +73,25 @@ public static class Plans
 
     public static bool AllowsModelAi(string plan) =>
         !string.Equals(plan, Free, StringComparison.OrdinalIgnoreCase);
+
+    public static bool AllowsChat(string plan) =>
+        !string.Equals(plan, Free, StringComparison.OrdinalIgnoreCase);
+
+    public static decimal MonthlyPrice(string plan) =>
+        plan.ToLowerInvariant() switch
+        {
+            Enterprise => 199m,
+            Campus => 49m,
+            _ => 0m
+        };
+
+    public static string? NextPlan(string plan) =>
+        plan.ToLowerInvariant() switch
+        {
+            Free => Campus,
+            Campus => Enterprise,
+            _ => null
+        };
 }
 
 public static class Tenancy

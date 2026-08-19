@@ -21,7 +21,8 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
         modelBuilder.Entity<Subject>(entity =>
         {
             entity.HasKey(x => x.Id);
-            entity.HasIndex(x => x.Code).IsUnique();
+            entity.Property(x => x.TenantId).HasConversion(GuidAsText);
+            entity.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
             entity.Property(x => x.Code).HasMaxLength(32);
             entity.Property(x => x.Name).HasMaxLength(200);
         });

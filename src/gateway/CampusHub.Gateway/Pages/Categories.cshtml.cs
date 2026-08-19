@@ -11,6 +11,8 @@ public class CategoriesModel(DownstreamApi api) : PageModel
 {
     public IReadOnlyList<OpsSubject> Subjects { get; private set; } = [];
 
+    public string CampusName => Tenancy.TenantName(User);
+
     [BindProperty]
     public string Code { get; set; } = string.Empty;
 

@@ -6,15 +6,14 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = process.env.DATA_DIR ?? path.join(root, "..", "data");
 const storePath = path.join(dataDir, "chat-store.json");
 
-const campusRoom = {
-  id: "campus",
-  title: "Campus lobby",
-  kind: "campus",
-};
+export function campusRoomId(tenantId) {
+  const id = tenantId && String(tenantId).trim();
+  return id ? `campus:${id}` : "campus";
+}
 
 export class ChatStore {
   constructor() {
-    this.rooms = new Map([[campusRoom.id, { ...campusRoom, messages: [] }]]);
+    this.rooms = new Map();
     this.writeQueue = Promise.resolve();
   }
 
@@ -25,9 +24,6 @@ export class ChatStore {
       this.rooms = new Map(
         (parsed.rooms ?? []).map((room) => [room.id, { ...room, messages: room.messages ?? [] }]),
       );
-      if (!this.rooms.has(campusRoom.id)) {
-        this.rooms.set(campusRoom.id, { ...campusRoom, messages: [] });
-      }
     } catch (error) {
       if (error.code !== "ENOENT") {
         console.warn("Could not load chat store, starting empty.", error.message);
@@ -53,7 +49,8 @@ export class ChatStore {
   }
 
   async append(message) {
-    const room = this.ensureRoom(message.roomId, message.roomTitle, message.roomId === "campus" ? "campus" : "course");
+    const kind = message.roomId.startsWith("campus") ? "campus" : "course";
+    const room = this.ensureRoom(message.roomId, message.roomTitle, kind);
     if (message.clientId && room.messages.some((item) => item.clientId === message.clientId)) {
       return room.messages.find((item) => item.clientId === message.clientId);
     }

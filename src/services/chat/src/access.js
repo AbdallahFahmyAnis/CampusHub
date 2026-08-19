@@ -1,11 +1,23 @@
 import { isAdmin, isStaff } from "./auth.js";
-import { courseRoomId, parseCourseId } from "./store.js";
+import { campusRoomId, courseRoomId, parseCourseId } from "./store.js";
 
 const catalogBase = process.env.CATALOG_BASE_URL ?? "http://localhost:5102";
 const enrollmentBase = process.env.ENROLLMENT_BASE_URL ?? "http://localhost:5103";
 
+function allowsChat(user) {
+  return (user.plan ?? "campus").toLowerCase() !== "free";
+}
+
 export async function listAccessibleRooms(user) {
-  const rooms = [{ id: "campus", title: "Campus lobby", kind: "campus" }];
+  if (!allowsChat(user)) {
+    return [];
+  }
+
+  const rooms = [{
+    id: campusRoomId(user.tenantId),
+    title: "Campus lobby",
+    kind: "campus",
+  }];
   const courses = isAdmin(user)
     ? await getJson(`${catalogBase}/api/catalog/courses`, user.accessToken)
     : isStaff(user)
@@ -24,7 +36,12 @@ export async function listAccessibleRooms(user) {
 }
 
 export async function canJoinRoom(user, roomId) {
-  if (roomId === "campus") {
+  if (!allowsChat(user)) {
+    return { ok: false, reason: "Live chat requires the Campus plan. Upgrade in Billing." };
+  }
+
+  const lobbyId = campusRoomId(user.tenantId);
+  if (roomId === lobbyId || roomId === "campus") {
     return { ok: true, title: "Campus lobby" };
   }
 

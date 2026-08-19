@@ -12,6 +12,8 @@ public static class CampusEndpoints
     {
         app.MapGet("/api/identity/tenants/{tenantId:guid}/members", ListMembers).AllowAnonymous();
         app.MapPost("/api/identity/tenants/{tenantId:guid}/invites", CreateInvite).AllowAnonymous();
+        app.MapGet("/api/identity/tenants/{tenantId:guid}/billing", GetBilling).AllowAnonymous();
+        app.MapPost("/api/identity/tenants/{tenantId:guid}/billing/upgrade", UpgradeBilling).AllowAnonymous();
         app.MapGet("/api/identity/invites/{token}", GetInvite).AllowAnonymous();
         app.MapPost("/api/identity/invites/{token}/accept", AcceptInvite).AllowAnonymous();
         return app;
@@ -140,6 +142,82 @@ public static class CampusEndpoints
             new CreatedInviteDto(invite.Token, invite.Email, invite.Role, invite.ExpiresAt));
     }
 
+    private static async Task<IResult> GetBilling(
+        Guid tenantId,
+        HttpContext http,
+        IConfiguration config,
+        IdentityDbContext db,
+        CancellationToken ct)
+    {
+        if (!IsInternal(http, config))
+        {
+            return Results.Unauthorized();
+        }
+
+        var tenant = await FindCampusAsync(db, tenantId, ct);
+        if (tenant is null)
+        {
+            return Results.NotFound(new { error = "Campus was not found." });
+        }
+
+        return Results.Ok(ToBillingDto(tenant));
+    }
+
+    private static async Task<IResult> UpgradeBilling(
+        Guid tenantId,
+        HttpContext http,
+        IConfiguration config,
+        IdentityDbContext db,
+        CancellationToken ct)
+    {
+        if (!IsInternal(http, config))
+        {
+            return Results.Unauthorized();
+        }
+
+        var tenant = await FindCampusTrackedAsync(db, tenantId, ct);
+        if (tenant is null)
+        {
+            return Results.NotFound(new { error = "Campus was not found." });
+        }
+
+        var next = Plans.NextPlan(tenant.Plan);
+        if (next is null)
+        {
+            return Results.Conflict(new { error = "This campus is already on the highest plan." });
+        }
+
+        tenant.Plan = next;
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(new
+        {
+            upgraded = true,
+            plan = tenant.Plan,
+            billing = ToBillingDto(tenant),
+            message = "Plan upgraded. Sign in again so Ask AI, chat, and seat limits pick up the new plan."
+        });
+    }
+
+    private static CampusBillingDto ToBillingDto(Tenant tenant)
+    {
+        var next = Plans.NextPlan(tenant.Plan);
+        return new CampusBillingDto(
+            tenant.Id,
+            tenant.Name,
+            tenant.Plan,
+            Plans.SeatCap(tenant.Plan),
+            Plans.MonthlyPrice(tenant.Plan),
+            Plans.AllowsModelAi(tenant.Plan),
+            Plans.AllowsChat(tenant.Plan),
+            next,
+            next is null ? null : Plans.MonthlyPrice(next),
+            [
+                new PlanOptionDto(Plans.Free, "Free", Plans.MonthlyPrice(Plans.Free), Plans.SeatCap(Plans.Free), false, false),
+                new PlanOptionDto(Plans.Campus, "Campus", Plans.MonthlyPrice(Plans.Campus), Plans.SeatCap(Plans.Campus), true, true),
+                new PlanOptionDto(Plans.Enterprise, "Enterprise", Plans.MonthlyPrice(Plans.Enterprise), Plans.SeatCap(Plans.Enterprise), true, true)
+            ]);
+    }
+
     private static async Task<IResult> GetInvite(
         string token,
         HttpContext http,
@@ -235,6 +313,13 @@ public static class CampusEndpoints
         return Results.Ok(new { email = user.Email, tenantId = invite.TenantId });
     }
 
+    private static async Task<Tenant?> FindCampusTrackedAsync(IdentityDbContext db, Guid tenantId, CancellationToken ct)
+    {
+        var tenants = await db.Tenants.ToListAsync(ct);
+        return tenants.FirstOrDefault(t => t.Id == tenantId)
+               ?? tenants.FirstOrDefault(t => tenantId == Tenancy.DefaultTenantId && t.Slug == SeedTenants.DefaultSlug);
+    }
+
     private static async Task<Tenant?> FindCampusAsync(IdentityDbContext db, Guid tenantId, CancellationToken ct)
     {
         var tenants = await db.Tenants.AsNoTracking().ToListAsync(ct);
@@ -327,3 +412,23 @@ public sealed record OpenInviteDto(string Email, string DisplayName, string Role
 public sealed record CreateCampusInviteRequest(string Email, string DisplayName, string Role, string? CreatedBy);
 
 public sealed record AcceptCampusInviteRequest(string Password, string? DisplayName);
+
+public sealed record CampusBillingDto(
+    Guid TenantId,
+    string TenantName,
+    string Plan,
+    int SeatCap,
+    decimal MonthlyPrice,
+    bool AllowsModelAi,
+    bool AllowsChat,
+    string? NextPlan,
+    decimal? NextPlanPrice,
+    IReadOnlyList<PlanOptionDto> Options);
+
+public sealed record PlanOptionDto(
+    string Id,
+    string Name,
+    decimal MonthlyPrice,
+    int SeatCap,
+    bool AllowsModelAi,
+    bool AllowsChat);

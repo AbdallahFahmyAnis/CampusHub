@@ -372,14 +372,14 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
 
     private static readonly Subject[] Subjects =
     [
-        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"), Code = "CS", Name = "Computer Science", Description = "Algorithms, systems, and software engineering." },
-        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"), Code = "MATH", Name = "Mathematics", Description = "Pure and applied mathematics." },
-        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), Code = "ENG", Name = "English", Description = "Language, writing, and literature." },
-        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4"), Code = "DATA", Name = "Data Science", Description = "Data, analysis, and machine learning." },
-        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5"), Code = "BUS", Name = "Business", Description = "Management, ventures, and personal finance." },
-        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6"), Code = "PHYS", Name = "Physics", Description = "Mechanics and physical intuition." },
-        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7"), Code = "DES", Name = "Design", Description = "UX and visual design for campus products." },
-        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8"), Code = "HIST", Name = "History", Description = "Modern world and civic context." }
+        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"), TenantId = Tenancy.DefaultTenantId, Code = "CS", Name = "Computer Science", Description = "Algorithms, systems, and software engineering." },
+        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"), TenantId = Tenancy.DefaultTenantId, Code = "MATH", Name = "Mathematics", Description = "Pure and applied mathematics." },
+        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"), TenantId = Tenancy.DefaultTenantId, Code = "ENG", Name = "English", Description = "Language, writing, and literature." },
+        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4"), TenantId = Tenancy.DefaultTenantId, Code = "DATA", Name = "Data Science", Description = "Data, analysis, and machine learning." },
+        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5"), TenantId = Tenancy.DefaultTenantId, Code = "BUS", Name = "Business", Description = "Management, ventures, and personal finance." },
+        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6"), TenantId = Tenancy.DefaultTenantId, Code = "PHYS", Name = "Physics", Description = "Mechanics and physical intuition." },
+        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7"), TenantId = Tenancy.DefaultTenantId, Code = "DES", Name = "Design", Description = "UX and visual design for campus products." },
+        new() { Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8"), TenantId = Tenancy.DefaultTenantId, Code = "HIST", Name = "History", Description = "Modern world and civic context." }
     ];
 
     private static readonly CourseSeed[] Courses =

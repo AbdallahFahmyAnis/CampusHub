@@ -40,6 +40,7 @@ interface Profile {
         <div class="actions">
           @if (session.isAdmin()) {
             <a class="btn secondary" routerLink="/people">People</a>
+            <a class="btn secondary" routerLink="/billing">Billing</a>
           }
           <a class="btn secondary" routerLink="/learn/inbox">Inbox</a>
           <a class="btn secondary" routerLink="/enroll">Enrollments</a>

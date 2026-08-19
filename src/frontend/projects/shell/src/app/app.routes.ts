@@ -17,6 +17,11 @@ export const routes: Routes = [
     loadComponent: () => import('./people').then((m) => m.PeoplePage),
   },
   {
+    path: 'billing',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./billing').then((m) => m.BillingPage),
+  },
+  {
     path: 'account',
     canActivate: [authGuard],
     loadComponent: () => import('./profile').then((m) => m.ProfilePage),

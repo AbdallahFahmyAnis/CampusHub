@@ -33,9 +33,12 @@ public static class CatalogEndpoints
         return app;
     }
 
-    private static async Task<IResult> ListSubjects(CatalogDbContext db, CancellationToken ct)
+    private static async Task<IResult> ListSubjects(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
     {
+        var tenantId = Tenancy.TenantId(user);
         var items = await db.Subjects
+            .AsNoTracking()
+            .Where(s => s.TenantId == tenantId || (tenantId == Tenancy.DefaultTenantId && s.TenantId == Guid.Empty))
             .OrderBy(s => s.Code)
             .Select(s => new SubjectDto(s.Id, s.Code, s.Name, s.Description))
             .ToListAsync(ct);
@@ -43,22 +46,28 @@ public static class CatalogEndpoints
         return Results.Ok(items);
     }
 
-    private static async Task<IResult> CreateSubject(CreateSubjectRequest request, CatalogDbContext db, CancellationToken ct)
+    private static async Task<IResult> CreateSubject(
+        CreateSubjectRequest request,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Code) || string.IsNullOrWhiteSpace(request.Name))
         {
             return Results.BadRequest(new { error = "Code and name are required." });
         }
 
+        var tenantId = Tenancy.TenantId(user);
         var code = request.Code.Trim().ToUpperInvariant();
-        if (await db.Subjects.AnyAsync(s => s.Code == code, ct))
+        if (await db.Subjects.AnyAsync(s => s.TenantId == tenantId && s.Code == code, ct))
         {
-            return Results.Conflict(new { error = "A category with that code already exists." });
+            return Results.Conflict(new { error = "A category with that code already exists on this campus." });
         }
 
         var subject = new Subject
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             Code = code,
             Name = request.Name.Trim(),
             Description = request.Description?.Trim()
@@ -229,10 +238,12 @@ public static class CatalogEndpoints
             return Results.BadRequest(new { error = "Capacity must be at least 1." });
         }
 
-        var subject = await db.Subjects.SingleOrDefaultAsync(s => s.Id == request.SubjectId, ct);
+        var tenantId = Tenancy.TenantId(user);
+        var subject = await db.Subjects.SingleOrDefaultAsync(
+            s => s.Id == request.SubjectId && s.TenantId == tenantId, ct);
         if (subject is null)
         {
-            return Results.BadRequest(new { error = "Unknown subject." });
+            return Results.BadRequest(new { error = "Unknown subject for this campus." });
         }
 
         var (id, email) = Caller(user);
@@ -284,10 +295,12 @@ public static class CatalogEndpoints
             return Results.Forbid();
         }
 
-        var subject = await db.Subjects.SingleOrDefaultAsync(s => s.Id == request.SubjectId, ct);
+        var tenantId = Tenancy.TenantId(user);
+        var subject = await db.Subjects.SingleOrDefaultAsync(
+            s => s.Id == request.SubjectId && s.TenantId == tenantId, ct);
         if (subject is null)
         {
-            return Results.BadRequest(new { error = "Unknown subject." });
+            return Results.BadRequest(new { error = "Unknown subject for this campus." });
         }
 
         var occupied = course.Capacity - course.RemainingSeats;
