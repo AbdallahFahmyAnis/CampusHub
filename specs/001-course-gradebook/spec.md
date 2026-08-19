@@ -1,5 +1,6 @@
 # Feature Specification: Course gradebook
 
+**Story**: CH-S15
 **Feature Branch**: `main`
 **Created**: 2026-08-19
 **Status**: Implemented

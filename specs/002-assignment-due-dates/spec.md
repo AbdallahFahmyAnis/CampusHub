@@ -1,5 +1,6 @@
 # Feature Specification: Assignment due dates and student calendar
 
+**Story**: CH-S16
 **Feature Branch**: `cursor/sdd-spec-driven-development`
 **Created**: 2026-08-19
 **Status**: Implemented

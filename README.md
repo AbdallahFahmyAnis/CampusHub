@@ -12,6 +12,8 @@ New slices start as a spec, not as ad-hoc code. Constitution: [`.specify/memory/
 
 In Cursor, use the project skills `speckit-specify`, `speckit-plan`, `speckit-tasks`, `speckit-implement`, then `speckit-converge`. “Proceed to next” means the next backlog item in the product spec.
 
+Shipped slices are stories CH-S01–CH-S16 with specs under `specs/` and a Jira import at [`specs/jira/README.md`](specs/jira/README.md).
+
 ## What runs today
 
 | Service | URL | Role |

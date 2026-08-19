@@ -60,6 +60,8 @@ Treat these as done unless a new spec changes them:
 15. Course gradebook
 16. Assignment due dates + student calendar
 
+Story index and Jira import: [`specs/jira/README.md`](../jira/README.md).
+
 ## Requirements
 
 - **FR-001**: System MUST keep the gateway as the only browser-facing edge.
