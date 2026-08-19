@@ -161,10 +161,10 @@ public static class CatalogEndpoints
         var total = await query.CountAsync(ct);
 
         // Apply sort
-        var ordered = sortBy switch
+        IQueryable<Course> ordered = sortBy switch
         {
-            "price-asc" => query.OrderBy(c => c.Price),
-            "price-desc" => query.OrderByDescending(c => c.Price),
+            "price-asc" => query.OrderBy(c => (double)c.Price),
+            "price-desc" => query.OrderByDescending(c => (double)c.Price),
             "newest" => query.OrderByDescending(c => c.CreatedAt),
             _ => query.OrderBy(c => c.Title),
         };
