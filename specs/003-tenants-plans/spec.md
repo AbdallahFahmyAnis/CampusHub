@@ -4,6 +4,12 @@
 **Status**: Implemented  
 **Created**: 2026-08-19
 
+## A–Z
+
+1. Anonymous `/signup` **or** login (CH-S17).
+2. Tenant + plan on session (`/whoami`).
+3. Plan gates Ask AI / chat / seats.
+
 ## User Story 1 - Sign up a campus (Priority: P1)
 
 A campus owner creates a tenant and works under a plan (Free vs Campus) that gates features such as model Ask AI and seat counts.

@@ -10,11 +10,11 @@ High-level diagram and request flows: [docs/architecture.md](docs/architecture.m
 
 New slices start as a spec, not as ad-hoc code. Constitution: [`.specify/memory/constitution.md`](.specify/memory/constitution.md). Product baseline and backlog: [`specs/000-product/spec.md`](specs/000-product/spec.md).
 
-Story index (screens, code, tests, mock, Done): [`specs/STORIES.md`](specs/STORIES.md). Workflow: [`specs/WORKFLOW.md`](specs/WORKFLOW.md).
+Story index (real product order, A–Z from auth): [`specs/STORIES.md`](specs/STORIES.md). Auth is CH-S17 (register, login, token, refresh, logout). Workflow: [`specs/WORKFLOW.md`](specs/WORKFLOW.md).
 
 In Cursor, use the project skills `speckit-specify`, `speckit-plan`, `speckit-tasks`, `speckit-implement`, then `speckit-converge`. “Proceed to next” means the next backlog item in the product spec.
 
-Shipped slices are stories CH-S01–CH-S16. Run story tests: `dotnet test tests/CampusHub.Catalog.Api.Tests --filter Story=CH-S16`.
+Shipped stories CH-S01–CH-S21. Auth tests: `dotnet test tests/CampusHub.Catalog.Api.Tests --filter Story=CH-S17`.
 
 ## What runs today
 

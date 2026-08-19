@@ -4,6 +4,13 @@
 **Status**: Implemented  
 **Created**: 2026-08-19
 
+## A–Z
+
+1. Login as campus admin (CH-S17).
+2. `/people` create invite.
+3. Invitee `/invite/:token` sets password (register).
+4. Login as the new member.
+
 ## User Story 1 - Invite a member (Priority: P1)
 
 A campus admin sends an invite. The invitee accepts and appears on People.

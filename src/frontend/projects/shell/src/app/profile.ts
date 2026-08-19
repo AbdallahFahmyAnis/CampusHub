@@ -1,3 +1,4 @@
+/** SDD CH-S18 / specs/018-account-profile — /account */
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';

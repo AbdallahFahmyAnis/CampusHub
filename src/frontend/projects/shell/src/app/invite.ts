@@ -1,3 +1,4 @@
+/** SDD CH-S02 invite register + CH-S17 login after accept. /invite/:token */
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';

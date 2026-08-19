@@ -10,7 +10,7 @@ New product slices start with `specs/NNN-slug/spec.md`. Do not implement a slice
 
 ### Story traceability
 
-Every shipped slice has a story id `CH-Snn` (Jira idea `MDP-1n`). Specs include **screens**, **apply (code paths)**, **test**, and **mock**. New types and endpoint classes cite the story in XML docs or file headers. Tests use `[Trait("Story", "CH-Snn")]`. Workflow: Specify → Apply → Test → Mock → Retest → Done (`specs/WORKFLOW.md`).
+Every shipped slice has a story id `CH-Snn`. Product order (auth first) is `specs/STORIES.md`. Specs include **screens**, **apply (code paths)**, **test**, and **mock**. New types and endpoint classes cite the story in XML docs or file headers. Tests use `[Trait("Story", "CH-Snn")]`. Workflow: Specify → Apply → Test → Mock → Retest → Done (`specs/WORKFLOW.md`).
 
 ### One vertical slice
 
@@ -46,4 +46,4 @@ Stage only files for the slice. Never commit `.tmp-build/`, `*.db`, `bin/`, `obj
 - Specs are the review surface: if it is not in `spec.md`, it is not required.
 - After implement, mark tasks done and set spec status to Implemented.
 
-**Version**: 1.1.0 | **Ratified**: 2026-08-19 | **Last Amended**: 2026-08-19
+**Version**: 1.1.0 | **Ratified**: 2026-08-19 | **Last Amended**: 2026-08-20

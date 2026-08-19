@@ -1,3 +1,4 @@
+/** SDD CH-S21 / specs/021-course-pass — QR course pass. /learn/pass */
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';

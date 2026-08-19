@@ -8,6 +8,7 @@ using EnrollmentEntity = CampusHub.Enrollment.Api.Domain.Enrollment;
 
 namespace CampusHub.Enrollment.Api.Features;
 
+/// <summary>SDD CH-S19 / specs/019-enroll-checkout. Enroll saga (mock pay) for the signed-in student.</summary>
 public static class EnrollmentEndpoints
 {
     public static IEndpointRouteBuilder MapEnrollmentEndpoints(this IEndpointRouteBuilder app)

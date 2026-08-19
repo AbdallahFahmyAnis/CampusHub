@@ -1,3 +1,4 @@
+/** SDD CH-S19 / specs/019-enroll-checkout — mock pay checkout. /enroll/:courseId */
 import { DecimalPipe } from '@angular/common';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
