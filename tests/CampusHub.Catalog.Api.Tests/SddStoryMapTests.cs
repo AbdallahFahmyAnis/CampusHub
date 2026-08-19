@@ -12,6 +12,7 @@ public class SddStoryMapTests
         Assert.Equal("specs/013-quizzes", SddStories.SpecPath(SddStories.ChS11Quizzes));
         Assert.Equal("specs/002-assignment-due-dates", SddStories.SpecPath(SddStories.ChS16DueDates));
         Assert.Equal("specs/001-course-gradebook", SddStories.SpecPath(SddStories.ChS15Gradebook));
-        Assert.Equal("specs/003-tenants-plans", SddStories.SpecPath(SddStories.ChS01Tenants));
+        Assert.Equal("specs/017-auth-session", SddStories.SpecPath(SddStories.ChS17Auth));
+        Assert.Equal("specs/019-enroll-checkout", SddStories.SpecPath(SddStories.ChS19Enroll));
     }
 }

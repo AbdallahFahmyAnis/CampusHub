@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Payment.Api.Features;
 
+/// <summary>SDD CH-S19 / specs/019-enroll-checkout. Internal mock PSP — not exposed on the gateway.</summary>
 public static class PaymentEndpoints
 {
     public static IEndpointRouteBuilder MapPaymentEndpoints(this IEndpointRouteBuilder app)

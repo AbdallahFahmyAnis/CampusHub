@@ -1,3 +1,4 @@
+/** SDD CH-S17 — specs/017-auth-session. BFF cookie session via /whoami; login/logout at gateway. */
 import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';

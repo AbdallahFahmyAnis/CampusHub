@@ -32,6 +32,11 @@
     { "id": "CH-S13", "epic": "learn", "summary": "Lecture notes", "spec": "specs/015-lecture-notes/spec.md" },
     { "id": "CH-S14", "epic": "learn", "summary": "Course announcements", "spec": "specs/016-announcements/spec.md" },
     { "id": "CH-S15", "epic": "learn", "summary": "Course gradebook", "spec": "specs/001-course-gradebook/spec.md" },
-    { "id": "CH-S16", "epic": "learn", "summary": "Assignment due dates and student calendar", "spec": "specs/002-assignment-due-dates/spec.md" }
+    { "id": "CH-S16", "epic": "learn", "summary": "Assignment due dates and student calendar", "spec": "specs/002-assignment-due-dates/spec.md" },
+    { "id": "CH-S17", "epic": "platform", "summary": "Register, login, access token, refresh, logout", "spec": "specs/017-auth-session/spec.md" },
+    { "id": "CH-S18", "epic": "platform", "summary": "Account profile and password", "spec": "specs/018-account-profile/spec.md" },
+    { "id": "CH-S19", "epic": "learn", "summary": "Enroll, checkout, and mock payment", "spec": "specs/019-enroll-checkout/spec.md" },
+    { "id": "CH-S20", "epic": "learn", "summary": "Course player and curriculum", "spec": "specs/020-course-player/spec.md" },
+    { "id": "CH-S21", "epic": "discovery", "summary": "Course pass QR and attendance", "spec": "specs/021-course-pass/spec.md" }
   ]
 }

@@ -190,6 +190,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
 
+// SDD CH-S17 — specs/017-auth-session: login challenge, logout (session revoke), whoami.
 app.MapGet("/login", (string? returnUrl) =>
         Results.Challenge(new AuthenticationProperties
         {

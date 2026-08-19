@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace CampusHub.Identity.Api.Pages.Account;
 
+/// <summary>SDD CH-S17 — specs/017-auth-session. Email/password login UI at Identity /Account/Login.</summary>
 [AllowAnonymous]
 public sealed class LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger) : PageModel
 {

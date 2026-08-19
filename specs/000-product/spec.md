@@ -39,26 +39,31 @@ Admins use `/ops`. Campus owners use `/campus`, people, invites, and mock billin
 
 **Independent Test**: Sign in as admin and open Ops; as student open inbox and certificates.
 
-## Shipped slices (baseline)
+## Shipped slices (baseline, real product order)
 
-Treat these as done unless a new spec changes them:
+See [`specs/STORIES.md`](../STORIES.md) for A–Z walkthroughs. Auth is **CH-S17** (login, campus/invite/ops register, access token, refresh, logout).
 
-1. Tenants / campus signup / plan gates
-2. Invites + People
-3. Mock billing
-4. Platform `/ops` vs campus `/campus`
-5. Notifications + SSE
-6. Course completion certificates
-7. Teacher course analytics
-8. Chat rooms + AI tutor
-9. Catalog filters, sort, recommended
-10. Student progress dashboard
-11. Quizzes
-12. Assignments
-13. Lecture notes
-14. Course announcements
-15. Course gradebook
-16. Assignment due dates + student calendar
+1. Auth session (CH-S17)
+2. Account profile (CH-S18)
+3. Tenants / campus signup / plan gates (CH-S01)
+4. Invites + People (CH-S02)
+5. Catalog filters, sort, recommended (CH-S09)
+6. Enroll + mock payment (CH-S19)
+7. Course player / curriculum (CH-S20)
+8. Lecture notes (CH-S13)
+9. Chat + Ask AI (CH-S08)
+10. Quizzes (CH-S11)
+11. Assignments (CH-S12)
+12. Due dates + calendar (CH-S16)
+13. Announcements (CH-S14)
+14. Gradebook (CH-S15)
+15. Progress dashboard (CH-S10)
+16. Notifications + SSE (CH-S05)
+17. Certificates (CH-S06)
+18. Course pass QR + attendance (CH-S21)
+19. Teacher analytics (CH-S07)
+20. Mock billing (CH-S03)
+21. Platform `/ops` vs campus `/campus` (CH-S04)
 
 Story index and Jira import: [`specs/jira/README.md`](../jira/README.md). Qualified cards: [`specs/STORIES.md`](../STORIES.md). Workflow: [`specs/WORKFLOW.md`](../WORKFLOW.md).
 

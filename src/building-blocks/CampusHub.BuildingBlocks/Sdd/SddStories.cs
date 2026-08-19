@@ -21,6 +21,11 @@ public static class SddStories
     public const string ChS14Announcements = "CH-S14";
     public const string ChS15Gradebook = "CH-S15";
     public const string ChS16DueDates = "CH-S16";
+    public const string ChS17Auth = "CH-S17";
+    public const string ChS18Account = "CH-S18";
+    public const string ChS19Enroll = "CH-S19";
+    public const string ChS20Player = "CH-S20";
+    public const string ChS21CoursePass = "CH-S21";
 
     public static string SpecPath(string storyId) => storyId switch
     {
@@ -40,6 +45,11 @@ public static class SddStories
         ChS14Announcements => "specs/016-announcements",
         ChS15Gradebook => "specs/001-course-gradebook",
         ChS16DueDates => "specs/002-assignment-due-dates",
+        ChS17Auth => "specs/017-auth-session",
+        ChS18Account => "specs/018-account-profile",
+        ChS19Enroll => "specs/019-enroll-checkout",
+        ChS20Player => "specs/020-course-player",
+        ChS21CoursePass => "specs/021-course-pass",
         _ => "specs/000-product",
     };
 }

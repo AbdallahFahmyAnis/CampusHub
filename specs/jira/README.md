@@ -6,7 +6,7 @@ Source of truth for Jira. Each story has a spec and a plan. Status is **Done** (
 
 | Plan / Epic | Scope | Stories |
 |---|---|---|
-| CampusHub Platform | Identity, tenants, invites, billing, ops vs campus | CH-S01–S04 |
+| CampusHub Platform | Auth, identity, tenants, invites, billing, ops vs campus | CH-S17–S18, CH-S01–S04 |
 | CampusHub Teach & learn | Analytics, quizzes, assignments, notes, announcements, gradebook, due dates | CH-S07, CH-S11–S16 |
 | CampusHub Discovery & engagement | Notifications, certificates, chat/AI, catalog search, progress, calendar | CH-S05–S06, CH-S08–S10, CH-S16 calendar is with due dates |
 
@@ -32,6 +32,13 @@ CH-S16 due dates lives in Teach & learn; calendar UI is on My learning.
 | CH-S14 | Course announcements | [016](../016-announcements/spec.md) | [plan](../016-announcements/plan.md) | Teach & learn |
 | CH-S15 | Course gradebook | [001](../001-course-gradebook/spec.md) | [plan](../001-course-gradebook/plan.md) | Teach & learn |
 | CH-S16 | Assignment due dates and calendar | [002](../002-assignment-due-dates/spec.md) | [plan](../002-assignment-due-dates/plan.md) | Teach & learn |
+| CH-S17 | Register, login, token, refresh, logout | [017](../017-auth-session/spec.md) | [plan](../017-auth-session/plan.md) | Platform |
+| CH-S18 | Account profile | [018](../018-account-profile/spec.md) | [plan](../018-account-profile/plan.md) | Platform |
+| CH-S19 | Enroll and mock pay | [019](../019-enroll-checkout/spec.md) | [plan](../019-enroll-checkout/plan.md) | Teach & learn |
+| CH-S20 | Course player | [020](../020-course-player/spec.md) | [plan](../020-course-player/plan.md) | Teach & learn |
+| CH-S21 | Course pass QR | [021](../021-course-pass/spec.md) | [plan](../021-course-pass/plan.md) | Discovery |
+
+Product order (auth first): [`specs/STORIES.md`](../STORIES.md).
 
 ## Upload to Jira Product Discovery (MDP)
 

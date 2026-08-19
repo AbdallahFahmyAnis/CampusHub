@@ -13,6 +13,7 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace CampusHub.Identity.Api.Controllers;
 
+/// <summary>SDD CH-S17 — specs/017-auth-session. OpenIddict authorize + end-session (logout). Token/refresh is /connect/token.</summary>
 public sealed class AuthorizationController(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,

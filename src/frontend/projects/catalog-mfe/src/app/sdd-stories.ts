@@ -16,4 +16,9 @@ export const SddStories = {
   announcements: { id: 'CH-S14', jira: 'MDP-25', spec: 'specs/016-announcements' },
   gradebook: { id: 'CH-S15', jira: 'MDP-26', spec: 'specs/001-course-gradebook' },
   dueDates: { id: 'CH-S16', jira: 'MDP-27', spec: 'specs/002-assignment-due-dates' },
+  auth: { id: 'CH-S17', spec: 'specs/017-auth-session' },
+  account: { id: 'CH-S18', spec: 'specs/018-account-profile' },
+  enroll: { id: 'CH-S19', spec: 'specs/019-enroll-checkout' },
+  player: { id: 'CH-S20', spec: 'specs/020-course-player' },
+  coursePass: { id: 'CH-S21', spec: 'specs/021-course-pass' },
 } as const;

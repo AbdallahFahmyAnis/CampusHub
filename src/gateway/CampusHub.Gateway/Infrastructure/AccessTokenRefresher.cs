@@ -1,9 +1,11 @@
 using System.Text.Json;
+using CampusHub.BuildingBlocks.Sdd;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace CampusHub.Gateway.Infrastructure;
 
+/// <summary>SDD CH-S17 / specs/017-auth-session. Silent refresh_token grant on the BFF cookie.</summary>
 public sealed class AccessTokenRefresher(IHttpClientFactory httpFactory, IConfiguration config, ILogger<AccessTokenRefresher> logger)
 {
     public async Task RefreshIfNeededAsync(CookieValidatePrincipalContext context)
@@ -11,7 +13,7 @@ public sealed class AccessTokenRefresher(IHttpClientFactory httpFactory, IConfig
         var expiresAtValue = context.Properties.GetTokenValue("expires_at");
         if (string.IsNullOrEmpty(expiresAtValue) ||
             !DateTimeOffset.TryParse(expiresAtValue, out var expiresAt) ||
-            expiresAt > DateTimeOffset.UtcNow.AddMinutes(2))
+            !TokenRefreshPolicy.NeedsRefresh(expiresAt))
         {
             return;
         }
