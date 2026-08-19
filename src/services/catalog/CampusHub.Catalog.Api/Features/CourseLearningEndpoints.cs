@@ -20,6 +20,7 @@ public static class CourseLearningEndpoints
         api.MapPost("/courses/{id:guid}/sections", CreateSection).RequireAuthorization("CanManageCatalog");
         api.MapPost("/courses/{id:guid}/sections/{sectionId:guid}/lectures", CreateLecture).RequireAuthorization("CanManageCatalog");
 
+        api.MapGet("/progress/dashboard", GetProgressDashboard).RequireAuthorization();
         api.MapGet("/wishlist", ListWishlist);
         api.MapPost("/courses/{id:guid}/wishlist", AddWishlist);
         api.MapDelete("/courses/{id:guid}/wishlist", RemoveWishlist);
@@ -31,6 +32,98 @@ public static class CourseLearningEndpoints
         api.MapPost("/courses/{id:guid}/questions", CreateQuestion);
         api.MapPost("/courses/{id:guid}/questions/{questionId:guid}/answers", CreateAnswer);
         return api;
+    }
+
+    private static async Task<IResult> GetProgressDashboard(
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+    {
+        var (studentId, _) = CatalogEndpoints.Caller(user);
+
+        // All lecture progress for this student
+        var allProgress = await db.LectureProgress.AsNoTracking()
+            .Where(p => p.StudentId == studentId)
+            .Select(p => new { p.CourseId, p.LectureId, p.CompletedAt })
+            .ToListAsync(ct);
+
+        if (allProgress.Count == 0)
+        {
+            return Results.Ok(new StudentProgressDashboardDto([], 0, 0, null));
+        }
+
+        var courseIds = allProgress.Select(p => p.CourseId).Distinct().ToList();
+
+        // Load courses with sections + lectures
+        var courses = await db.Courses.AsNoTracking()
+            .Include(c => c.Subject)
+            .Include(c => c.Sections).ThenInclude(s => s.Lectures)
+            .Where(c => courseIds.Contains(c.Id))
+            .ToListAsync(ct);
+
+        var items = new List<CourseProgressDto>();
+        foreach (var course in courses)
+        {
+            var totalLectures = course.Sections.SelectMany(s => s.Lectures).Count();
+            var completedIds = allProgress.Where(p => p.CourseId == course.Id)
+                .Select(p => p.LectureId).ToHashSet();
+            var completedCount = completedIds.Count;
+            var pct = totalLectures > 0 ? (int)Math.Round(completedCount * 100.0 / totalLectures) : 0;
+
+            // Last completed lecture for "continue" deep-link
+            var lastProgressEntry = allProgress
+                .Where(p => p.CourseId == course.Id)
+                .OrderByDescending(p => p.CompletedAt)
+                .FirstOrDefault();
+
+            // Find the next incomplete lecture in order
+            var ordered = course.Sections
+                .OrderBy(s => s.SortOrder)
+                .SelectMany(s => s.Lectures.OrderBy(l => l.SortOrder))
+                .ToList();
+            var nextLecture = ordered.FirstOrDefault(l => !completedIds.Contains(l.Id));
+            var continueLectureId = nextLecture?.Id ?? lastProgressEntry?.LectureId;
+
+            items.Add(new CourseProgressDto(
+                course.Id,
+                course.Title,
+                course.Subject?.Code ?? "",
+                totalLectures,
+                completedCount,
+                pct,
+                lastProgressEntry?.CompletedAt,
+                continueLectureId));
+        }
+
+        // Sort: in-progress first (not 100%), then completed
+        items = [.. items.OrderBy(i => i.ProgressPct == 100 ? 1 : 0).ThenByDescending(i => i.LastActivityAt)];
+
+        // Streak: count consecutive calendar days (UTC) with at least one completion
+        var activityDays = allProgress
+            .Select(p => p.CompletedAt.UtcDateTime.Date)
+            .Distinct()
+            .OrderByDescending(d => d)
+            .ToList();
+
+        var streak = 0;
+        var today = DateTime.UtcNow.Date;
+        for (var i = 0; i < activityDays.Count; i++)
+        {
+            var expected = today.AddDays(-i);
+            if (activityDays.Count > i && activityDays[i] == expected)
+            {
+                streak++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        var totalCompleted = allProgress.Count;
+        var lastActivity = allProgress.Max(p => p.CompletedAt);
+
+        return Results.Ok(new StudentProgressDashboardDto(items, streak, totalCompleted, lastActivity));
     }
 
     private static async Task<IResult> GetCurriculum(Guid id, CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)

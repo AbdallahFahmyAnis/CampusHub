@@ -160,6 +160,22 @@ public sealed record CreateQuestionRequest(string Title, string Body);
 
 public sealed record CreateAnswerRequest(string Body);
 
+public sealed record CourseProgressDto(
+    Guid CourseId,
+    string CourseTitle,
+    string SubjectCode,
+    int TotalLectures,
+    int CompletedLectures,
+    int ProgressPct,
+    DateTimeOffset? LastActivityAt,
+    Guid? ContinueLectureId);
+
+public sealed record StudentProgressDashboardDto(
+    IReadOnlyList<CourseProgressDto> Courses,
+    int StreakDays,
+    int TotalLecturesCompleted,
+    DateTimeOffset? LastActivityAt);
+
 public sealed record LectureStatDto(
     Guid Id,
     string Title,

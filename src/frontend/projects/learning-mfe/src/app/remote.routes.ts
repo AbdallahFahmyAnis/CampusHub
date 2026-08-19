@@ -4,9 +4,11 @@ import { Certificates } from './certificates';
 import { CoursePass } from './course-pass';
 import { CoursePlayer } from './course-player';
 import { Inbox } from './inbox';
+import { ProgressDashboard } from './progress-dashboard';
 
 export const LEARNING_ROUTES: Routes = [
-  { path: '', component: CoursePass },
+  { path: '', component: ProgressDashboard },
+  { path: 'pass', component: CoursePass },
   { path: 'inbox', component: Inbox },
   { path: 'certificates', component: Certificates },
   { path: 'attendance', component: Attendance },

@@ -24,6 +24,24 @@ export interface CredentialDto {
   expiresAt: string;
 }
 
+export interface CourseProgressDto {
+  courseId: string;
+  courseTitle: string;
+  subjectCode: string;
+  totalLectures: number;
+  completedLectures: number;
+  progressPct: number;
+  lastActivityAt: string | null;
+  continueLectureId: string | null;
+}
+
+export interface ProgressDashboardDto {
+  courses: CourseProgressDto[];
+  streakDays: number;
+  totalLecturesCompleted: number;
+  lastActivityAt: string | null;
+}
+
 export interface ScanDto {
   id: string;
   studentName: string;
@@ -35,6 +53,10 @@ export interface ScanDto {
 @Injectable({ providedIn: 'root' })
 export class LearningApi {
   private readonly http = inject(HttpClient);
+
+  progressDashboard() {
+    return firstValueFrom(this.http.get<ProgressDashboardDto>('/api/catalog/progress/dashboard'));
+  }
 
   mine() {
     return firstValueFrom(this.http.get<NotificationDto[]>('/api/notifications/mine'));
