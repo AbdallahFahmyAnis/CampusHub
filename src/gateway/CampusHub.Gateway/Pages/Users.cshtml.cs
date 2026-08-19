@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace CampusHub.Gateway.Pages;
 
 [Authorize(Roles = Roles.Administrator)]
+[PlatformOnly]
 public class UsersModel(DownstreamApi api) : PageModel
 {
     public IReadOnlyList<OpsUser> Users { get; private set; } = [];

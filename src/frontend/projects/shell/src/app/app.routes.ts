@@ -22,6 +22,11 @@ export const routes: Routes = [
     loadComponent: () => import('./billing').then((m) => m.BillingPage),
   },
   {
+    path: 'campus',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./campus-dashboard').then((m) => m.CampusDashboardPage),
+  },
+  {
     path: 'account',
     canActivate: [authGuard],
     loadComponent: () => import('./profile').then((m) => m.ProfilePage),

@@ -14,6 +14,7 @@ public static class CampusGatewayEndpoints
         campus.MapPost("/invites", CreateInvite);
         campus.MapGet("/billing", GetBilling);
         campus.MapPost("/billing/upgrade", UpgradeBilling);
+        campus.MapGet("/dashboard", GetDashboard);
 
         app.MapGet("/api/invites/{token}", GetInvite).AllowAnonymous();
         app.MapPost("/api/invites/{token}/accept", AcceptInvite).AllowAnonymous().DisableAntiforgery();
@@ -99,6 +100,53 @@ public static class CampusGatewayEndpoints
         return ok
             ? Results.Ok(new { accepted = true })
             : Results.BadRequest(new { error = error ?? "Could not accept the invite." });
+    }
+
+    private static async Task<IResult> GetDashboard(
+        ClaimsPrincipal user,
+        DownstreamApi api,
+        CancellationToken ct)
+    {
+        if (!user.IsInRole(Roles.Administrator))
+        {
+            return Results.Forbid();
+        }
+
+        var tenantId = Tenancy.TenantId(user);
+
+        var membersTask = api.GetInternalAsync<CampusMembersDto>("identity", $"/api/identity/tenants/{tenantId}/members", ct);
+        var billingTask = api.GetInternalAsync<CampusBillingDto>("identity", $"/api/identity/tenants/{tenantId}/billing", ct);
+
+        await Task.WhenAll(membersTask, billingTask);
+
+        var members = await membersTask;
+        var billing = await billingTask;
+
+        var isPlatform = tenantId == Tenancy.DefaultTenantId;
+        var memberCount = members is null ? 0 : members.Members.Length;
+        var studentSeats = members is null ? 0 : members.SeatsUsed;
+        var seatCap = billing is null ? 0 : billing.SeatCap;
+        var pendingInvites = members is null ? 0 : members.Invites.Length;
+        var allowsModelAi = billing is not null && billing.AllowsModelAi;
+        var allowsChat = billing is not null && billing.AllowsChat;
+        var monthlyPrice = billing is null ? 0m : billing.MonthlyPrice;
+        var nextPlan = billing?.NextPlan;
+
+        return Results.Ok(new
+        {
+            tenantId,
+            tenantName = Tenancy.TenantName(user),
+            plan = Tenancy.Plan(user),
+            isPlatformAdmin = isPlatform,
+            memberCount,
+            studentSeats,
+            seatCap,
+            pendingInvites,
+            allowsModelAi,
+            allowsChat,
+            monthlyPrice,
+            nextPlan
+        });
     }
 
     private static async Task<IResult> GetBilling(ClaimsPrincipal user, DownstreamApi api, CancellationToken ct)

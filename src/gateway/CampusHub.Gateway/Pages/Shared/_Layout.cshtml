@@ -23,6 +23,7 @@
             <a asp-page="/Categories" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Categories" ? "active" : null)">Categories</a>
             <a asp-page="/Enrollments" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Enrollments" ? "active" : null)">Enrollments</a>
             <a asp-page="/Users" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Users" ? "active" : null)">Users</a>
+            <a asp-page="/Tenants" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Tenants" ? "active" : null)">Campuses</a>
             <a href="/">Student UI</a>
         </nav>
         <div class="session">

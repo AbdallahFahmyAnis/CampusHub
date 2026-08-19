@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace CampusHub.Gateway.Pages;
 
 [Authorize(Roles = Roles.Administrator)]
+[PlatformOnly]
 public class CategoriesModel(DownstreamApi api) : PageModel
 {
     public IReadOnlyList<OpsSubject> Subjects { get; private set; } = [];

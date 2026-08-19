@@ -11,7 +11,57 @@ public static class TenantEndpoints
     public static IEndpointRouteBuilder MapTenantEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/identity/tenants/register", Register).AllowAnonymous();
+        app.MapGet("/api/identity/tenants", ListTenants).AllowAnonymous();
         return app;
+    }
+
+    private static async Task<IResult> ListTenants(
+        HttpContext http,
+        IConfiguration config,
+        IdentityDbContext db,
+        UserManager<ApplicationUser> users,
+        CancellationToken ct)
+    {
+        var expected = config["Internal:ApiKey"] ?? "campus-dev-internal";
+        if (!http.Request.Headers.TryGetValue("X-Internal-Key", out var provided) ||
+            !string.Equals(provided.ToString(), expected, StringComparison.Ordinal))
+        {
+            return Results.Unauthorized();
+        }
+
+        var tenants = await db.Tenants.AsNoTracking()
+            .OrderBy(t => t.CreatedAt)
+            .ToListAsync(ct);
+
+        var result = new List<TenantSummaryDto>(tenants.Count);
+        foreach (var tenant in tenants)
+        {
+            var memberCount = await users.Users.CountAsync(
+                u => u.TenantId == tenant.Id, ct);
+            var studentCount = 0;
+            var tenantUsers = await users.Users.AsNoTracking()
+                .Where(u => u.TenantId == tenant.Id)
+                .ToListAsync(ct);
+            foreach (var user in tenantUsers)
+            {
+                if (await users.IsInRoleAsync(user, Roles.Student))
+                {
+                    studentCount++;
+                }
+            }
+
+            result.Add(new TenantSummaryDto(
+                tenant.Id,
+                tenant.Name,
+                tenant.Slug,
+                tenant.Plan,
+                Plans.SeatCap(tenant.Plan),
+                studentCount,
+                memberCount,
+                tenant.CreatedAt));
+        }
+
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> Register(
@@ -113,3 +163,13 @@ public static class TenantEndpoints
 }
 
 public sealed record RegisterCampusRequest(string CampusName, string Email, string DisplayName, string Password);
+
+public sealed record TenantSummaryDto(
+    Guid Id,
+    string Name,
+    string Slug,
+    string Plan,
+    int SeatCap,
+    int StudentSeats,
+    int MemberCount,
+    DateTimeOffset CreatedAt);

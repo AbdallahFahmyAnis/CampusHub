@@ -1,0 +1,44 @@
+@page "/ops/tenants"
+@model TenantsModel
+@{
+    ViewData["Title"] = "Ops tenants";
+}
+
+<h1 class="mb-2">Campuses</h1>
+<p class="ops-lede">All tenants registered on this platform. Seat usage = confirmed students on the campus plan.</p>
+
+<table class="table table-hover" id="tenants-table">
+    <thead>
+        <tr>
+            <th>Campus</th>
+            <th>Slug</th>
+            <th>Plan</th>
+            <th>Students</th>
+            <th>Cap</th>
+            <th>Members</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in Model.Tenants)
+        {
+            <tr>
+                <td>@t.Name</td>
+                <td><code>@t.Slug</code></td>
+                <td><span class="badge bg-@(t.Plan == "enterprise" ? "dark" : t.Plan == "campus" ? "primary" : "secondary")">@t.Plan</span></td>
+                <td>@t.StudentSeats</td>
+                <td>@(t.SeatCap == int.MaxValue ? "∞" : t.SeatCap.ToString())</td>
+                <td>@t.MemberCount</td>
+                <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            new DataTable('#tenants-table');
+        });
+    </script>
+}

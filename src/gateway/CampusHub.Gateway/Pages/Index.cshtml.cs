@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace CampusHub.Gateway.Pages;
 
 [Authorize(Roles = Roles.Administrator)]
+[PlatformOnly]
 public class IndexModel(HealthProbe probe, IConfiguration config) : PageModel
 {
     public IReadOnlyList<ServiceHealth> Services { get; private set; } = [];
