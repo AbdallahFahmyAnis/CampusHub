@@ -7,3 +7,11 @@
 ## Summary
 
 `AnnouncementEndpoints.cs`, editor panel, player Announcements tab.
+
+## Code to apply
+
+| Area | Path |
+|---|---|
+| API | `AnnouncementEndpoints.cs` |
+| UI | `course-editor.ts`, player Announcements tab |
+

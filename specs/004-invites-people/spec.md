@@ -23,3 +23,26 @@ A campus admin sends an invite. The invitee accepts and appears on People.
 ## Success Criteria
 
 - **SC-001**: Invite accept is visible without using a platform admin account.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-13](https://abdallah-fahmy.atlassian.net/browse/MDP-13) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| People | `http://localhost:5000/people` | campus admin | Member list + invite form |
+| Accept invite | `http://localhost:5000/invite/:token` | invitee | Join campus |
+
+### Apply (code)
+
+- Identity `CampusEndpoints` invites/members (CH-S02)
+- `src/frontend/projects/shell/src/app/people.ts`
+
+### Test / Mock
+
+- Create invite as admin; open token URL; member appears on People. Seeded campus already has members.

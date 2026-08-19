@@ -23,3 +23,26 @@ Teachers post announcements. Students read them in the player Announcements tab.
 ## Success Criteria
 
 - **SC-001**: Seeded announcements appear after Catalog seed.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-25](https://abdallah-fahmy.atlassian.net/browse/MDP-25) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Editor announcements | `http://localhost:5000/catalog/{id}/edit` | teacher | Post title + body |
+| Player Announcements | `http://localhost:5000/learn/course/{id}` | student | List with author/time |
+
+### Apply (code)
+
+- `AnnouncementEndpoints.cs` (CH-S14)
+- `course-editor.ts`, `course-player.ts`
+
+### Test / Mock
+
+- Seeded Linear Algebra / Distributed posts. Empty tab message when none.

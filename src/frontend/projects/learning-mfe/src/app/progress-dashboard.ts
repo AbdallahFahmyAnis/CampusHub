@@ -1,3 +1,4 @@
+/** SDD CH-S10 progress dashboard, CH-S16 calendar — /learn. */
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';

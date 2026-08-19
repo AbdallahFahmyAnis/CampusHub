@@ -24,3 +24,27 @@ Students join a course chat room. Ask AI in the player answers from course mater
 ## Success Criteria
 
 - **SC-001**: Ask AI works if Meilisearch/AI are down.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-19](https://abdallah-fahmy.atlassian.net/browse/MDP-19) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Chat | `http://localhost:5000/chat` and `/chat/:roomId` | student | Course rooms, messages |
+| Ask AI | player tab on `http://localhost:5000/learn/course/:id` | student | Answer from materials |
+
+### Apply (code)
+
+- Chat Node service + `src/frontend/projects/chat-mfe/src/app/chat.ts` (CH-S08)
+- `POST /api/catalog/courses/{id}/ask` in `CourseLearningEndpoints.cs`
+- `CourseTutor.cs`
+
+### Test / Mock
+
+- Room `tutor:{courseId}` / course rooms. Ask without `Ai__ApiKey` still answers from catalog text.

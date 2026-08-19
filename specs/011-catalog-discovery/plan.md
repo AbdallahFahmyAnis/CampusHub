@@ -7,3 +7,11 @@
 ## Summary
 
 Catalog list query (`sortBy`, minRating subquery). Angular course-list. Meilisearch optional.
+
+## Code to apply
+
+| Area | Path |
+|---|---|
+| API | `CatalogEndpoints` list/recommended |
+| UI | `course-list.ts` `/catalog` |
+

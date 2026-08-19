@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Features;
 
+/// <summary>
+/// SDD CH-S07 analytics, CH-S08 ask/tutor, CH-S10 progress dashboard — specs/009, 010, 012.
+/// </summary>
 public static class CourseLearningEndpoints
 {
     public static RouteGroupBuilder MapCourseLearningEndpoints(this RouteGroupBuilder api)

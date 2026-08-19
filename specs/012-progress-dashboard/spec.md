@@ -23,3 +23,25 @@ A student sees streak, lecture counts, course progress bars, and continue-learni
 ## Success Criteria
 
 - **SC-001**: My learning is the default `/learn` route.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-21](https://abdallah-fahmy.atlassian.net/browse/MDP-21) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| My learning | `http://localhost:5000/learn` | student | Streak, progress bars, continue, notes, calendar (CH-S16) |
+
+### Apply (code)
+
+- `GET /api/catalog/progress/dashboard` (CH-S10)
+- `src/frontend/projects/learning-mfe/src/app/progress-dashboard.ts`
+
+### Test / Mock
+
+- `student@` with lecture progress. Continue opens the player.

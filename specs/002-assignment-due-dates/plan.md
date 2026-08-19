@@ -22,19 +22,22 @@ Add optional `DueAt` on catalog assignments. Surface it in the teacher editor an
 - [x] Seed/schema must not brick Catalog (`ALTER` + try/catch)
 - [x] Commit set excludes db/bin/tmp
 
-## Files likely to change
+## Files likely to change (apply)
 
-- `src/services/catalog/CampusHub.Catalog.Api/Domain/Entities.cs`
-- `src/services/catalog/CampusHub.Catalog.Api/Infrastructure/CatalogSchema.cs`
-- `src/services/catalog/CampusHub.Catalog.Api/Infrastructure/CatalogDbContext.cs`
-- `src/services/catalog/CampusHub.Catalog.Api/Infrastructure/CatalogSeeder.cs`
-- `src/services/catalog/CampusHub.Catalog.Api/Contracts/Dtos.cs`
-- `src/services/catalog/CampusHub.Catalog.Api/Features/AssignmentEndpoints.cs`
-- `src/services/catalog/CampusHub.Catalog.Api/Features/CatalogEndpoints.cs`
-- `src/frontend/projects/catalog-mfe/src/app/catalog.api.ts`
-- `src/frontend/projects/catalog-mfe/src/app/course-editor.ts`
-- `src/frontend/projects/learning-mfe/src/app/course-player.ts`
-- `src/frontend/projects/learning-mfe/src/app/progress-dashboard.ts`
+| Area | Path | Story |
+|---|---|---|
+| Domain | `src/building-blocks/CampusHub.BuildingBlocks/Sdd/AssignmentDueRules.cs` | CH-S16 |
+| Schema | `CatalogSchema.cs` ALTER DueAt | CH-S16 |
+| API | `Features/AssignmentEndpoints.cs` list + `GET /calendar` | CH-S16 |
+| UI | `course-editor.ts`, `course-player.ts`, `progress-dashboard.ts` | CH-S16 |
+| Tests | `tests/CampusHub.Catalog.Api.Tests/AssignmentDueRulesTests.cs` | CH-S16 |
+| Mock | `CatalogSeeder.EnsureAssignmentDueDatesAsync` | CH-S16 |
+
+## Test
+
+`dotnet test --filter Story=CH-S16`
+
+Screen: `/learn` calendar shows Linear Algebra due date.
 
 ## Research / risks
 

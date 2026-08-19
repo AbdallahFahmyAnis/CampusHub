@@ -23,3 +23,26 @@ Platform administrators use Razor `/ops`. Campus owners use `/campus` in the Ang
 ## Success Criteria
 
 - **SC-001**: The two consoles are distinct URLs and audiences.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-15](https://abdallah-fahmy.atlassian.net/browse/MDP-15) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Platform ops | `http://localhost:5000/ops` | `admin@campushub.local` | Razor platform console |
+| Campus home | `http://localhost:5000/campus` | campus admin | Tenant dashboard, link to ops only if platform admin |
+
+### Apply (code)
+
+- Gateway `/ops` Razor
+- `src/frontend/projects/shell/src/app/campus-dashboard.ts` (CH-S04)
+
+### Test / Mock
+
+- Admin: both URLs. Campus owner: `/campus` only, not platform-wide tools.

@@ -40,3 +40,27 @@ An enrolled student opens the course player Grades tab and sees only their row.
 ## Assumptions
 
 - Roster is inferred from quiz attempts and assignment submissions, not the Enrollment service.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-26](https://abdallah-fahmy.atlassian.net/browse/MDP-26) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Gradebook | `http://localhost:5000/catalog/:id/gradebook` | teacher | Roster of quiz % and assignment points |
+| Player Grades | `http://localhost:5000/learn/course/:id` | student | Own row only |
+
+### Apply (code)
+
+- `GradeEndpoints.cs` (CH-S15)
+- `src/frontend/projects/catalog-mfe/src/app/course-gradebook.ts`
+- Player Grades tab
+
+### Test / Mock
+
+- Teacher: Algorithms (Sam/Noah quiz %) and Linear Algebra (Sam 88, Noah ungraded). Student never sees others.

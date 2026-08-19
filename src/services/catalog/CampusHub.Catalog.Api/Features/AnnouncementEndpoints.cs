@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Features;
 
+/// <summary>SDD CH-S14 / MDP-25 — specs/016-announcements. Course announcements.</summary>
 public static class AnnouncementEndpoints
 {
     public static RouteGroupBuilder MapAnnouncementEndpoints(this RouteGroupBuilder api)

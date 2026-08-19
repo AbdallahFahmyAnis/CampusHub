@@ -7,3 +7,11 @@
 ## Summary
 
 `NoteEndpoints.cs`, `LectureNotes` table, player Notes tab, dashboard snippets.
+
+## Code to apply
+
+| Area | Path |
+|---|---|
+| API | `NoteEndpoints.cs` |
+| UI | player Notes tab, `progress-dashboard.ts` |
+

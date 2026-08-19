@@ -7,3 +7,11 @@
 ## Summary
 
 `GET /api/catalog/courses/{id}/stats`. Angular `course-analytics.ts`.
+
+## Code to apply
+
+| Area | Path |
+|---|---|
+| API | `CourseLearningEndpoints.GetCourseStats` |
+| UI | `course-analytics.ts` `/catalog/:id/analytics` |
+

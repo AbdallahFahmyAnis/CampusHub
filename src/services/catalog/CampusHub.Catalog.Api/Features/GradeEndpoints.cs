@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Features;
 
+/// <summary>SDD CH-S15 / MDP-26 — specs/001-course-gradebook. Teacher roster and student grades.</summary>
 public static class GradeEndpoints
 {
     public static RouteGroupBuilder MapGradeEndpoints(this RouteGroupBuilder api)

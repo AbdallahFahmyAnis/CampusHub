@@ -23,3 +23,27 @@ A student receives in-app notifications (enrollment, completion) and sees live u
 ## Success Criteria
 
 - **SC-001**: Inbox is usable without email being configured.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-16](https://abdallah-fahmy.atlassian.net/browse/MDP-16) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Inbox | `http://localhost:5000/learn/inbox` | student | Notification rows |
+| Shell bell | any authenticated page | student | Unread count (SSE) |
+
+### Apply (code)
+
+- `src/services/notification/CampusHub.Notification.Api/Features/NotificationEndpoints.cs` (CH-S05)
+- `src/frontend/projects/learning-mfe/src/app/inbox.ts`
+- Shell notification alerts
+
+### Test / Mock
+
+- Seeded inbox on Notification start. Enroll to create a new row; unread updates without email.

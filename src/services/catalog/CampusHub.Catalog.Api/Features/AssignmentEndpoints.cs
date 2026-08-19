@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CampusHub.BuildingBlocks.Sdd;
 using CampusHub.Catalog.Api.Contracts;
 using CampusHub.Catalog.Api.Domain;
 using CampusHub.Catalog.Api.Infrastructure;
@@ -6,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Features;
 
+/// <summary>SDD CH-S12 / MDP-23 (assignments) and CH-S16 / MDP-27 (due dates + calendar). specs/014-assignments, specs/002-assignment-due-dates.</summary>
 public static class AssignmentEndpoints
 {
     public static RouteGroupBuilder MapAssignmentEndpoints(this RouteGroupBuilder api)
@@ -76,8 +78,8 @@ public static class AssignmentEndpoints
                 mine?.Feedback,
                 staff ? count : 0,
                 a.DueAt,
-                Overdue(a.DueAt, mine is not null),
-                Late(a.DueAt, mine?.SubmittedAt));
+                AssignmentDueRules.Overdue(a.DueAt, mine is not null),
+                AssignmentDueRules.Late(a.DueAt, mine?.SubmittedAt));
         }).ToList();
 
         return Results.Ok(result);
@@ -130,7 +132,7 @@ public static class AssignmentEndpoints
                 null,
                 0,
                 assignment.DueAt,
-                Overdue(assignment.DueAt, false),
+                AssignmentDueRules.Overdue(assignment.DueAt, false),
                 false));
     }
 
@@ -212,8 +214,8 @@ public static class AssignmentEndpoints
                     a.Title,
                     a.DueAt!.Value,
                     sub is not null,
-                    Overdue(a.DueAt, sub is not null),
-                    Late(a.DueAt, sub?.SubmittedAt));
+                    AssignmentDueRules.Overdue(a.DueAt, sub is not null),
+                    AssignmentDueRules.Late(a.DueAt, sub?.SubmittedAt));
             })
             .OrderBy(i => i.DueAt)
             .ToList();
@@ -342,12 +344,6 @@ public static class AssignmentEndpoints
         await db.SaveChangesAsync(ct);
         return Results.Ok(ToDto(submission));
     }
-
-    private static bool Overdue(DateTimeOffset? dueAt, bool submitted) =>
-        dueAt is not null && !submitted && DateTimeOffset.UtcNow > dueAt;
-
-    private static bool Late(DateTimeOffset? dueAt, DateTimeOffset? submittedAt) =>
-        dueAt is not null && submittedAt is not null && submittedAt > dueAt;
 
     private static AssignmentSubmissionDto ToDto(CourseAssignmentSubmission s) =>
         new(s.Id, s.AssignmentId, s.StudentId, s.StudentName, s.Body, s.Score, s.Feedback, s.SubmittedAt, s.GradedAt);

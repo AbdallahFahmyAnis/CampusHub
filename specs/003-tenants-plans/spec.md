@@ -23,3 +23,34 @@ A campus owner creates a tenant and works under a plan (Free vs Campus) that gat
 ## Success Criteria
 
 - **SC-001**: Seeded `admin@` / `teacher@` / `student@` still work with `CampusHub!123`.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-12](https://abdallah-fahmy.atlassian.net/browse/MDP-12) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+| **Persona** | Campus owner |
+| **Value** | Isolate campuses and gate paid features by plan |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Campus signup | `http://localhost:5000/signup` | anonymous | Create campus + owner account |
+| Catalog after login | `http://localhost:5000/catalog` | owner | Tenant-scoped courses |
+
+### Apply (code)
+
+- `src/services/identity/CampusHub.Identity.Api/Features/CampusEndpoints.cs` (CH-S01)
+- `src/frontend/projects/shell/src/app/signup.ts`
+- Catalog Ask AI plan gate in `CourseLearningEndpoints.cs` / `CourseTutor.cs`
+
+### Test
+
+- Screen: complete signup, sign in, confirm tenant.
+- Free plan Ask AI stays catalog-text.
+
+### Mock
+
+- Seeded `admin@` / `teacher@` / `student@` + `CampusHub!123` on the default campus.

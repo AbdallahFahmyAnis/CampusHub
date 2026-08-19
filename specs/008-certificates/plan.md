@@ -7,3 +7,11 @@
 ## Summary
 
 Catalog completion event → Access certificate. Angular certificates page via learning-mfe.
+
+## Code to apply
+
+| Area | Path |
+|---|---|
+| API | `AccessEndpoints.cs` credentials |
+| UI | `certificates.ts` `/learn/certificates` |
+

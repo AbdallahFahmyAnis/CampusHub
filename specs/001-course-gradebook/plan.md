@@ -11,4 +11,14 @@
 ## Technical Context
 
 **Owning service**: Catalog  
-**UI**: catalog-mfe `course-gradebook.ts`, learning-mfe player
+## Code to apply
+
+| Area | Path |
+|---|---|
+| API | `Features/GradeEndpoints.cs` `GET .../gradebook` and `.../grades` |
+| UI | `course-gradebook.ts`, player Grades tab |
+| Mock | Seeded quiz attempts + assignment scores |
+
+## Test
+
+Teacher roster vs student self row. Algorithms + Linear Algebra.

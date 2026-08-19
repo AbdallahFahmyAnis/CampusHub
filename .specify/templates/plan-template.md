@@ -1,32 +1,31 @@
 # Implementation Plan: [FEATURE]
 
-**Spec**: `specs/[###-feature-name]/spec.md`
-**Date**: [DATE]
+**Spec**: `specs/NNN-slug/spec.md`  
+**Story**: CH-Snn / MDP-nn  
+**Workflow stage after this plan**: Apply → Test → Mock → Done
 
 ## Summary
 
-[What we will build and where it lives]
+[One paragraph]
 
 ## Technical Context
 
-**Language/Version**: .NET 9 (Catalog/other APIs), Angular (shell + MFEs), Node (chat only if in scope)
-**Storage**: SQLite per service unless spec says otherwise
-**Edge**: YARP gateway `:5000`
-**UI**: catalog-mfe and/or learning-mfe
+**Language/Version**: .NET 9 / Angular  
+**Edge**: `http://localhost:5000`  
+**Owning service**: [Catalog | Identity | …]
 
 ## Constitution Check
 
-- [ ] Spec exists and is not Draft-only if we are implementing
-- [ ] One vertical slice; owning service is named
-- [ ] No new public port; gateway still the edge
-- [ ] Seed/schema cannot brick Catalog/Identity startup
-- [ ] Commit set will exclude db/bin/tmp
+- [ ] Spec exists with screens + AC
+- [ ] One vertical slice
+- [ ] No new public port
+- [ ] Story id in new types/endpoints
 
-## Files likely to change
+## Code to apply *(mandatory)*
 
-- `src/services/...`
-- `src/frontend/projects/...`
-
-## Research / risks
-
-- [SQLite FK, Guid TEXT, DateTimeOffset ORDER BY, paged `{ items }` APIs]
+| Area | Path | Story |
+|---|---|---|
+| API | `src/services/.../Features/*.cs` | CH-Snn |
+| UI | `src/frontend/projects/...` | CH-Snn |
+| Tests | `tests/CampusHub.Catalog.Api.Tests/` | `[Trait("Story", "CH-Snn")]` |
+| Mock | seeder / schema | CH-Snn |

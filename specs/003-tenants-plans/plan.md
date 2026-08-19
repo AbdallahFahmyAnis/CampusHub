@@ -11,4 +11,14 @@ Identity owns tenants and plans. Shell signup and session expose plan. Catalog A
 ## Technical Context
 
 **Owning service**: Identity (+ shell signup, Catalog tutor gate)  
-**Edge**: Gateway OIDC session
+## Code to apply
+
+| Area | Path |
+|---|---|
+| Identity | `CampusEndpoints.cs` tenants |
+| UI | `src/frontend/projects/shell/src/app/signup.ts` |
+| Gate | Catalog Ask AI respects Free vs Campus (`CourseTutor`) |
+
+## Test / Mock
+
+`/signup` then seeded users still login with `CampusHub!123`.

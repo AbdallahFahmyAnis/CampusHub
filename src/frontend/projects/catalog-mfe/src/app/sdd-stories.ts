@@ -1,0 +1,19 @@
+/** SDD story map — keep in sync with specs/jira/README.md (CH-Snn / MDP-12..27). */
+export const SddStories = {
+  tenants: { id: 'CH-S01', jira: 'MDP-12', spec: 'specs/003-tenants-plans' },
+  invites: { id: 'CH-S02', jira: 'MDP-13', spec: 'specs/004-invites-people' },
+  billing: { id: 'CH-S03', jira: 'MDP-14', spec: 'specs/005-mock-billing' },
+  opsCampus: { id: 'CH-S04', jira: 'MDP-15', spec: 'specs/006-ops-campus' },
+  notifications: { id: 'CH-S05', jira: 'MDP-16', spec: 'specs/007-notifications' },
+  certificates: { id: 'CH-S06', jira: 'MDP-17', spec: 'specs/008-certificates' },
+  analytics: { id: 'CH-S07', jira: 'MDP-18', spec: 'specs/009-course-analytics' },
+  chatTutor: { id: 'CH-S08', jira: 'MDP-19', spec: 'specs/010-chat-ai-tutor' },
+  discovery: { id: 'CH-S09', jira: 'MDP-20', spec: 'specs/011-catalog-discovery' },
+  progress: { id: 'CH-S10', jira: 'MDP-21', spec: 'specs/012-progress-dashboard' },
+  quizzes: { id: 'CH-S11', jira: 'MDP-22', spec: 'specs/013-quizzes' },
+  assignments: { id: 'CH-S12', jira: 'MDP-23', spec: 'specs/014-assignments' },
+  notes: { id: 'CH-S13', jira: 'MDP-24', spec: 'specs/015-lecture-notes' },
+  announcements: { id: 'CH-S14', jira: 'MDP-25', spec: 'specs/016-announcements' },
+  gradebook: { id: 'CH-S15', jira: 'MDP-26', spec: 'specs/001-course-gradebook' },
+  dueDates: { id: 'CH-S16', jira: 'MDP-27', spec: 'specs/002-assignment-due-dates' },
+} as const;

@@ -23,3 +23,26 @@ A student writes notes on a lecture. They persist on the account and appear on M
 ## Success Criteria
 
 - **SC-001**: Notes survive Catalog restart (SQLite).
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-24](https://abdallah-fahmy.atlassian.net/browse/MDP-24) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Player Notes | `http://localhost:5000/learn/course/{id}` | student | Save notes on a lecture |
+| My learning notes | `http://localhost:5000/learn` | student | Snippets linking to lectures |
+
+### Apply (code)
+
+- `NoteEndpoints.cs` (CH-S13)
+- Player + `progress-dashboard.ts`
+
+### Test / Mock
+
+- Type notes, refresh, same text. Empty notes stay off the dashboard list.

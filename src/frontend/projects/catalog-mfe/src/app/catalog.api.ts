@@ -1,6 +1,9 @@
+/** Catalog HTTP client. Story map: ./sdd-stories.ts (CH-S07–S16). */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+
+export { SddStories } from './sdd-stories';
 
 export interface SubjectDto {
   id: string;

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using CampusHub.BuildingBlocks.Sdd;
 using CampusHub.Catalog.Api.Contracts;
 using CampusHub.Catalog.Api.Domain;
 using CampusHub.Catalog.Api.Infrastructure;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CampusHub.Catalog.Api.Features;
 
+/// <summary>SDD CH-S11 / MDP-22 — specs/013-quizzes. Course quizzes and attempts.</summary>
 public static class QuizEndpoints
 {
     private static readonly JsonSerializerOptions Json = new()
@@ -57,7 +59,7 @@ public static class QuizEndpoints
         var result = quizzes.Select(quiz =>
         {
             var mine = attempts.Where(a => a.QuizId == quiz.Id).ToList();
-            var best = mine.Count == 0 ? (int?)null : mine.Max(a => Percent(a.Score, a.Total));
+            var best = mine.Count == 0 ? (int?)null : mine.Max(a => QuizScoring.Percent(a.Score, a.Total));
             var passed = mine.Any(a => a.Passed);
             var questions = ParseQuestions(quiz.QuestionsJson);
             return new QuizSummaryDto(quiz.Id, quiz.Title, quiz.PassPercent, questions.Count, best, mine.Count == 0 ? null : passed);
@@ -143,7 +145,7 @@ public static class QuizEndpoints
         var mine = await db.CourseQuizAttempts.AsNoTracking()
             .Where(a => a.QuizId == quizId && a.StudentId == studentId)
             .ToListAsync(ct);
-        var best = mine.Count == 0 ? (int?)null : mine.Max(a => Percent(a.Score, a.Total));
+        var best = mine.Count == 0 ? (int?)null : mine.Max(a => QuizScoring.Percent(a.Score, a.Total));
         var passed = mine.Count == 0 ? (bool?)null : mine.Any(a => a.Passed);
         return Results.Ok(ToDetail(quiz, reveal, best, passed));
     }
@@ -185,8 +187,8 @@ public static class QuizEndpoints
         }
 
         var total = questions.Count;
-        var percent = Percent(score, total);
-        var passed = percent >= quiz.PassPercent;
+        var percent = QuizScoring.Percent(score, total);
+        var passed = QuizScoring.Passed(percent, quiz.PassPercent);
         var attempt = new CourseQuizAttempt
         {
             Id = Guid.NewGuid(),
@@ -226,9 +228,6 @@ public static class QuizEndpoints
             revealAnswers ? q.CorrectIndex : null)).ToList();
         return new QuizDetailDto(quiz.Id, quiz.Title, quiz.PassPercent, questions, bestScore, passed);
     }
-
-    private static int Percent(int score, int total) =>
-        total <= 0 ? 0 : (int)Math.Round(score * 100.0 / total);
 
     internal sealed record StoredQuestion(Guid Id, string Prompt, List<string> Choices, int CorrectIndex);
 }

@@ -23,3 +23,25 @@ A student filters by category, level, price, rating, sorts, and sees recommended
 ## Success Criteria
 
 - **SC-001**: Empty filter results do not show a misleading non-zero total.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-20](https://abdallah-fahmy.atlassian.net/browse/MDP-20) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Catalog | `http://localhost:5000/catalog` | student | Filters, sort, recommended, search |
+
+### Apply (code)
+
+- `CatalogEndpoints.ListCourses` / recommended (CH-S09)
+- `src/frontend/projects/catalog-mfe/src/app/course-list.ts`
+
+### Test / Mock
+
+- Filter by subject/level; Meilisearch down still lists seeded courses. `minRating` applies before paging.

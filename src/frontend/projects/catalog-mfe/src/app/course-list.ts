@@ -1,3 +1,4 @@
+/** SDD CH-S09 / MDP-20 — catalog filters, sort, recommended. /catalog */
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';

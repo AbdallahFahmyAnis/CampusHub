@@ -23,3 +23,26 @@ A teacher opens `/catalog/:id/analytics` for enrollments, revenue, completions, 
 ## Success Criteria
 
 - **SC-001**: Analytics is linked from My courses and the editor.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-18](https://abdallah-fahmy.atlassian.net/browse/MDP-18) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Analytics | `http://localhost:5000/catalog/:id/analytics` | teacher | Enrollments, revenue, lecture completions |
+| My courses | `http://localhost:5000/catalog/mine` | teacher | Analytics link |
+
+### Apply (code)
+
+- `GET /api/catalog/courses/{id}/stats` in `CourseLearningEndpoints.cs` (CH-S07)
+- `src/frontend/projects/catalog-mfe/src/app/course-analytics.ts`
+
+### Test / Mock
+
+- Teacher on Algorithms or Linear Algebra analytics. Seeded enrollments/progress.

@@ -1,3 +1,4 @@
+/** SDD CH-S01 / MDP-12 — campus signup. /signup */
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';

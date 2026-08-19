@@ -1,3 +1,4 @@
+/** SDD CH-S02 / MDP-13 — invites and people. /people */
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';

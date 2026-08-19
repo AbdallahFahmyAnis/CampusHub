@@ -1,6 +1,6 @@
 # CampusHub SDD story map
 
-Source of truth for Jira. Each story has a spec and a plan. Status is **Done** for shipped slices.
+Source of truth for Jira. Each story has a spec and a plan. Status is **Done** (Specify → Apply → Test → Mock → Done). Screens and code maps: [`specs/STORIES.md`](../STORIES.md).
 
 ## Plans (Jira epics)
 
@@ -33,7 +33,36 @@ CH-S16 due dates lives in Teach & learn; calendar UI is on My learning.
 | CH-S15 | Course gradebook | [001](../001-course-gradebook/spec.md) | [plan](../001-course-gradebook/plan.md) | Teach & learn |
 | CH-S16 | Assignment due dates and calendar | [002](../002-assignment-due-dates/spec.md) | [plan](../002-assignment-due-dates/plan.md) | Teach & learn |
 
-## Upload to Jira
+## Upload to Jira Product Discovery (MDP)
+
+Target: [MDP ideas](https://abdallah-fahmy.atlassian.net/jira/polaris/projects/MDP/ideas/view/9a59bccf-ce6f-426f-8cec-d8c61b1deeed)
+
+1. Create an API token: https://id.atlassian.com/manage-profile/security/api-tokens
+2. Run:
+
+```powershell
+$env:JIRA_EMAIL = "your-atlassian-email@example.com"
+$env:JIRA_API_TOKEN = "paste-token-here"
+# optional: $env:JIRA_PARENT = "MDP-7"
+pwsh specs/jira/push-jira.ps1
+```
+
+Creates **Idea** issues in project **MDP** (3 plans + 16 stories). Keys are written to `specs/jira/jira-keys.json`.
+
+### Work items (Story/Task)
+
+MDP is Product Discovery: it only has **Idea**. Real Jira **work items** (Epic/Story/Task) must go in a Software project.
+
+```powershell
+$env:JIRA_EMAIL = "your-atlassian-email@example.com"
+$env:JIRA_API_TOKEN = "new-token"
+$env:JIRA_SOFTWARE_PROJECT = "YOURSOFTWAREKEY"
+powershell -File specs/jira/push-jira-workitems.ps1
+```
+
+That creates work items and Relates-links them to MDP-9–MDP-27.
+
+Or import `jira-import.csv` in Jira (map Issue Type to **Idea**).
 
 1. Import `jira-import.csv` (Issues → Import issues from CSV). Map **Epic Name**, **Issue Type**, **Status**, **Labels**, **Description**.
 2. Or set `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY` and run:

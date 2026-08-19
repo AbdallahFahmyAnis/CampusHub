@@ -7,3 +7,11 @@
 ## Summary
 
 `GET /api/catalog/progress/dashboard`. `progress-dashboard.ts` in learning-mfe.
+
+## Code to apply
+
+| Area | Path |
+|---|---|
+| API | `CourseLearningEndpoints.GetProgressDashboard` |
+| UI | `progress-dashboard.ts` `/learn` |
+

@@ -1,3 +1,4 @@
+/** SDD CH-S11–S16 teacher authoring: quizzes, assignments, due dates, announcements. */
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';

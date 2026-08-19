@@ -23,3 +23,26 @@ A campus admin opens billing, sees plan and mock invoices, and can upgrade witho
 ## Success Criteria
 
 - **SC-001**: Billing is usable at `http://localhost:5000/billing` after sign-in.
+
+## Qualified story
+
+| Field | Value |
+|---|---|
+| **Jira idea** | [MDP-14](https://abdallah-fahmy.atlassian.net/browse/MDP-14) |
+| **Workflow** | Specify ✅ Apply ✅ Test ✅ Mock ✅ Retest ✅ **Done** |
+
+### Screens
+
+| Screen | URL | Actor | Must show |
+|---|---|---|---|
+| Billing | `http://localhost:5000/billing` | campus admin | Plan, mock invoices, upgrade |
+
+### Apply (code)
+
+- Identity billing GET/upgrade on `CampusEndpoints` (CH-S03)
+- Gateway `/campus` billing proxies
+- `src/frontend/projects/shell/src/app/billing.ts`
+
+### Test / Mock
+
+- Open billing as admin; upgrade mock plan; persist after refresh. No live card network.

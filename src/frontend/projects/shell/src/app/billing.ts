@@ -1,3 +1,4 @@
+/** SDD CH-S03 / MDP-14 — mock billing. /billing */
 import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
