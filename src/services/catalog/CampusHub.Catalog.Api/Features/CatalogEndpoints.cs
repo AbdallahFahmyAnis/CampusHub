@@ -158,6 +158,17 @@ public static class CatalogEndpoints
             query = query.Where(c => c.Price <= maxPrice.Value);
         }
 
+        // Filter by minimum average rating using a DB subquery
+        if (minRating.HasValue)
+        {
+            var threshold = minRating.Value;
+            var ratedIds = db.CourseReviews.AsNoTracking()
+                .GroupBy(r => r.CourseId)
+                .Where(g => g.Average(r => (double)r.Rating) >= threshold)
+                .Select(g => g.Key);
+            query = query.Where(c => ratedIds.Contains(c.Id));
+        }
+
         var total = await query.CountAsync(ct);
 
         // Apply sort
@@ -174,14 +185,6 @@ public static class CatalogEndpoints
             .Take(pageSize)
             .ToListAsync(ct);
 
-        // Post-filter by rating (stats loaded in memory after paging)
-        if (minRating.HasValue)
-        {
-            var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
-            courses = courses
-                .Where(c => stats.TryGetValue(c.Id, out var s) && s.Average >= minRating.Value)
-                .ToList();
-        }
         return await ToPaged(db, user, courses, page, pageSize, total, ct);
     }
 
