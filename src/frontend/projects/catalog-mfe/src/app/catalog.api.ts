@@ -164,19 +164,34 @@ export class CatalogApi {
     return firstValueFrom(this.http.get<SubjectDto[]>('/api/catalog/subjects'));
   }
 
-  courses(options?: { category?: string; q?: string; page?: number; pageSize?: number }) {
+  courses(options?: {
+    category?: string;
+    q?: string;
+    level?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+    sort?: string;
+    page?: number;
+    pageSize?: number;
+  }) {
     const params: Record<string, string | number> = {
       page: options?.page ?? 1,
       pageSize: options?.pageSize ?? 12,
     };
-    if (options?.category) {
-      params['category'] = options.category;
-    }
-    if (options?.q) {
-      params['q'] = options.q;
-    }
+    if (options?.category) params['category'] = options.category;
+    if (options?.q) params['q'] = options.q;
+    if (options?.level) params['level'] = options.level;
+    if (options?.minPrice != null) params['minPrice'] = options.minPrice;
+    if (options?.maxPrice != null) params['maxPrice'] = options.maxPrice;
+    if (options?.minRating != null) params['minRating'] = options.minRating;
+    if (options?.sort) params['sort'] = options.sort;
 
     return firstValueFrom(this.http.get<PagedCoursesDto>('/api/catalog/courses', { params }));
+  }
+
+  recommended() {
+    return firstValueFrom(this.http.get<CourseListItemDto[]>('/api/catalog/courses/recommended'));
   }
 
   mine() {

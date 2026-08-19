@@ -1,11 +1,12 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CatalogApi, CourseListItemDto, SubjectDto, hoursLabel, starSlots } from './catalog.api';
 
 @Component({
   selector: 'app-course-list',
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, FormsModule],
   template: `
     <div class="udemy-catalog">
       <div class="page-head">
@@ -20,24 +21,92 @@ import { CatalogApi, CourseListItemDto, SubjectDto, hoursLabel, starSlots } from
           <p class="muted catalog-count">{{ totalCount() }} course{{ totalCount() === 1 ? '' : 's' }}</p>
         }
       </div>
+
       @if (!saved() && subjects().length) {
         <div class="catalog-filters" role="tablist" aria-label="Categories">
-          <button
-            type="button"
-            class="chip"
-            [class.active]="!category()"
-            (click)="setCategory('')"
-          >All</button>
+          <button type="button" class="chip" [class.active]="!category()" (click)="setCategory('')">All</button>
           @for (subject of subjects(); track subject.id) {
-            <button
-              type="button"
-              class="chip"
-              [class.active]="category() === subject.code"
-              (click)="setCategory(subject.code)"
-            >{{ subject.name }}</button>
+            <button type="button" class="chip" [class.active]="category() === subject.code" (click)="setCategory(subject.code)">{{ subject.name }}</button>
           }
         </div>
       }
+
+      @if (!saved()) {
+        <!-- Filter bar -->
+        <div class="catalog-filter-bar" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end;margin-bottom:1.25rem;">
+          <label style="display:flex;flex-direction:column;gap:.2rem;font-size:.85rem;">
+            Level
+            <select [(ngModel)]="filterLevel" (change)="applyFilters()" style="padding:.35rem .6rem;border-radius:6px;border:1px solid var(--border,#e5e7eb);">
+              <option value="">Any</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:.2rem;font-size:.85rem;">
+            Min rating
+            <select [(ngModel)]="filterMinRating" (change)="applyFilters()" style="padding:.35rem .6rem;border-radius:6px;border:1px solid var(--border,#e5e7eb);">
+              <option [ngValue]="null">Any</option>
+              <option [ngValue]="4.5">4.5+</option>
+              <option [ngValue]="4.0">4.0+</option>
+              <option [ngValue]="3.5">3.5+</option>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:.2rem;font-size:.85rem;">
+            Max price (USD)
+            <select [(ngModel)]="filterMaxPrice" (change)="applyFilters()" style="padding:.35rem .6rem;border-radius:6px;border:1px solid var(--border,#e5e7eb);">
+              <option [ngValue]="null">Any</option>
+              <option [ngValue]="0">Free only</option>
+              <option [ngValue]="25">Up to 25</option>
+              <option [ngValue]="50">Up to 50</option>
+              <option [ngValue]="100">Up to 100</option>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:.2rem;font-size:.85rem;">
+            Sort by
+            <select [(ngModel)]="filterSort" (change)="applyFilters()" style="padding:.35rem .6rem;border-radius:6px;border:1px solid var(--border,#e5e7eb);">
+              <option value="">Relevance</option>
+              <option value="newest">Newest</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+            </select>
+          </label>
+          @if (hasActiveFilters()) {
+            <button type="button" class="btn secondary" (click)="clearFilters()" style="align-self:flex-end;">Clear filters</button>
+          }
+        </div>
+      }
+
+      <!-- Recommended strip (only on landing, no search/filter active) -->
+      @if (!saved() && !query() && !category() && !hasActiveFilters() && recommended().length && page() === 1) {
+        <section style="margin-bottom:2rem;">
+          <h2 style="font-size:1.1rem;margin-bottom:.75rem;">Recommended for you</h2>
+          <div class="udemy-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">
+            @for (course of recommended(); track course.id) {
+              <article class="udemy-card" style="position:relative;">
+                <a [routerLink]="['/catalog', course.id]">
+                  <div class="udemy-cover" [attr.data-subject]="course.subjectCode"><span>{{ course.subjectCode }}</span></div>
+                  <div class="udemy-card-body">
+                    <h2>{{ course.title }}</h2>
+                    <p class="instructor">{{ course.teacherName }}</p>
+                    <div class="rating-line">
+                      <strong>{{ course.ratingAverage || 'New' }}</strong>
+                      <span class="stars" aria-hidden="true">
+                        @for (slot of starSlots(course.ratingAverage); track $index) {
+                          <span [class.on]="slot.on">★</span>
+                        }
+                      </span>
+                    </div>
+                    <p class="price">{{ course.price | number: '1.2-2' }} USD</p>
+                  </div>
+                </a>
+              </article>
+            }
+          </div>
+        </section>
+        <hr style="margin-bottom:1.5rem;border:none;border-top:1px solid var(--border,#e5e7eb);">
+      }
+
       @if (error()) {
         <p class="error">{{ error() }}</p>
       } @else if (!loaded()) {
@@ -106,6 +175,7 @@ export class CourseList {
 
   readonly courses = signal<CourseListItemDto[]>([]);
   readonly subjects = signal<SubjectDto[]>([]);
+  readonly recommended = signal<CourseListItemDto[]>([]);
   readonly error = signal<string | null>(null);
   readonly loaded = signal(false);
   readonly category = signal('');
@@ -118,6 +188,16 @@ export class CourseList {
   readonly starSlots = starSlots;
   readonly hoursLabel = hoursLabel;
   readonly searchEngine = signal('sql');
+
+  filterLevel = '';
+  filterMinRating: number | null = null;
+  filterMaxPrice: number | null = null;
+  filterSort = '';
+
+  readonly hasActiveFilters = computed(() =>
+    !!this.filterLevel || this.filterMinRating != null || this.filterMaxPrice != null || !!this.filterSort
+  );
+
   readonly heading = computed(() => {
     if (this.saved()) {
       return 'Wishlist';
@@ -131,16 +211,13 @@ export class CourseList {
     if (this.saved()) {
       return 'Courses you saved for later. Open one to preview a lecture or enroll.';
     }
-    return 'Filter by category, preview a lecture, then enroll for the full curriculum, Q&A, and a signed pass.';
+    return 'Filter by category, level, price, or rating — then preview a lecture and enroll.';
   });
 
   constructor() {
-    void this.api.subjects()
-      .then((items) => this.subjects.set(items))
-      .catch(() => undefined);
-    void this.api.capabilities()
-      .then((caps) => this.searchEngine.set(caps.search))
-      .catch(() => undefined);
+    void this.api.subjects().then((items) => this.subjects.set(items)).catch(() => undefined);
+    void this.api.capabilities().then((caps) => this.searchEngine.set(caps.search)).catch(() => undefined);
+    void this.api.recommended().then((items) => this.recommended.set(items)).catch(() => undefined);
 
     this.route.queryParamMap.subscribe((params) => {
       this.category.set((params.get('category') ?? '').toUpperCase());
@@ -168,23 +245,28 @@ export class CourseList {
     });
   }
 
+  applyFilters(): void {
+    this.page.set(1);
+    void this.load();
+  }
+
+  clearFilters(): void {
+    this.filterLevel = '';
+    this.filterMinRating = null;
+    this.filterMaxPrice = null;
+    this.filterSort = '';
+    void this.load();
+  }
+
   emptyTitle(): string {
-    if (this.saved()) {
-      return 'Your wishlist is empty';
-    }
-    if (this.query()) {
-      return 'No courses matched that search';
-    }
+    if (this.saved()) return 'Your wishlist is empty';
+    if (this.query()) return 'No courses matched that search';
     return this.category() ? 'No courses in this category' : 'No published courses yet';
   }
 
   emptyBody(): string {
-    if (this.saved()) {
-      return 'Tap the heart on a course card to save it here.';
-    }
-    if (this.query()) {
-      return 'Try another keyword, or clear the search and browse by category.';
-    }
+    if (this.saved()) return 'Tap the heart on a course card to save it here.';
+    if (this.query()) return 'Try another keyword, or clear the search and browse by category.';
     return this.category() ? 'Try another category, or choose All.' : 'When a teacher publishes a course, it will appear here.';
   }
 
@@ -223,6 +305,10 @@ export class CourseList {
         const result = await this.api.courses({
           category: this.category() || undefined,
           q: this.query() || undefined,
+          level: this.filterLevel || undefined,
+          minRating: this.filterMinRating ?? undefined,
+          maxPrice: this.filterMaxPrice ?? undefined,
+          sort: this.filterSort || undefined,
           page: this.page(),
           pageSize: this.pageSize,
         });

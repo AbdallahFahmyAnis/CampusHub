@@ -19,6 +19,7 @@ public static class CatalogEndpoints
         api.MapGet("/capabilities", GetCapabilities);
         api.MapGet("/courses", ListCourses);
         api.MapGet("/courses/mine", ListMine).RequireAuthorization("CanManageCatalog");
+        api.MapGet("/courses/recommended", Recommended).RequireAuthorization();
         api.MapGet("/courses/{id:guid}", GetCourse);
         api.MapPost("/courses", CreateCourse).RequireAuthorization("CanManageCatalog");
         api.MapPut("/courses/{id:guid}", UpdateCourse).RequireAuthorization("CanManageCatalog");
@@ -91,6 +92,11 @@ public static class CatalogEndpoints
         Guid? subjectId,
         string? category,
         string? q,
+        string? level,
+        decimal? minPrice,
+        decimal? maxPrice,
+        double? minRating,
+        string? sort,
         int page = 1,
         int pageSize = 12,
         CancellationToken ct = default)
@@ -137,12 +143,45 @@ public static class CatalogEndpoints
                 c.Subject.Code.Contains(term));
         }
 
+        if (!string.IsNullOrWhiteSpace(level))
+        {
+            query = query.Where(c => c.Level == level.Trim());
+        }
+
+        if (minPrice.HasValue)
+        {
+            query = query.Where(c => c.Price >= minPrice.Value);
+        }
+
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(c => c.Price <= maxPrice.Value);
+        }
+
         var total = await query.CountAsync(ct);
-        var courses = await query
-            .OrderBy(c => c.Title)
+
+        // Apply sort; rating requires a sub-query so do it after count
+        IOrderedQueryable<Course>? ordered = sort switch
+        {
+            "price-asc" => query.OrderBy(c => c.Price),
+            "price-desc" => query.OrderByDescending(c => c.Price),
+            "newest" => query.OrderByDescending(c => c.CreatedAt),
+            _ => query.OrderBy(c => c.Title),
+        };
+
+        var courses = await ordered
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
+
+        // Post-filter by rating (stats loaded in memory after paging)
+        if (minRating.HasValue)
+        {
+            var stats = await CatalogMappings.LoadStats(db, courses.Select(c => c.Id), ct);
+            courses = courses
+                .Where(c => stats.TryGetValue(c.Id, out var s) && s.Average >= minRating.Value)
+                .ToList();
+        }
         return await ToPaged(db, user, courses, page, pageSize, total, ct);
     }
 
@@ -181,6 +220,69 @@ public static class CatalogEndpoints
             page,
             pageSize,
             total));
+    }
+
+    private static async Task<IResult> Recommended(
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+    {
+        var (studentId, _) = Caller(user);
+        var tenantId = Tenancy.TenantId(user);
+
+        // Find the subjects the student has already enrolled in
+        var enrolledCourseIds = await db.CourseWishlists.AsNoTracking()
+            .Where(w => w.StudentId == studentId)
+            .Select(w => w.CourseId)
+            .ToListAsync(ct);
+
+        // Also collect subjects from progress (courses they've started learning)
+        var startedCourseIds = await db.LectureProgress.AsNoTracking()
+            .Where(p => p.StudentId == studentId)
+            .Select(p => p.CourseId)
+            .Distinct()
+            .ToListAsync(ct);
+
+        var interactedIds = enrolledCourseIds.Union(startedCourseIds).Distinct().ToList();
+
+        // Get the subject IDs of those courses
+        var interactedSubjectIds = await db.Courses.AsNoTracking()
+            .Where(c => interactedIds.Contains(c.Id))
+            .Select(c => c.SubjectId)
+            .Distinct()
+            .ToListAsync(ct);
+
+        IQueryable<Course> query;
+        if (interactedSubjectIds.Count > 0)
+        {
+            // Return published courses in the same subjects the student hasn't interacted with yet
+            query = db.Courses.AsNoTracking()
+                .Include(c => c.Subject)
+                .Where(c =>
+                    c.TenantId == tenantId &&
+                    c.Status == CourseStatus.Published &&
+                    interactedSubjectIds.Contains(c.SubjectId) &&
+                    !interactedIds.Contains(c.Id));
+        }
+        else
+        {
+            // No history — return highest-rated courses
+            query = db.Courses.AsNoTracking()
+                .Include(c => c.Subject)
+                .Where(c => c.TenantId == tenantId && c.Status == CourseStatus.Published);
+        }
+
+        var candidates = await query.OrderBy(c => c.Title).Take(20).ToListAsync(ct);
+        var stats = await CatalogMappings.LoadStats(db, candidates.Select(c => c.Id), ct);
+
+        // Sort by rating desc, take top 6
+        var ranked = candidates
+            .OrderByDescending(c => stats.TryGetValue(c.Id, out var s) ? s.Average : 0)
+            .Take(6)
+            .ToList();
+
+        var wished = await CatalogMappings.WishlistIds(db, studentId, ranked.Select(c => c.Id), ct);
+        return Results.Ok(ranked.Select(c => CatalogMappings.ToListItem(c, stats.GetValueOrDefault(c.Id), wished.Contains(c.Id))).ToList());
     }
 
     private static async Task<IResult> ListMine(CatalogDbContext db, ClaimsPrincipal user, CancellationToken ct)
