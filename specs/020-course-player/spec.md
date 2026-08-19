@@ -5,6 +5,12 @@
 **Created**: 2026-08-20  
 **Status**: Implemented
 
+## User story
+
+**As an** enrolled student,  
+**I want** to work through lectures and mark them complete,  
+**so that** I progress through the syllabus.
+
 ## Qualified header
 
 | Field | Value |

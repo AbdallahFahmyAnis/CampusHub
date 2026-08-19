@@ -41,7 +41,7 @@ Admins use `/ops`. Campus owners use `/campus`, people, invites, and mock billin
 
 ## Shipped slices (baseline, real product order)
 
-See [`specs/STORIES.md`](../STORIES.md) for A–Z walkthroughs. Auth is **CH-S17** (login, campus/invite/ops register, access token, refresh, logout).
+See [`specs/STORIES.md`](../STORIES.md) for the BA backlog (As a / I want / So that, acceptance criteria, definition of Done).
 
 1. Auth session (CH-S17)
 2. Account profile (CH-S18)

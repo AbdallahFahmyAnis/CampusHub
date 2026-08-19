@@ -5,6 +5,12 @@
 **Created**: 2026-08-20  
 **Status**: Implemented
 
+## User story
+
+**As a** signed-in user,  
+**I want** to update my display name and password,  
+**so that** my identity stays accurate without changing email.
+
 ## Qualified header
 
 | Field | Value |

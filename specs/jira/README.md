@@ -1,6 +1,6 @@
 # CampusHub SDD story map
 
-Source of truth for Jira. Each story has a spec and a plan. Status is **Done** (Specify → Apply → Test → Mock → Done). Screens and code maps: [`specs/STORIES.md`](../STORIES.md).
+Source of truth for Jira. Write stories in BA form (As a / I want / So that) from [`specs/STORIES.md`](../STORIES.md).
 
 ## Plans (Jira epics)
 

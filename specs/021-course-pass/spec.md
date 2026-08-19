@@ -5,6 +5,12 @@
 **Created**: 2026-08-20  
 **Status**: Implemented
 
+## User story
+
+**As an** enrolled student, **I want** a QR course pass.  
+**As a** teacher, **I want** to scan it,  
+**so that** attendance can be recorded.
+
 ## Qualified header
 
 | Field | Value |

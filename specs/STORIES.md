@@ -1,150 +1,333 @@
-# CampusHub features — real product order
+# CampusHub user stories (BA backlog)
 
-Every row is one **A–Z feature story**: start from **auth** (CH-S17), then that feature’s screens, APIs, mock, test, Done.
+Professional backlog for CampusHub. Each item is an independent user story: **As a / I want / So that**, with scope, acceptance criteria, and definition of Done.
 
-Gateway: `http://localhost:5000`. Password: `CampusHub!123`.  
-Workflow: [WORKFLOW.md](WORKFLOW.md).
+**Product order** (how a user actually uses the platform). Gateway: `http://localhost:5000`.  
+**Workflow:** Specify → Apply → Test → Mock → Done ([WORKFLOW.md](WORKFLOW.md)).  
+**Demo accounts:** `student@`, `teacher@`, `admin@campushub.local` / `CampusHub!123`.
 
-**Auth facts (all stories):** the browser holds cookie `campushub.bff` only. Access + refresh tokens live in that cookie. YARP sends `Authorization: Bearer`. Refresh is silent (`/connect/token`). Logout is session revoke (`/logout`). There is **no** public student self-register and **no** OAuth `/connect/revoke`.
+| ID | Priority | Epic | User story title | Spec |
+|---|---|---|---|---|
+| CH-S17 | Must | Platform | Authenticate and manage a secure session | [017](017-auth-session/spec.md) |
+| CH-S18 | Must | Platform | Maintain my profile and password | [018](018-account-profile/spec.md) |
+| CH-S01 | Must | Platform | Register a campus and apply plan entitlements | [003](003-tenants-plans/spec.md) |
+| CH-S02 | Must | Platform | Invite people to my campus | [004](004-invites-people/spec.md) |
+| CH-S09 | Must | Discovery | Discover and filter courses | [011](011-catalog-discovery/spec.md) |
+| CH-S19 | Must | Teach & learn | Enrol and complete mock checkout | [019](019-enroll-checkout/spec.md) |
+| CH-S20 | Must | Teach & learn | Consume a course curriculum | [020](020-course-player/spec.md) |
+| CH-S13 | Should | Teach & learn | Capture lecture notes | [015](015-lecture-notes/spec.md) |
+| CH-S08 | Should | Discovery | Discuss the course and ask the tutor | [010](010-chat-ai-tutor/spec.md) |
+| CH-S11 | Must | Teach & learn | Author and sit a quiz | [013](013-quizzes/spec.md) |
+| CH-S12 | Must | Teach & learn | Set and submit written assignments | [014](014-assignments/spec.md) |
+| CH-S16 | Should | Teach & learn | Schedule assignment due dates | [002](002-assignment-due-dates/spec.md) |
+| CH-S14 | Should | Teach & learn | Publish course announcements | [016](016-announcements/spec.md) |
+| CH-S15 | Must | Teach & learn | Review course grades | [001](001-course-gradebook/spec.md) |
+| CH-S10 | Should | Discovery | Track my learning progress | [012](012-progress-dashboard/spec.md) |
+| CH-S05 | Should | Discovery | Receive in-app notifications | [007](007-notifications/spec.md) |
+| CH-S06 | Should | Discovery | Receive a completion certificate | [008](008-certificates/spec.md) |
+| CH-S21 | Should | Discovery | Present a course pass for attendance | [021](021-course-pass/spec.md) |
+| CH-S07 | Should | Teach & learn | Inspect course analytics | [009](009-course-analytics/spec.md) |
+| CH-S03 | Should | Platform | Manage campus plan (mock billing) | [005](005-mock-billing/spec.md) |
+| CH-S04 | Must | Platform | Separate platform ops from campus admin | [006](006-ops-campus/spec.md) |
 
-## Order (as the app is wired)
-
-| # | Story | Feature | Spec |
-|---|---|---|---|
-| 1 | **CH-S17** | Register, login, access token, refresh, logout | [017](017-auth-session/spec.md) |
-| 2 | **CH-S18** | Account profile + password | [018](018-account-profile/spec.md) |
-| 3 | **CH-S01** | Campus signup, tenants, plan gates | [003](003-tenants-plans/spec.md) |
-| 4 | **CH-S02** | Invites and People (user register by invite) | [004](004-invites-people/spec.md) |
-| 5 | **CH-S09** | Catalog browse, filters, sort, recommended | [011](011-catalog-discovery/spec.md) |
-| 6 | **CH-S19** | Enroll, checkout, mock payment | [019](019-enroll-checkout/spec.md) |
-| 7 | **CH-S20** | Course player and curriculum | [020](020-course-player/spec.md) |
-| 8 | **CH-S13** | Lecture notes | [015](015-lecture-notes/spec.md) |
-| 9 | **CH-S08** | Chat rooms and Ask AI | [010](010-chat-ai-tutor/spec.md) |
-| 10 | **CH-S11** | Quizzes | [013](013-quizzes/spec.md) |
-| 11 | **CH-S12** | Assignments | [014](014-assignments/spec.md) |
-| 12 | **CH-S16** | Due dates + calendar | [002](002-assignment-due-dates/spec.md) |
-| 13 | **CH-S14** | Announcements | [016](016-announcements/spec.md) |
-| 14 | **CH-S15** | Gradebook | [001](001-course-gradebook/spec.md) |
-| 15 | **CH-S10** | My learning dashboard | [012](012-progress-dashboard/spec.md) |
-| 16 | **CH-S05** | Notifications + SSE | [007](007-notifications/spec.md) |
-| 17 | **CH-S06** | Completion certificates | [008](008-certificates/spec.md) |
-| 18 | **CH-S21** | Course pass QR + attendance | [021](021-course-pass/spec.md) |
-| 19 | **CH-S07** | Teacher analytics | [009](009-course-analytics/spec.md) |
-| 20 | **CH-S03** | Mock billing | [005](005-mock-billing/spec.md) |
-| 21 | **CH-S04** | Ops `/ops` vs campus `/campus` | [006](006-ops-campus/spec.md) |
-
-CH-S01–S16 map to Jira ideas MDP-12–MDP-27. CH-S17–S21 are specified in-repo until the next Jira push.
+Status for all items below: **Done** (implemented). CH-S01–S16 = Jira Discovery MDP-12–MDP-27. CH-S17–S21 = in-repo until the next Jira import.
 
 ---
 
-## 1. CH-S17 Auth — register, login, token, refresh, logout
+## CH-S17 — Authenticate and manage a secure session
 
-**A–Z:** `/signup` (campus) → `/invite/:token` or `/ops/users` (user) → `/login` → Identity `/Account/Login` → cookie + access JWT + refresh → `/whoami` → silent refresh → `/logout`.
+**As a** campus user,  
+**I want** to register through an approved path, sign in, stay signed in safely, and sign out,  
+**so that** only I can use my account and the application never exposes tokens in the browser.
 
 | | |
 |---|---|
-| Screens | `/signup`, `/login`, `http://localhost:5101/Account/Login`, `/logout`, `/whoami` |
-| Apply | Gateway `Program.cs`, `AccessTokenRefresher`, Identity `AuthorizationController`, `Login.cshtml`, `session.ts`, `TokenRefreshPolicy` |
-| Test | `dotnet test --filter Story=CH-S17` |
-| Mock | `student@` / `teacher@` / `admin@` + `CampusHub!123` |
-| Revoke | **Logout** ends BFF + Identity cookies. Not `/connect/revoke`. |
+| **Priority** | Must |
+| **Epic** | Platform |
+| **Value** | Protects student and staff data; is a dependency for every other story. |
 
-Full AC: [spec](017-auth-session/spec.md).
+**In scope:** campus registration, invite/ops user creation, login, access token on the BFF cookie, silent refresh, logout.  
+**Out of scope:** public self-service student registration; OAuth token-revoke endpoint; social login; email verification.
 
----
+**Preconditions:** Identity and gateway are running. Seeded users exist for UAT.
 
-## 2. CH-S18 Account
+**Acceptance criteria**
 
-**A–Z:** Login → `/account` → edit name → change password → still signed in.
+1. **Given** a seeded student, **when** they sign in with a valid password, **then** they reach the catalog and `/whoami` reports authenticated identity, role, tenant, and plan.
+2. **Given** a new campus owner, **when** they complete `/signup`, **then** they are directed to login and can sign in as Administrator of that campus.
+3. **Given** a valid invite, **when** the invitee sets a password that meets policy, **then** they can sign in and appear on People.
+4. **Given** an authenticated session, **when** the UI calls a catalog API, **then** the gateway attaches a Bearer access token and the browser does not store a JWT.
+5. **Given** an access token due to expire within two minutes, **when** the session is validated, **then** the gateway refreshes the token without asking the user to sign in again.
+6. **Given** the user chooses Sign out, **when** logout completes, **then** the session is ended and protected routes require login again.
+7. **Given** an unauthenticated API call, **when** it hits `/api/*`, **then** the response is 401 (not an HTML login bounce).
 
----
-
-## 3. CH-S01 Tenants / campus register / plans
-
-**A–Z:** Anonymous `/signup` → login as owner → tenant + plan on `/whoami` → Free vs Campus gates Ask AI / chat / seats.
-
----
-
-## 4. CH-S02 Invites / People
-
-**A–Z:** Login as admin → `/people` → create invite → open `/invite/:token` → set password → login as new member.
+**Definition of Done:** AC 1–7 in UAT; `dotnet test --filter Story=CH-S17`; no JWT in browser storage.
 
 ---
 
-## 5. CH-S09 Catalog
+## CH-S18 — Maintain my profile and password
 
-**A–Z:** Login → `/catalog` → search/filters/sort/recommended/wishlist. JWT required. Meilisearch optional.
+**As a** signed-in user,  
+**I want** to update my display name and password,  
+**so that** my identity in the product stays accurate without exposing my email to change.
 
----
+**In scope:** `/account` name and password. **Out of scope:** email change; forcing other sessions to expire.
 
-## 6. CH-S19 Enroll / mock pay
+**Acceptance criteria**
 
-**A–Z:** Login as student → course landing → `/enroll/:id` → Pay successfully / fail → saga → player unlocked. Payment API is internal, not on YARP.
-
----
-
-## 7. CH-S20 Player / curriculum
-
-**A–Z:** Login → enroll → `/learn/course/:id` → lectures complete. Other player tabs are stories 8–14.
+1. **Given** I am signed in, **when** I open Account, **then** I see my email (read-only) and can save a new display name.
+2. **Given** a valid current password, **when** I set a new password that meets policy, **then** I remain signed in and can use the new password at next login.
 
 ---
 
-## 8–14. Teach & learn (on the player + editor)
+## CH-S01 — Register a campus and apply plan entitlements
 
-Each starts with **login as student or teacher** (CH-S17), then:
+**As a** campus owner,  
+**I want** my organisation to exist as a tenant on a plan,  
+**so that** seats, AI, and chat follow what we pay for.
 
-| Story | A–Z |
-|---|---|
-| CH-S13 Notes | Player Notes tab → persist → `/learn` snippets |
-| CH-S08 Chat / Ask AI | `/chat` or player Ask; Free plan catalog-text; Campus may use model |
-| CH-S11 Quizzes | Teacher editor → student Quiz tab → percent / pass |
-| CH-S12 Assignments | Teacher create → student submit → teacher grade |
-| CH-S16 Due dates | Teacher due → player overdue/late → `/learn` calendar |
-| CH-S14 Announcements | Teacher post → player list |
-| CH-S15 Grades | Teacher `/catalog/:id/gradebook` → student Grades tab (self only) |
+**Acceptance criteria**
+
+1. **Given** a successful campus signup, **when** the owner signs in, **then** session shows that tenant and plan.
+2. **Given** Free plan, **when** a learner uses Ask AI, **then** answers come from course materials only (no model requirement).
 
 ---
 
-## 15. CH-S10 My learning
+## CH-S02 — Invite people to my campus
 
-**A–Z:** Login as student → `/learn` → streak, bars, continue, calendar, links.
+**As a** campus administrator,  
+**I want** to invite staff and students by email/token,  
+**so that** only authorised people join my campus.
 
----
+**Acceptance criteria**
 
-## 16. CH-S05 Inbox
-
-**A–Z:** Login → bell + `/learn/inbox` → SSE unread. Seeded welcome rows.
-
----
-
-## 17. CH-S06 Certificates
-
-**A–Z:** Login → complete all lectures → `/learn/certificates`.
+1. **Given** I am a campus admin, **when** I create an invite on People, **then** I receive a token URL I can copy (email delivery is not required).
+2. **Given** a valid token, **when** the invitee accepts and sets a password, **then** they appear on the People list for that tenant.
 
 ---
 
-## 18. CH-S21 Course pass / attendance
+## CH-S09 — Discover and filter courses
 
-**A–Z:** Login → enroll → `/learn/pass` QR → teacher `/learn/attendance` scan. Enrollment cancel **revokes the pass** (credential, not OAuth token).
+**As a** learner,  
+**I want** to search, filter, sort, and see recommended courses,  
+**so that** I can find a relevant offering without leaving the catalog.
 
----
+**Acceptance criteria**
 
-## 19. CH-S07 Analytics
-
-**A–Z:** Login as teacher → `/catalog/mine` → `/catalog/:id/analytics`.
-
----
-
-## 20. CH-S03 Billing
-
-**A–Z:** Login as admin → `/billing` → mock upgrade → **sign in again** so JWT `plan` refreshes (CH-S17).
+1. **Given** I am signed in, **when** I apply filters, **then** the list and total count match those filters.
+2. **Given** search infrastructure is unavailable, **when** I search, **then** SQL fallback still returns courses.
 
 ---
 
-## 21. CH-S04 Ops vs campus
+## CH-S19 — Enrol and complete mock checkout
 
-**A–Z:** Login as `admin@` → `/ops`. Campus owner → `/campus`. Platform-only filter.
+**As a** student,  
+**I want** to enrol in a published course using a simulated payment,  
+**so that** I can start learning without a live card network.
+
+**Acceptance criteria**
+
+1. **Given** a published course, **when** I pay successfully, **then** enrolment is confirmed and the player unlocks.
+2. **Given** I simulate payment failure, **when** the saga completes, **then** the reserved seat is released and I am not enrolled.
 
 ---
 
-Constants: `CampusHub.BuildingBlocks.Sdd.SddStories` and `sdd-stories.ts`.
+## CH-S20 — Consume a course curriculum
+
+**As an** enrolled student,  
+**I want** to open lectures in order and mark them complete,  
+**so that** I can progress through the syllabus.
+
+**Acceptance criteria**
+
+1. **Given** confirmed enrolment (or staff), **when** I open the player, **then** I can view the current lecture and complete it.
+2. **Given** I am not enrolled, **when** I request a full lecture body or completion, **then** access is denied (preview lectures remain available).
+
+---
+
+## CH-S13 — Capture lecture notes
+
+**As a** student,  
+**I want** notes on a lecture to persist on my account,  
+**so that** I can resume study later.
+
+**Acceptance criteria**
+
+1. **Given** an unlocked lecture, **when** I save notes and refresh, **then** the same text is shown.
+2. **Given** saved notes, **when** I open My learning, **then** snippets link back to the lecture.
+
+---
+
+## CH-S08 — Discuss the course and ask the tutor
+
+**As a** learner on a campus plan that allows chat,  
+**I want** a course room and an Ask AI tutor,  
+**so that** I can get help from peers and from course materials.
+
+**Acceptance criteria**
+
+1. **Given** enrolment (or staff), **when** I open course chat, **then** I can send messages.
+2. **Given** no AI key or Free plan, **when** I ask a question, **then** I still receive an answer from catalog text.
+
+---
+
+## CH-S11 — Author and sit a quiz
+
+**As a** teacher, **I want** to publish a multiple-choice quiz.  
+**As a** student, **I want** to sit it and see a score,  
+**so that** mastery is measured in the course.
+
+**Acceptance criteria**
+
+1. **Given** I am the course teacher, **when** I add a quiz, **then** it appears on the student Quiz tab.
+2. **Given** I am enrolled, **when** I submit answers, **then** I see percent and pass/fail against the pass mark.
+3. **Given** a missing attempts table at first run, **when** the quiz list loads, **then** the API does not return 500.
+
+---
+
+## CH-S12 — Set and submit written assignments
+
+**As a** teacher, **I want** to set written work and grade it.  
+**As a** student, **I want** to submit it,  
+**so that** coursework is collected in one place.
+
+**Acceptance criteria**
+
+1. **Given** I am enrolled, **when** I submit text, **then** the teacher can see that submission.
+2. **Given** I am the teacher, **when** I enter a score, **then** it is clamped to the maximum and the student can see score and feedback.
+
+---
+
+## CH-S16 — Schedule assignment due dates
+
+**As a** teacher, **I want** an optional due date.  
+**As a** student, **I want** upcoming and overdue work on My learning,  
+**so that** I do not miss deadlines.
+
+**Acceptance criteria**
+
+1. **Given** a due date, **when** the student opens Assignments, **then** due, overdue, and late states are visible.
+2. **Given** dated work in a course I am learning, **when** I open My learning, **then** items appear in calendar order.
+3. **Given** no due date, **when** I view the calendar, **then** that assignment is omitted but remains submittable.
+
+---
+
+## CH-S14 — Publish course announcements
+
+**As a** teacher, **I want** to post an announcement,  
+**so that** the cohort sees timely course news.
+
+**Acceptance criteria**
+
+1. **Given** I can manage the course, **when** I post title and body, **then** students see it on the Announcements tab.
+2. **Given** no posts, **when** a student opens the tab, **then** an empty state is shown.
+
+---
+
+## CH-S15 — Review course grades
+
+**As a** teacher, **I want** a roster of quiz and assignment scores.  
+**As a** student, **I want** only my own row,  
+**so that** assessment is visible without leaking peers’ marks.
+
+**Acceptance criteria**
+
+1. **Given** I am the teacher, **when** I open the gradebook, **then** I see students who have submitted work and an overall percent.
+2. **Given** I am a student, **when** I open Grades, **then** I do not see other students’ scores.
+
+---
+
+## CH-S10 — Track my learning progress
+
+**As a** student,  
+**I want** a dashboard of progress and a continue action,  
+**so that** I can resume the right lecture quickly.
+
+**Acceptance criteria**
+
+1. **Given** lecture progress, **when** I open My learning, **then** I see courses and completion percents.
+2. **Given** an in-progress course, **when** I choose Continue, **then** the player opens at a sensible lecture.
+
+---
+
+## CH-S05 — Receive in-app notifications
+
+**As a** signed-in user,  
+**I want** an inbox and a live unread count,  
+**so that** I notice enrolment and teaching events without email.
+
+**Acceptance criteria**
+
+1. **Given** a relevant domain event, **when** Notification processes it, **then** an inbox row exists for me.
+2. **Given** the shell is open, **when** a new notification arrives, **then** unread count can update without a full page reload.
+
+---
+
+## CH-S06 — Receive a completion certificate
+
+**As a** student who finished every lecture,  
+**I want** a certificate on my account,  
+**so that** I can evidence completion.
+
+**Acceptance criteria**
+
+1. **Given** all lectures complete, **when** completion is processed, **then** a certificate is listed on Certificates.
+2. **Given** no completions, **when** I open Certificates, **then** the empty state explains how to earn one.
+
+---
+
+## CH-S21 — Present a course pass for attendance
+
+**As a** enrolled student, **I want** a QR course pass.  
+**As a** teacher, **I want** to scan it,  
+**so that** attendance can be recorded on campus.
+
+**Acceptance criteria**
+
+1. **Given** confirmed enrolment, **when** I open Course pass, **then** I can display a QR for my pass.
+2. **Given** a revoked, expired, or unknown token, **when** a teacher scans, **then** the scan is rejected with a clear error.
+
+---
+
+## CH-S07 — Inspect course analytics
+
+**As a** teacher,  
+**I want** enrolment, revenue, and lecture-completion stats for my course,  
+**so that** I can see whether the offering is working.
+
+**Acceptance criteria**
+
+1. **Given** I own the course (or I am admin), **when** I open analytics, **then** I see confirmed enrolments and per-lecture completion counts.
+2. **Given** I am not allowed to manage the course, **when** I request stats, **then** access is denied.
+
+---
+
+## CH-S03 — Manage campus plan (mock billing)
+
+**As a** campus administrator,  
+**I want** to view and change plan on a mock billing page,  
+**so that** we can demo upgrades without a live payment provider.
+
+**Acceptance criteria**
+
+1. **Given** I am campus admin, **when** I open Billing, **then** I see the current plan and mock invoices.
+2. **Given** a successful mock upgrade, **when** I sign in again, **then** session plan matches the new entitlement.
+
+---
+
+## CH-S04 — Separate platform operations from campus administration
+
+**As a** platform administrator, **I want** a platform console.  
+**As a** campus owner, **I want** a campus console,  
+**so that** tenant data is not mixed with platform-wide tools.
+
+**Acceptance criteria**
+
+1. **Given** a platform admin on the default campus, **when** they open Ops, **then** they see platform health and ops tools.
+2. **Given** a campus-only admin, **when** they open Campus, **then** they do not receive platform-wide ops.
+
+---
+
+## Definition of Done (all stories)
+
+A story is Done when UAT on `http://localhost:5000` matches the acceptance criteria, mock data is clickable, tests tagged `Story=CH-Snn` pass where they exist, and the spec/plan/code cite the story id.
