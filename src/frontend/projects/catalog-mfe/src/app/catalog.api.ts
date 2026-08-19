@@ -185,7 +185,7 @@ export class CatalogApi {
     if (options?.minPrice != null) params['minPrice'] = options.minPrice;
     if (options?.maxPrice != null) params['maxPrice'] = options.maxPrice;
     if (options?.minRating != null) params['minRating'] = options.minRating;
-    if (options?.sort) params['sort'] = options.sort;
+    if (options?.sort) params['sortBy'] = options.sort;
 
     return firstValueFrom(this.http.get<PagedCoursesDto>('/api/catalog/courses', { params }));
   }

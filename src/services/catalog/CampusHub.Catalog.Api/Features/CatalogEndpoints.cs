@@ -96,7 +96,7 @@ public static class CatalogEndpoints
         decimal? minPrice,
         decimal? maxPrice,
         double? minRating,
-        string? sort,
+        string? sortBy,
         int page = 1,
         int pageSize = 12,
         CancellationToken ct = default)
@@ -160,8 +160,8 @@ public static class CatalogEndpoints
 
         var total = await query.CountAsync(ct);
 
-        // Apply sort; rating requires a sub-query so do it after count
-        IOrderedQueryable<Course>? ordered = sort switch
+        // Apply sort
+        var ordered = sortBy switch
         {
             "price-asc" => query.OrderBy(c => c.Price),
             "price-desc" => query.OrderByDescending(c => c.Price),
