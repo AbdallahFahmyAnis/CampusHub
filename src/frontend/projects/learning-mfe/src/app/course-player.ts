@@ -8,6 +8,9 @@ import {
   CourseDetailDto,
   CurriculumDto,
   LectureDetailDto,
+  QuizAttemptDto,
+  QuizDetailDto,
+  QuizSummaryDto,
   QuestionDto,
   ReviewDto,
   starSlots,
@@ -55,6 +58,7 @@ import { SessionService } from '../../../shell/src/app/session';
             <button type="button" [class.active]="tab() === 'lecture'" (click)="tab.set('lecture')">Lecture</button>
             <button type="button" [class.active]="tab() === 'notes'" (click)="tab.set('notes')">Notes</button>
             <button type="button" [class.active]="tab() === 'ask'" (click)="tab.set('ask')">Ask AI</button>
+            <button type="button" [class.active]="tab() === 'quiz'" (click)="tab.set('quiz')">Quiz</button>
             <button type="button" [class.active]="tab() === 'qa'" (click)="tab.set('qa')">Q&amp;A</button>
             <button type="button" [class.active]="tab() === 'reviews'" (click)="tab.set('reviews')">Reviews</button>
           </div>
@@ -124,6 +128,57 @@ import { SessionService } from '../../../shell/src/app/session';
                 <h3>Answer</h3>
                 <p>{{ askAnswer() }}</p>
               </article>
+            }
+          }
+
+          @if (tab() === 'quiz') {
+            @if (!item.enrolled && !session.isTeacher()) {
+              <p class="muted">Enroll to take course quizzes.</p>
+            } @else if (activeQuiz(); as quiz) {
+              <p><button type="button" class="btn secondary" (click)="activeQuiz.set(null)">Back to quizzes</button></p>
+              <h2>{{ quiz.title }}</h2>
+              <p class="muted">Pass mark {{ quiz.passPercent }}%
+                @if (quiz.bestScore != null) {
+                  · Best score {{ quiz.bestScore }}%
+                }
+              </p>
+              @if (quizResult(); as result) {
+                <div class="completion-banner" [style.background]="result.passed ? '#dcfce7' : '#fee2e2'">
+                  <strong>{{ result.passed ? 'Passed' : 'Not yet' }} — {{ result.percent }}%</strong>
+                  <span>{{ result.score }} / {{ result.total }} correct</span>
+                </div>
+                <button type="button" class="btn secondary" (click)="quizResult.set(null)">Try again</button>
+              } @else {
+                <form class="form stacked" (submit)="submitQuiz($event)">
+                  @for (q of quiz.questions; track q.id) {
+                    <fieldset>
+                      <legend>{{ q.prompt }}</legend>
+                      @for (choice of q.choices; track choice.index) {
+                        <label class="inline">
+                          <input type="radio" [name]="'q-' + q.id" [value]="choice.index" [(ngModel)]="quizAnswers[q.id]" />
+                          {{ choice.text }}
+                        </label>
+                      }
+                    </fieldset>
+                  }
+                  <button class="btn" type="submit" [disabled]="quizBusy()">Submit answers</button>
+                </form>
+              }
+            } @else {
+              @if (quizzes().length === 0) {
+                <p class="muted">No quizzes yet for this course.</p>
+              }
+              @for (quiz of quizzes(); track quiz.id) {
+                <article class="qa">
+                  <h3>{{ quiz.title }}</h3>
+                  <p class="muted">{{ quiz.questionCount }} questions · pass at {{ quiz.passPercent }}%
+                    @if (quiz.bestScore != null) {
+                      · Best {{ quiz.bestScore }}% {{ quiz.passed ? '✓' : '' }}
+                    }
+                  </p>
+                  <button type="button" class="btn" (click)="openQuiz(quiz.id)">{{ quiz.bestScore != null ? 'Retake' : 'Start quiz' }}</button>
+                </article>
+              }
             }
           }
 
@@ -212,7 +267,12 @@ export class CoursePlayer implements OnDestroy {
   readonly lectureId = signal<string | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly questions = signal<QuestionDto[]>([]);
-  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'qa' | 'reviews'>('lecture');
+  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'qa' | 'reviews'>('lecture');
+  readonly quizzes = signal<QuizSummaryDto[]>([]);
+  readonly activeQuiz = signal<QuizDetailDto | null>(null);
+  readonly quizResult = signal<QuizAttemptDto | null>(null);
+  readonly quizBusy = signal(false);
+  quizAnswers: Record<string, number> = {};
   readonly error = signal<string | null>(null);
   readonly starSlots = starSlots;
   readonly askBusy = signal(false);
@@ -355,19 +415,59 @@ export class CoursePlayer implements OnDestroy {
     this.reviews.set(await this.api.reviews(id));
   }
 
+  async openQuiz(quizId: string): Promise<void> {
+    const courseId = this.course()?.id;
+    if (!courseId) {
+      return;
+    }
+    try {
+      const quiz = await this.api.quiz(courseId, quizId);
+      this.activeQuiz.set(quiz);
+      this.quizResult.set(null);
+      this.quizAnswers = {};
+    } catch {
+      this.error.set('Could not open this quiz.');
+    }
+  }
+
+  async submitQuiz(event: Event): Promise<void> {
+    event.preventDefault();
+    const courseId = this.course()?.id;
+    const quiz = this.activeQuiz();
+    if (!courseId || !quiz) {
+      return;
+    }
+    this.quizBusy.set(true);
+    try {
+      const answers = quiz.questions.map((q) => ({
+        questionId: q.id,
+        choiceIndex: Number(this.quizAnswers[q.id] ?? -1),
+      }));
+      const result = await this.api.submitQuiz(courseId, quiz.id, answers);
+      this.quizResult.set(result);
+      this.quizzes.set(await this.api.quizzes(courseId));
+    } catch {
+      this.error.set('Could not submit the quiz. Confirm you are enrolled.');
+    } finally {
+      this.quizBusy.set(false);
+    }
+  }
+
   private async open(courseId: string, lectureId: string | null): Promise<void> {
     try {
       if (!this.course() || this.course()?.id !== courseId) {
-        const [course, curriculum, reviews, questions] = await Promise.all([
+        const [course, curriculum, reviews, questions, quizzes] = await Promise.all([
           this.api.course(courseId),
           this.api.curriculum(courseId),
           this.api.reviews(courseId),
           this.api.questions(courseId),
+          this.api.quizzes(courseId),
         ]);
         this.course.set(course);
         this.curriculum.set(curriculum);
         this.reviews.set(reviews);
         this.questions.set(questions);
+        this.quizzes.set(quizzes);
       }
       const first = this.curriculum()?.sections[0]?.lectures[0]?.id ?? null;
       const target = lectureId ?? first;

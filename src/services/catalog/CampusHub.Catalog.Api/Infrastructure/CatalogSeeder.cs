@@ -21,6 +21,7 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
         await SeedCurriculumAsync(cancellationToken);
         await EnsureVideoUrlsAsync(cancellationToken);
         await SeedCommunityAsync(cancellationToken);
+        await SeedQuizzesAsync(cancellationToken);
         await search.RebuildAsync(db, cancellationToken);
         logger.LogInformation(
             "Catalog seed completed with {CourseCount} courses",
@@ -275,6 +276,50 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
             videos[i].VideoUrl = DemoVideo(i + videos[i].Title.Length);
         }
 
+        await db.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedQuizzesAsync(CancellationToken ct)
+    {
+        if (await db.CourseQuizzes.AnyAsync(ct))
+        {
+            return;
+        }
+
+        var questions = new[]
+        {
+            new
+            {
+                id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccc01"),
+                prompt = "What does O(n log n) typically describe?",
+                choices = new[] { "Constant time", "Efficient comparison sorts", "Exponential blow-up", "Linear scans only" },
+                correctIndex = 1,
+            },
+            new
+            {
+                id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccc02"),
+                prompt = "BFS finds shortest paths when edges are:",
+                choices = new[] { "Weighted with negatives", "Unweighted (or equal weight)", "Directed acyclic only", "Always complete graphs" },
+                correctIndex = 1,
+            },
+            new
+            {
+                id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccc03"),
+                prompt = "A hash table's average lookup is:",
+                choices = new[] { "O(n²)", "O(log n)", "O(1)", "O(n log n)" },
+                correctIndex = 2,
+            },
+        };
+
+        db.CourseQuizzes.Add(new CourseQuiz
+        {
+            Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccc00"),
+            CourseId = AlgorithmsId,
+            Title = "Algorithms checkpoint",
+            PassPercent = 70,
+            QuestionsJson = System.Text.Json.JsonSerializer.Serialize(questions),
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
         await db.SaveChangesAsync(ct);
     }
 

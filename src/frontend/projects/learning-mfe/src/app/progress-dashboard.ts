@@ -90,6 +90,12 @@ import { LearningApi, ProgressDashboardDto } from './learning.api';
                   <p style="margin:0;font-weight:600;">{{ course.courseTitle }}</p>
                   <p class="muted" style="margin:.2rem 0 .5rem;font-size:.85rem;">
                     {{ course.completedLectures }} / {{ course.totalLectures }} lectures
+                    @if (course.quizCount) {
+                      · Quizzes {{ course.quizzesPassed }}/{{ course.quizCount }}
+                    }
+                    @if (course.bestQuizPercent != null) {
+                      · Best quiz {{ course.bestQuizPercent }}%
+                    }
                     @if (course.lastActivityAt) {
                       · Last: {{ course.lastActivityAt | date:'mediumDate' }}
                     }

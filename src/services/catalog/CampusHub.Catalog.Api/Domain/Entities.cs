@@ -161,3 +161,28 @@ public sealed class CourseAnswer
     public bool IsTeacher { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
+
+public sealed class CourseQuiz
+{
+    public Guid Id { get; set; }
+    public Guid CourseId { get; set; }
+    public Course Course { get; set; } = null!;
+    public required string Title { get; set; }
+    public int PassPercent { get; set; } = 70;
+    public required string QuestionsJson { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+public sealed class CourseQuizAttempt
+{
+    public Guid Id { get; set; }
+    public Guid QuizId { get; set; }
+    public CourseQuiz Quiz { get; set; } = null!;
+    public Guid CourseId { get; set; }
+    public required string StudentId { get; set; }
+    public int Score { get; set; }
+    public int Total { get; set; }
+    public bool Passed { get; set; }
+    public required string AnswersJson { get; set; }
+    public DateTimeOffset SubmittedAt { get; set; }
+}

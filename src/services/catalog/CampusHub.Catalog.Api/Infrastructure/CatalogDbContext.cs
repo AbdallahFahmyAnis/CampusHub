@@ -15,6 +15,8 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
     public DbSet<CourseAnswer> CourseAnswers => Set<CourseAnswer>();
     public DbSet<CourseWishlist> CourseWishlists => Set<CourseWishlist>();
     public DbSet<LectureProgress> LectureProgress => Set<LectureProgress>();
+    public DbSet<CourseQuiz> CourseQuizzes => Set<CourseQuiz>();
+    public DbSet<CourseQuizAttempt> CourseQuizAttempts => Set<CourseQuizAttempt>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,6 +129,28 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
                 .WithMany(x => x.Answers)
                 .HasForeignKey(x => x.QuestionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CourseQuiz>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Title).HasMaxLength(200);
+            entity.HasOne(x => x.Course)
+                .WithMany()
+                .HasForeignKey(x => x.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => x.CourseId);
+        });
+
+        modelBuilder.Entity<CourseQuizAttempt>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.StudentId).HasMaxLength(64);
+            entity.HasOne(x => x.Quiz)
+                .WithMany()
+                .HasForeignKey(x => x.QuizId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(x => new { x.QuizId, x.StudentId, x.SubmittedAt });
         });
     }
 

@@ -33,6 +33,9 @@ export interface CourseProgressDto {
   progressPct: number;
   lastActivityAt: string | null;
   continueLectureId: string | null;
+  quizCount: number;
+  quizzesPassed: number;
+  bestQuizPercent: number | null;
 }
 
 export interface ProgressDashboardDto {

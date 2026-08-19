@@ -61,6 +61,14 @@ public static class CourseLearningEndpoints
             .Where(c => courseIds.Contains(c.Id))
             .ToListAsync(ct);
 
+        var quizzes = await db.CourseQuizzes.AsNoTracking()
+            .Where(q => courseIds.Contains(q.CourseId))
+            .Select(q => new { q.Id, q.CourseId })
+            .ToListAsync(ct);
+        var attempts = await db.CourseQuizAttempts.AsNoTracking()
+            .Where(a => a.StudentId == studentId && courseIds.Contains(a.CourseId))
+            .ToListAsync(ct);
+
         var items = new List<CourseProgressDto>();
         foreach (var course in courses)
         {
@@ -84,6 +92,13 @@ public static class CourseLearningEndpoints
             var nextLecture = ordered.FirstOrDefault(l => !completedIds.Contains(l.Id));
             var continueLectureId = nextLecture?.Id ?? lastProgressEntry?.LectureId;
 
+            var courseQuizIds = quizzes.Where(q => q.CourseId == course.Id).Select(q => q.Id).ToHashSet();
+            var courseAttempts = attempts.Where(a => a.CourseId == course.Id).ToList();
+            var quizzesPassed = courseQuizIds.Count(qid => courseAttempts.Any(a => a.QuizId == qid && a.Passed));
+            int? bestQuiz = courseAttempts.Count == 0
+                ? null
+                : courseAttempts.Max(a => a.Total <= 0 ? 0 : (int)Math.Round(a.Score * 100.0 / a.Total));
+
             items.Add(new CourseProgressDto(
                 course.Id,
                 course.Title,
@@ -92,7 +107,10 @@ public static class CourseLearningEndpoints
                 completedCount,
                 pct,
                 lastProgressEntry?.CompletedAt,
-                continueLectureId));
+                continueLectureId,
+                courseQuizIds.Count,
+                quizzesPassed,
+                bestQuiz));
         }
 
         // Sort: in-progress first (not 100%), then completed

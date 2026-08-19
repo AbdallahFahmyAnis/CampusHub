@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CatalogApi, CurriculumDto, SubjectDto } from './catalog.api';
+import { CatalogApi, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog.api';
 
 @Component({
   selector: 'app-course-editor',
@@ -112,6 +112,33 @@ import { CatalogApi, CurriculumDto, SubjectDto } from './catalog.api';
           <button class="btn" type="submit">Add section</button>
         </form>
       </section>
+      <section class="panel" style="margin-top: 24px; max-width: 720px;">
+        <h2>Quizzes</h2>
+        <p class="muted">Multiple-choice checkpoints. Students take them in the course player.</p>
+        @for (quiz of quizzes(); track quiz.id) {
+          <p>
+            <strong>{{ quiz.title }}</strong>
+            <span class="muted"> · {{ quiz.questionCount }} questions · pass at {{ quiz.passPercent }}%</span>
+          </p>
+        }
+        <form class="form stacked" (submit)="addQuiz($event)">
+          <label>Quiz title <input name="quizTitle" [(ngModel)]="quizTitle" required /></label>
+          <label>Pass mark (%) <input type="number" min="1" max="100" name="passPct" [(ngModel)]="quizPass" /></label>
+          @for (q of quizQuestions; track $index; let qi = $index) {
+            <fieldset class="panel" style="padding: 0.75rem;">
+              <legend>Question {{ qi + 1 }}</legend>
+              <label>Prompt <input [(ngModel)]="q.prompt" [name]="'qp-' + qi" /></label>
+              @for (choice of q.choices; track $index; let c = $index) {
+                <label class="inline">
+                  <input type="radio" [name]="'correct-' + qi" [checked]="q.correctIndex === c" (change)="q.correctIndex = c" />
+                  <input [(ngModel)]="q.choices[c]" [name]="'qc-' + qi + '-' + c" placeholder="Choice {{ c + 1 }}" />
+                </label>
+              }
+            </fieldset>
+          }
+          <button class="btn" type="submit">Add quiz</button>
+        </form>
+      </section>
     }
   `,
 })
@@ -126,8 +153,15 @@ export class CourseEditor {
   readonly status = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly curriculum = signal<CurriculumDto | null>(null);
+  readonly quizzes = signal<QuizSummaryDto[]>([]);
   readonly saving = signal(false);
   sectionTitle = '';
+  quizTitle = '';
+  quizPass = 70;
+  quizQuestions = [
+    { prompt: '', choices: ['', '', '', ''], correctIndex: 0 },
+    { prompt: '', choices: ['', '', '', ''], correctIndex: 0 },
+  ];
   lectureTitle: Record<string, string> = {};
   lectureKind: Record<string, string> = {};
   lectureVideo: Record<string, string> = {};
@@ -161,6 +195,7 @@ export class CourseEditor {
     const course = await this.api.course(id);
     this.status.set(course.status);
     this.curriculum.set(await this.api.curriculum(id));
+    this.quizzes.set(await this.api.quizzes(id));
     this.form.patchValue({
       subjectId: course.subjectId,
       title: course.title,
@@ -244,5 +279,40 @@ export class CourseEditor {
     this.lectureBody[sectionId] = '';
     this.lectureVideo[sectionId] = '';
     this.curriculum.set(await this.api.curriculum(id));
+  }
+
+  async addQuiz(event: Event): Promise<void> {
+    event.preventDefault();
+    const id = this.id();
+    const questions = this.quizQuestions
+      .filter((q) => q.prompt.trim() && q.choices.filter((c) => c.trim()).length >= 2)
+      .map((q) => {
+        const choices = q.choices.map((c) => c.trim()).filter(Boolean);
+        return {
+          prompt: q.prompt.trim(),
+          choices,
+          correctIndex: Math.min(q.correctIndex, choices.length - 1),
+        };
+      });
+    if (!id || !this.quizTitle.trim() || questions.length === 0) {
+      this.error.set('Add a title and at least one complete question.');
+      return;
+    }
+    try {
+      await this.api.createQuiz(id, {
+        title: this.quizTitle.trim(),
+        passPercent: this.quizPass || 70,
+        questions,
+      });
+      this.quizTitle = '';
+      this.quizQuestions = [
+        { prompt: '', choices: ['', '', '', ''], correctIndex: 0 },
+        { prompt: '', choices: ['', '', '', ''], correctIndex: 0 },
+      ];
+      this.quizzes.set(await this.api.quizzes(id));
+      this.error.set(null);
+    } catch {
+      this.error.set('Could not save the quiz.');
+    }
   }
 }

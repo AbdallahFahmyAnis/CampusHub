@@ -156,6 +156,45 @@ export interface CourseStatsDto {
   monthlyBreakdown: MonthlyEnrollmentDto[];
 }
 
+export interface QuizChoiceDto {
+  index: number;
+  text: string;
+}
+
+export interface QuizQuestionDto {
+  id: string;
+  prompt: string;
+  choices: QuizChoiceDto[];
+  correctIndex?: number | null;
+}
+
+export interface QuizSummaryDto {
+  id: string;
+  title: string;
+  passPercent: number;
+  questionCount: number;
+  bestScore: number | null;
+  passed: boolean | null;
+}
+
+export interface QuizDetailDto {
+  id: string;
+  title: string;
+  passPercent: number;
+  questions: QuizQuestionDto[];
+  bestScore: number | null;
+  passed: boolean | null;
+}
+
+export interface QuizAttemptDto {
+  id: string;
+  score: number;
+  total: number;
+  percent: number;
+  passed: boolean;
+  submittedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
   private readonly http = inject(HttpClient);
@@ -291,6 +330,28 @@ export class CatalogApi {
   ask(courseId: string, body: { question: string; lectureId?: string | null }) {
     return firstValueFrom(
       this.http.post<{ answer: string; source: string }>(`/api/catalog/courses/${courseId}/ask`, body),
+    );
+  }
+
+  quizzes(courseId: string) {
+    return firstValueFrom(this.http.get<QuizSummaryDto[]>(`/api/catalog/courses/${courseId}/quizzes`));
+  }
+
+  quiz(courseId: string, quizId: string) {
+    return firstValueFrom(this.http.get<QuizDetailDto>(`/api/catalog/courses/${courseId}/quizzes/${quizId}`));
+  }
+
+  createQuiz(courseId: string, body: {
+    title: string;
+    passPercent: number;
+    questions: { prompt: string; choices: string[]; correctIndex: number }[];
+  }) {
+    return firstValueFrom(this.http.post<QuizDetailDto>(`/api/catalog/courses/${courseId}/quizzes`, body));
+  }
+
+  submitQuiz(courseId: string, quizId: string, answers: { questionId: string; choiceIndex: number }[]) {
+    return firstValueFrom(
+      this.http.post<QuizAttemptDto>(`/api/catalog/courses/${courseId}/quizzes/${quizId}/submit`, { answers }),
     );
   }
 }

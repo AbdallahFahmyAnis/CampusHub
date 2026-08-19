@@ -168,13 +168,56 @@ public sealed record CourseProgressDto(
     int CompletedLectures,
     int ProgressPct,
     DateTimeOffset? LastActivityAt,
-    Guid? ContinueLectureId);
+    Guid? ContinueLectureId,
+    int QuizCount,
+    int QuizzesPassed,
+    int? BestQuizPercent);
 
 public sealed record StudentProgressDashboardDto(
     IReadOnlyList<CourseProgressDto> Courses,
     int StreakDays,
     int TotalLecturesCompleted,
     DateTimeOffset? LastActivityAt);
+
+public sealed record QuizChoiceDto(int Index, string Text);
+
+public sealed record QuizQuestionDto(
+    Guid Id,
+    string Prompt,
+    IReadOnlyList<QuizChoiceDto> Choices,
+    int? CorrectIndex);
+
+public sealed record QuizSummaryDto(
+    Guid Id,
+    string Title,
+    int PassPercent,
+    int QuestionCount,
+    int? BestScore,
+    bool? Passed);
+
+public sealed record QuizDetailDto(
+    Guid Id,
+    string Title,
+    int PassPercent,
+    IReadOnlyList<QuizQuestionDto> Questions,
+    int? BestScore,
+    bool? Passed);
+
+public sealed record CreateQuizQuestionRequest(string Prompt, IReadOnlyList<string> Choices, int CorrectIndex);
+
+public sealed record CreateQuizRequest(string Title, int PassPercent, IReadOnlyList<CreateQuizQuestionRequest> Questions);
+
+public sealed record SubmitQuizAnswerRequest(Guid QuestionId, int ChoiceIndex);
+
+public sealed record SubmitQuizRequest(IReadOnlyList<SubmitQuizAnswerRequest> Answers);
+
+public sealed record QuizAttemptDto(
+    Guid Id,
+    int Score,
+    int Total,
+    int Percent,
+    bool Passed,
+    DateTimeOffset SubmittedAt);
 
 public sealed record LectureStatDto(
     Guid Id,

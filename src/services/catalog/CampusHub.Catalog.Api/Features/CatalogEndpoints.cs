@@ -30,6 +30,7 @@ public static class CatalogEndpoints
         api.MapDelete("/courses/{id:guid}/reservations", ReleaseSeat).AllowAnonymous();
 
         api.MapCourseLearningEndpoints();
+        api.MapQuizEndpoints();
 
         return app;
     }
