@@ -1,4 +1,5 @@
 using CampusHub.Identity.Api.Data;
+using CampusHub.Identity.Api.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -103,6 +104,12 @@ public static class DependencyInjection
         builder.Services.AddControllersWithViews();
         builder.Services.AddRazorPages();
         builder.Services.AddScoped<IdentitySeeder>();
+
+        builder.Services.AddHttpClient("notification", client =>
+        {
+            client.BaseAddress = new Uri(builder.Configuration["Services:Notification"] ?? "http://localhost:5105");
+        });
+        builder.Services.AddScoped<NotificationPublisher>();
 
         return builder;
     }

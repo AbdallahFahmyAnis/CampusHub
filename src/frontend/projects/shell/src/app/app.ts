@@ -37,6 +37,7 @@ export class App {
     void this.session.load().then((session) => {
       if (session.authenticated) {
         void this.alerts.refresh();
+        this.alerts.startSse();
       }
     });
     this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event) => {

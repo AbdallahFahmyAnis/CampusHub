@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using CampusHub.BuildingBlocks.Security;
+using CampusHub.Contracts.Events;
 using CampusHub.Identity.Api.Data;
+using CampusHub.Identity.Api.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -168,6 +170,8 @@ public static class CampusEndpoints
         HttpContext http,
         IConfiguration config,
         IdentityDbContext db,
+        NotificationPublisher notifier,
+        UserManager<ApplicationUser> users,
         CancellationToken ct)
     {
         if (!IsInternal(http, config))
@@ -187,8 +191,25 @@ public static class CampusEndpoints
             return Results.Conflict(new { error = "This campus is already on the highest plan." });
         }
 
+        var oldPlan = tenant.Plan;
         tenant.Plan = next;
         await db.SaveChangesAsync(ct);
+
+        // Notify all admins of this campus
+        var tenantUsers = await users.Users.AsNoTracking()
+            .Where(u => u.TenantId == tenant.Id)
+            .ToListAsync(ct);
+        foreach (var admin in tenantUsers)
+        {
+            if (await users.IsInRoleAsync(admin, Roles.Administrator))
+            {
+                await notifier.PublishAsync(EventTypes.PlanUpgraded, new PlanUpgradedV1(
+                    tenant.Id, tenant.Name,
+                    admin.Id, admin.Email ?? string.Empty,
+                    oldPlan, tenant.Plan), ct);
+            }
+        }
+
         return Results.Ok(new
         {
             upgraded = true,
@@ -252,6 +273,7 @@ public static class CampusEndpoints
         IConfiguration config,
         IdentityDbContext db,
         UserManager<ApplicationUser> users,
+        NotificationPublisher notifier,
         CancellationToken ct)
     {
         if (!IsInternal(http, config))
@@ -310,6 +332,24 @@ public static class CampusEndpoints
         await users.AddToRoleAsync(user, invite.Role);
         invite.AcceptedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+
+        // Notify all admins of the campus that someone accepted an invite
+        var tenantUsers = await users.Users.AsNoTracking()
+            .Where(u => u.TenantId == invite.TenantId)
+            .ToListAsync(ct);
+        var tenantName = tenant?.Name ?? SeedTenants.DefaultName;
+        foreach (var admin in tenantUsers)
+        {
+            if (await users.IsInRoleAsync(admin, Roles.Administrator))
+            {
+                await notifier.PublishAsync(EventTypes.InviteAccepted, new InviteAcceptedV1(
+                    invite.TenantId, tenantName,
+                    user.Id, user.Email ?? string.Empty, displayName,
+                    admin.Id, admin.Email ?? string.Empty,
+                    invite.Role), ct);
+            }
+        }
+
         return Results.Ok(new { email = user.Email, tenantId = invite.TenantId });
     }
 

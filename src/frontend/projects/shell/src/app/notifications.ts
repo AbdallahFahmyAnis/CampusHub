@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, signal, inject, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
@@ -75,14 +75,19 @@ export function noticeGlyph(kind: NoticeKind): string {
 }
 
 @Injectable({ providedIn: 'root' })
-export class NotificationAlerts {
+export class NotificationAlerts implements OnDestroy {
+  private readonly http = inject(HttpClient);
   private readonly unread = signal(0);
   private readonly items = signal<NotificationDto[]>([]);
   readonly unreadCount = this.unread.asReadonly();
   readonly all = this.items.asReadonly();
   readonly recent = computed(() => this.items().slice(0, 8));
 
-  constructor(private readonly http: HttpClient) {}
+  private sseAbort: AbortController | null = null;
+
+  ngOnDestroy(): void {
+    this.stopSse();
+  }
 
   async refresh(): Promise<void> {
     try {
@@ -95,6 +100,65 @@ export class NotificationAlerts {
     } catch {
       this.unread.set(0);
       this.items.set([]);
+    }
+  }
+
+  /** Connect to the SSE stream. Call once after the user signs in. */
+  startSse(): void {
+    this.stopSse();
+    const abort = new AbortController();
+    this.sseAbort = abort;
+    void this.connectSse(abort.signal);
+  }
+
+  stopSse(): void {
+    this.sseAbort?.abort();
+    this.sseAbort = null;
+  }
+
+  private async connectSse(signal: AbortSignal): Promise<void> {
+    // Back-off between reconnect attempts (ms): 2s, 4s, 8s, capped at 30s
+    let backoff = 2000;
+    while (!signal.aborted) {
+      try {
+        const response = await fetch('/api/notifications/stream', {
+          signal,
+          headers: { Accept: 'text/event-stream' },
+          credentials: 'include',
+        });
+        if (!response.ok || !response.body) {
+          break;
+        }
+        backoff = 2000; // reset on success
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (!signal.aborted) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const text = line.slice(6).trim();
+              if (text && !text.includes('"type":"connected"')) {
+                // A real notification arrived — do a lightweight refresh
+                void this.refresh();
+              }
+            }
+          }
+        }
+      } catch {
+        if (signal.aborted) {
+          return;
+        }
+      }
+      // Wait before reconnecting
+      await new Promise<void>((resolve) => setTimeout(resolve, backoff));
+      backoff = Math.min(backoff * 2, 30000);
     }
   }
 

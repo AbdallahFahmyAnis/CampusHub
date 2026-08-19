@@ -10,5 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\aspire\CampusHub.ServiceDefaults\CampusHub.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\..\building-blocks\CampusHub.BuildingBlocks\CampusHub.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\..\..\..\contracts\csharp\CampusHub.Contracts\CampusHub.Contracts.csproj" />
   </ItemGroup>
 </Project>

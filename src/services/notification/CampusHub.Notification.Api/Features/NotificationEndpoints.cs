@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text;
 using CampusHub.Contracts.Events;
 using CampusHub.Notification.Api.Domain;
 using CampusHub.Notification.Api.Infrastructure;
@@ -15,6 +16,7 @@ public static class NotificationEndpoints
         app.MapGet("/api/notifications/unread-count", UnreadCount).RequireAuthorization();
         app.MapPost("/api/notifications/{id:guid}/read", MarkRead).RequireAuthorization();
         app.MapPost("/api/notifications/read-all", MarkAllRead).RequireAuthorization();
+        app.MapGet("/api/notifications/stream", Stream).RequireAuthorization();
         return app;
     }
 
@@ -84,6 +86,63 @@ public static class NotificationEndpoints
             .Where(n => n.UserId == userId && n.Channel == NotificationChannels.InApp && !n.Read)
             .ExecuteUpdateAsync(setters => setters.SetProperty(n => n.Read, true), ct);
         return Results.NoContent();
+    }
+
+    private static async Task Stream(
+        ClaimsPrincipal user,
+        NotificationBus bus,
+        HttpContext http,
+        CancellationToken ct)
+    {
+        var userId = UserId(user);
+        http.Response.ContentType = "text/event-stream";
+        http.Response.Headers.CacheControl = "no-cache";
+        http.Response.Headers.Connection = "keep-alive";
+
+        // Send an initial heartbeat so the client knows the connection is alive
+        await http.Response.WriteAsync($"data: {{\"type\":\"connected\"}}\n\n", ct);
+        await http.Response.Body.FlushAsync(ct);
+
+        var reader = bus.Subscribe(userId);
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(25));
+            while (!ct.IsCancellationRequested)
+            {
+                var readTask = reader.WaitToReadAsync(ct).AsTask();
+                var tickTask = timer.WaitForNextTickAsync(ct).AsTask();
+
+                var winner = await Task.WhenAny(readTask, tickTask);
+                if (ct.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                if (winner == readTask && await readTask)
+                {
+                    while (reader.TryRead(out var message))
+                    {
+                        var line = $"data: {message}\n\n";
+                        await http.Response.WriteAsync(line, Encoding.UTF8, ct);
+                    }
+                }
+                else
+                {
+                    // Heartbeat comment so proxies don't close the connection
+                    await http.Response.WriteAsync(": heartbeat\n\n", ct);
+                }
+
+                await http.Response.Body.FlushAsync(ct);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal disconnect
+        }
+        finally
+        {
+            bus.Unsubscribe(userId);
+        }
     }
 
     private static string UserId(ClaimsPrincipal user) =>

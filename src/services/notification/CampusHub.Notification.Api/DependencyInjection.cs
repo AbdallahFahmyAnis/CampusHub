@@ -52,6 +52,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<INotificationChannel, SmsChannel>();
         builder.Services.AddScoped<INotificationChannel, PushChannel>();
         builder.Services.AddScoped<NotificationProcessor>();
+        builder.Services.AddSingleton<NotificationBus>();
         return builder;
     }
 }

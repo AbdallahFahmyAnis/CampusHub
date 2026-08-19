@@ -10,6 +10,7 @@ namespace CampusHub.Notification.Api.Features;
 public sealed class NotificationProcessor(
     NotificationDbContext db,
     IEnumerable<INotificationChannel> channels,
+    NotificationBus bus,
     ILogger<NotificationProcessor> logger)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
@@ -46,6 +47,12 @@ public sealed class NotificationProcessor(
         }
 
         await db.SaveChangesAsync(ct);
+
+        // Signal SSE streams for affected users
+        foreach (var m in messages.Where(m => m.Channel == NotificationChannels.InApp))
+        {
+            bus.Notify(m.UserId, $"{{\"id\":\"{m.Id}\",\"title\":{System.Text.Json.JsonSerializer.Serialize(m.Title)}}}");
+        }
     }
 
     private static List<UserNotification> BuildMessages(IntegrationEventDto envelope)
@@ -55,6 +62,8 @@ public sealed class NotificationProcessor(
             EventTypes.EnrollmentStarted => FromStarted(envelope),
             EventTypes.EnrollmentConfirmed => FromConfirmed(envelope),
             EventTypes.EnrollmentCancelled => FromCancelled(envelope),
+            EventTypes.InviteAccepted => FromInviteAccepted(envelope),
+            EventTypes.PlanUpgraded => FromPlanUpgraded(envelope),
             _ => []
         };
     }
@@ -107,6 +116,43 @@ public sealed class NotificationProcessor(
         [
             Create(envelope, body.StudentId, body.StudentEmail, NotificationChannels.InApp, title, text),
             Create(envelope, body.StudentId, body.StudentEmail, NotificationChannels.Email, title, text)
+        ];
+    }
+
+    private static List<UserNotification> FromInviteAccepted(IntegrationEventDto envelope)
+    {
+        var body = JsonSerializer.Deserialize<InviteAcceptedV1>(envelope.Payload, JsonOptions);
+        if (body is null)
+        {
+            return [];
+        }
+
+        // Notify the admin who sent the invite
+        return
+        [
+            Create(envelope, body.AdminId, body.AdminEmail, NotificationChannels.InApp,
+                "Invite accepted",
+                $"{body.InviteeName} ({body.InviteeEmail}) has joined {body.TenantName} as {body.Role}."),
+            // Also confirm to the new member
+            Create(envelope, body.InviteeId, body.InviteeEmail, NotificationChannels.InApp,
+                $"Welcome to {body.TenantName}",
+                $"Your invitation has been accepted. You are now a member of {body.TenantName}.")
+        ];
+    }
+
+    private static List<UserNotification> FromPlanUpgraded(IntegrationEventDto envelope)
+    {
+        var body = JsonSerializer.Deserialize<PlanUpgradedV1>(envelope.Payload, JsonOptions);
+        if (body is null)
+        {
+            return [];
+        }
+
+        return
+        [
+            Create(envelope, body.AdminId, body.AdminEmail, NotificationChannels.InApp,
+                "Plan upgraded",
+                $"{body.TenantName} is now on the {body.NewPlan} plan. Sign in again to activate new features.")
         ];
     }
 
