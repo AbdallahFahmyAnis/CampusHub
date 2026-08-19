@@ -109,6 +109,7 @@ import { SessionService } from '../../../shell/src/app/session';
                 <label>Your notes
                   <textarea class="notes-box" rows="10" [(ngModel)]="noteDraft" (ngModelChange)="saveNote()" placeholder="Capture a timestamp, a question, or the idea you want to keep."></textarea>
                 </label>
+                <p class="muted">{{ noteStatus() }}</p>
               }
             }
           }
@@ -328,6 +329,8 @@ export class CoursePlayer implements OnDestroy {
   reviewBody = '';
   replies: Record<string, string> = {};
   noteDraft = '';
+  readonly noteStatus = signal('Notes save to your account for this lecture.');
+  private noteTimer: ReturnType<typeof setTimeout> | null = null;
   askQuestion = '';
 
   constructor() {
@@ -345,6 +348,10 @@ export class CoursePlayer implements OnDestroy {
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
+    if (this.noteTimer) {
+      clearTimeout(this.noteTimer);
+    }
+    void this.flushNote();
   }
 
   paragraphs(body?: string | null): string[] {
@@ -409,6 +416,43 @@ export class CoursePlayer implements OnDestroy {
       return;
     }
     localStorage.setItem(this.noteKey(courseId, lectureId), this.noteDraft);
+    this.noteStatus.set('Saving…');
+    if (this.noteTimer) {
+      clearTimeout(this.noteTimer);
+    }
+    this.noteTimer = setTimeout(() => {
+      void this.flushNote();
+    }, 600);
+  }
+
+  private async flushNote(): Promise<void> {
+    const courseId = this.course()?.id;
+    const lectureId = this.lecture()?.id;
+    if (!courseId || !lectureId) {
+      return;
+    }
+    try {
+      await this.api.saveLectureNote(courseId, lectureId, this.noteDraft);
+      this.noteStatus.set('Saved to your account.');
+    } catch {
+      this.noteStatus.set('Saved on this device. Could not sync to your account yet.');
+    }
+  }
+
+  private async loadNote(courseId: string, lectureId: string): Promise<void> {
+    const local = localStorage.getItem(this.noteKey(courseId, lectureId)) ?? '';
+    try {
+      const remote = await this.api.lectureNote(courseId, lectureId);
+      const body = remote.body?.trim() ? remote.body : local;
+      this.noteDraft = body;
+      if (local && !remote.body?.trim()) {
+        await this.api.saveLectureNote(courseId, lectureId, local);
+      }
+      this.noteStatus.set(remote.updatedAt ? 'Loaded from your account.' : 'Notes save to your account for this lecture.');
+    } catch {
+      this.noteDraft = local;
+      this.noteStatus.set('Showing notes stored on this device.');
+    }
   }
 
   private noteKey(courseId: string, lectureId: string): string {
@@ -532,7 +576,7 @@ export class CoursePlayer implements OnDestroy {
       if (target) {
         const detail = await this.api.lecture(courseId, target);
         this.lecture.set(detail);
-        this.noteDraft = localStorage.getItem(this.noteKey(courseId, target)) ?? '';
+        await this.loadNote(courseId, target);
       }
       this.error.set(null);
     } catch {

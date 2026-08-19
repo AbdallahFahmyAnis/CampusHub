@@ -212,3 +212,13 @@ public sealed class CourseAssignmentSubmission
     public DateTimeOffset SubmittedAt { get; set; }
     public DateTimeOffset? GradedAt { get; set; }
 }
+
+public sealed class LectureNote
+{
+    public Guid Id { get; set; }
+    public Guid CourseId { get; set; }
+    public Guid LectureId { get; set; }
+    public required string StudentId { get; set; }
+    public required string Body { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}

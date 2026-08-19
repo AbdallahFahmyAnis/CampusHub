@@ -32,6 +32,7 @@ public static class CatalogEndpoints
         api.MapCourseLearningEndpoints();
         api.MapQuizEndpoints();
         api.MapAssignmentEndpoints();
+        api.MapNoteEndpoints();
 
         return app;
     }

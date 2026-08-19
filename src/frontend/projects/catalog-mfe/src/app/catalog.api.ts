@@ -218,6 +218,22 @@ export interface AssignmentSubmissionDto {
   gradedAt: string | null;
 }
 
+export interface LectureNoteDto {
+  courseId: string;
+  lectureId: string;
+  body: string;
+  updatedAt: string | null;
+}
+
+export interface LectureNoteListItemDto {
+  courseId: string;
+  courseTitle: string;
+  lectureId: string;
+  lectureTitle: string;
+  snippet: string;
+  updatedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
   private readonly http = inject(HttpClient);
@@ -405,6 +421,22 @@ export class CatalogApi {
         body,
       ),
     );
+  }
+
+  lectureNote(courseId: string, lectureId: string) {
+    return firstValueFrom(
+      this.http.get<LectureNoteDto>(`/api/catalog/courses/${courseId}/lectures/${lectureId}/notes`),
+    );
+  }
+
+  saveLectureNote(courseId: string, lectureId: string, body: string) {
+    return firstValueFrom(
+      this.http.put<LectureNoteDto>(`/api/catalog/courses/${courseId}/lectures/${lectureId}/notes`, { body }),
+    );
+  }
+
+  myNotes() {
+    return firstValueFrom(this.http.get<LectureNoteListItemDto[]>('/api/catalog/notes/mine'));
   }
 }
 

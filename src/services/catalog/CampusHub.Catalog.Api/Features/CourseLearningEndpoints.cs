@@ -101,6 +101,18 @@ public static class CourseLearningEndpoints
             assignmentSubs = [];
         }
 
+        List<LectureNote> notes;
+        try
+        {
+            notes = await db.LectureNotes.AsNoTracking()
+                .Where(n => n.StudentId == studentId && courseIds.Contains(n.CourseId) && n.Body != "")
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            notes = [];
+        }
+
         var items = new List<CourseProgressDto>();
         foreach (var course in courses)
         {
@@ -133,6 +145,7 @@ public static class CourseLearningEndpoints
 
             var courseAssignmentIds = assignmentRows.Where(a => a.CourseId == course.Id).Select(a => a.Id).ToHashSet();
             var submittedCount = assignmentSubs.Count(s => courseAssignmentIds.Contains(s.AssignmentId));
+            var notesCount = notes.Count(n => n.CourseId == course.Id);
 
             items.Add(new CourseProgressDto(
                 course.Id,
@@ -147,7 +160,8 @@ public static class CourseLearningEndpoints
                 quizzesPassed,
                 bestQuiz,
                 courseAssignmentIds.Count,
-                submittedCount));
+                submittedCount,
+                notesCount));
         }
 
         // Sort: in-progress first (not 100%), then completed

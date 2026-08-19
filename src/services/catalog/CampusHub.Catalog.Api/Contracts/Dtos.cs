@@ -173,7 +173,8 @@ public sealed record CourseProgressDto(
     int QuizzesPassed,
     int? BestQuizPercent,
     int AssignmentCount,
-    int AssignmentsSubmitted);
+    int AssignmentsSubmitted,
+    int NotesCount);
 
 public sealed record StudentProgressDashboardDto(
     IReadOnlyList<CourseProgressDto> Courses,
@@ -270,3 +271,19 @@ public sealed record CourseStatsDto(
     int CancelledEnrollments,
     decimal TotalRevenue,
     IReadOnlyList<MonthlyEnrollmentDto> MonthlyBreakdown);
+
+public sealed record LectureNoteDto(
+    Guid CourseId,
+    Guid LectureId,
+    string Body,
+    DateTimeOffset? UpdatedAt);
+
+public sealed record SaveLectureNoteRequest(string Body);
+
+public sealed record LectureNoteListItemDto(
+    Guid CourseId,
+    string CourseTitle,
+    Guid LectureId,
+    string LectureTitle,
+    string Snippet,
+    DateTimeOffset UpdatedAt);

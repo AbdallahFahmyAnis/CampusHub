@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CatalogApi, LectureNoteListItemDto } from '../../../catalog-mfe/src/app/catalog.api';
 import { LearningApi, ProgressDashboardDto } from './learning.api';
 
 @Component({
@@ -96,6 +97,9 @@ import { LearningApi, ProgressDashboardDto } from './learning.api';
                     @if (course.assignmentCount) {
                       · Assignments {{ course.assignmentsSubmitted }}/{{ course.assignmentCount }}
                     }
+                    @if (course.notesCount) {
+                      · Notes {{ course.notesCount }}
+                    }
                     @if (course.bestQuizPercent != null) {
                       · Best quiz {{ course.bestQuizPercent }}%
                     }
@@ -130,17 +134,39 @@ import { LearningApi, ProgressDashboardDto } from './learning.api';
     } @else if (!error()) {
       <p class="muted">Loading your progress…</p>
     }
+
+    @if (notes().length) {
+      <section style="margin-top:2rem;">
+        <h2 style="margin-bottom:1rem;">Your lecture notes</h2>
+        <div style="display:flex;flex-direction:column;gap:.75rem;">
+          @for (note of notes(); track note.courseId + note.lectureId) {
+            <a class="panel" [routerLink]="['/learn/course', note.courseId, note.lectureId]"
+              style="text-decoration:none;color:inherit;display:block;">
+              <p class="card-kicker" style="margin:0;">{{ note.courseTitle }}</p>
+              <p style="margin:.2rem 0;font-weight:600;">{{ note.lectureTitle }}</p>
+              <p class="muted" style="margin:0;font-size:.9rem;">{{ note.snippet }}</p>
+              <p class="muted" style="margin:.35rem 0 0;font-size:.8rem;">{{ note.updatedAt | date:'mediumDate' }}</p>
+            </a>
+          }
+        </div>
+      </section>
+    }
   `,
 })
 export class ProgressDashboard {
   private readonly api = inject(LearningApi);
+  private readonly catalog = inject(CatalogApi);
   readonly data = signal<ProgressDashboardDto | null>(null);
+  readonly notes = signal<LectureNoteListItemDto[]>([]);
   readonly error = signal<string | null>(null);
 
   constructor() {
     void this.api.progressDashboard()
       .then((d) => this.data.set(d))
       .catch(() => this.error.set('Could not load your progress. Make sure you are signed in.'));
+    void this.catalog.myNotes()
+      .then((items) => this.notes.set(items))
+      .catch(() => undefined);
   }
 
   continueItem(d: ProgressDashboardDto) {
