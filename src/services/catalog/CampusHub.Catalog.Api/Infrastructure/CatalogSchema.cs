@@ -119,8 +119,7 @@ internal static class CatalogSchema
                 Title TEXT NOT NULL,
                 PassPercent INTEGER NOT NULL,
                 QuestionsJson TEXT NOT NULL,
-                CreatedAt TEXT NOT NULL,
-                CONSTRAINT FK_CourseQuizzes_Courses_CourseId FOREIGN KEY (CourseId) REFERENCES Courses (Id) ON DELETE CASCADE
+                CreatedAt TEXT NOT NULL
             );
             """, ct);
         await TryAsync(db, """
@@ -133,9 +132,14 @@ internal static class CatalogSchema
                 Total INTEGER NOT NULL,
                 Passed INTEGER NOT NULL,
                 AnswersJson TEXT NOT NULL,
-                SubmittedAt TEXT NOT NULL,
-                CONSTRAINT FK_CourseQuizAttempts_CourseQuizzes_QuizId FOREIGN KEY (QuizId) REFERENCES CourseQuizzes (Id) ON DELETE CASCADE
+                SubmittedAt TEXT NOT NULL
             );
+            """, ct);
+        await TryAsync(db, """
+            CREATE INDEX IF NOT EXISTS IX_CourseQuizzes_CourseId ON CourseQuizzes (CourseId);
+            """, ct);
+        await TryAsync(db, """
+            CREATE INDEX IF NOT EXISTS IX_CourseQuizAttempts_QuizId_StudentId ON CourseQuizAttempts (QuizId, StudentId);
             """, ct);
     }
 

@@ -134,6 +134,8 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
         modelBuilder.Entity<CourseQuiz>(entity =>
         {
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasConversion(GuidAsText);
+            entity.Property(x => x.CourseId).HasConversion(GuidAsText);
             entity.Property(x => x.Title).HasMaxLength(200);
             entity.HasOne(x => x.Course)
                 .WithMany()
@@ -145,6 +147,9 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
         modelBuilder.Entity<CourseQuizAttempt>(entity =>
         {
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasConversion(GuidAsText);
+            entity.Property(x => x.QuizId).HasConversion(GuidAsText);
+            entity.Property(x => x.CourseId).HasConversion(GuidAsText);
             entity.Property(x => x.StudentId).HasMaxLength(64);
             entity.HasOne(x => x.Quiz)
                 .WithMany()

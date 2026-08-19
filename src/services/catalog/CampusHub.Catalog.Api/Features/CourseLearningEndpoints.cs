@@ -65,9 +65,17 @@ public static class CourseLearningEndpoints
             .Where(q => courseIds.Contains(q.CourseId))
             .Select(q => new { q.Id, q.CourseId })
             .ToListAsync(ct);
-        var attempts = await db.CourseQuizAttempts.AsNoTracking()
-            .Where(a => a.StudentId == studentId && courseIds.Contains(a.CourseId))
-            .ToListAsync(ct);
+        List<CourseQuizAttempt> attempts;
+        try
+        {
+            attempts = await db.CourseQuizAttempts.AsNoTracking()
+                .Where(a => a.StudentId == studentId && courseIds.Contains(a.CourseId))
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            attempts = [];
+        }
 
         var items = new List<CourseProgressDto>();
         foreach (var course in courses)

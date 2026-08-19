@@ -39,12 +39,20 @@ public static class QuizEndpoints
         var (studentId, _) = CatalogEndpoints.Caller(user);
         var quizzes = await db.CourseQuizzes.AsNoTracking()
             .Where(q => q.CourseId == id)
-            .OrderBy(q => q.CreatedAt)
             .ToListAsync(ct);
+        quizzes = [.. quizzes.OrderBy(q => q.CreatedAt)];
 
-        var attempts = await db.CourseQuizAttempts.AsNoTracking()
-            .Where(a => a.CourseId == id && a.StudentId == studentId)
-            .ToListAsync(ct);
+        List<CourseQuizAttempt> attempts;
+        try
+        {
+            attempts = await db.CourseQuizAttempts.AsNoTracking()
+                .Where(a => a.CourseId == id && a.StudentId == studentId)
+                .ToListAsync(ct);
+        }
+        catch
+        {
+            attempts = [];
+        }
 
         var result = quizzes.Select(quiz =>
         {
