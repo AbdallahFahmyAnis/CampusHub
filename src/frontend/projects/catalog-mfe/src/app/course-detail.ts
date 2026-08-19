@@ -14,10 +14,11 @@ import {
 } from './catalog.api';
 import { SessionService } from '../../../shell/src/app/session';
 import { VideoEmbed } from './video-embed';
+import { CourseChatPanel } from '../../../chat-mfe/src/app/course-chat-panel';
 
 @Component({
   selector: 'app-course-detail',
-  imports: [RouterLink, DecimalPipe, DatePipe, FormsModule, VideoEmbed],
+  imports: [RouterLink, DecimalPipe, DatePipe, FormsModule, VideoEmbed, CourseChatPanel],
   template: `
     @if (course(); as item) {
       <div class="udemy-page">
@@ -215,6 +216,13 @@ import { VideoEmbed } from './video-embed';
               </article>
             }
           </section>
+          @if (item.enrolled || session.isTeacher()) {
+            <section class="panel" id="live-chat">
+              <h2>Live chat &amp; AI Tutor</h2>
+              <p class="muted" style="margin-bottom: .75rem;">Chat with other students or ask the AI tutor a question about this course.</p>
+              <app-course-chat-panel [courseId]="item.id" />
+            </section>
+          }
           @if (error()) {
             <p class="error">{{ error() }}</p>
           }

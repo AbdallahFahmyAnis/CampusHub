@@ -1,5 +1,5 @@
 import { isAdmin, isStaff } from "./auth.js";
-import { campusRoomId, courseRoomId, parseCourseId } from "./store.js";
+import { campusRoomId, courseRoomId, parseCourseId, parseTutorCourseId, tutorRoomId } from "./store.js";
 
 const catalogBase = process.env.CATALOG_BASE_URL ?? "http://localhost:5102";
 const enrollmentBase = process.env.ENROLLMENT_BASE_URL ?? "http://localhost:5103";
@@ -25,14 +25,38 @@ export async function listAccessibleRooms(user) {
       : confirmedCourses(await getJson(`${enrollmentBase}/api/enrollments/mine`, user.accessToken));
 
   for (const course of courses) {
+    const cId = course.id ?? course.courseId;
+    const cTitle = course.title ?? course.courseTitle;
     rooms.push({
-      id: courseRoomId(course.id ?? course.courseId),
-      title: course.title ?? course.courseTitle,
+      id: courseRoomId(cId),
+      title: cTitle,
       kind: "course",
-      courseId: course.id ?? course.courseId,
+      courseId: cId,
+    });
+    rooms.push({
+      id: tutorRoomId(cId),
+      title: `AI Tutor — ${cTitle}`,
+      kind: "tutor",
+      courseId: cId,
     });
   }
   return rooms;
+}
+
+export async function askTutor(courseId, question, accessToken) {
+  const response = await fetch(`${catalogBase}/api/catalog/courses/${courseId}/ask`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ question }),
+  });
+  if (!response.ok) {
+    throw new Error(`Catalog /ask returned ${response.status}`);
+  }
+  const data = await response.json();
+  return data.answer ?? "I could not find an answer for that.";
 }
 
 export async function canJoinRoom(user, roomId) {
@@ -43,6 +67,20 @@ export async function canJoinRoom(user, roomId) {
   const lobbyId = campusRoomId(user.tenantId);
   if (roomId === lobbyId || roomId === "campus") {
     return { ok: true, title: "Campus lobby" };
+  }
+
+  const tutorCourseId = parseTutorCourseId(roomId);
+  if (tutorCourseId) {
+    if (isStaff(user)) {
+      const course = await getJson(`${catalogBase}/api/catalog/courses/${tutorCourseId}`, user.accessToken);
+      return { ok: true, title: `AI Tutor — ${course.title}`, isTutor: true, courseId: tutorCourseId };
+    }
+    const enrollments = await getJson(`${enrollmentBase}/api/enrollments/mine`, user.accessToken);
+    const match = enrollments.find((item) => item.courseId === tutorCourseId && item.status === "Confirmed");
+    if (!match) {
+      return { ok: false, reason: "Enroll in this course to access the AI tutor." };
+    }
+    return { ok: true, title: `AI Tutor — ${match.courseTitle}`, isTutor: true, courseId: tutorCourseId };
   }
 
   const courseId = parseCourseId(roomId);

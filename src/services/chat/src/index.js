@@ -2,8 +2,8 @@ import http from "node:http";
 import express from "express";
 import { Server } from "socket.io";
 import { verifyAccessToken } from "./auth.js";
-import { canJoinRoom, listAccessibleRooms } from "./access.js";
-import { ChatStore } from "./store.js";
+import { askTutor, canJoinRoom, listAccessibleRooms } from "./access.js";
+import { ChatStore, parseTutorCourseId } from "./store.js";
 
 const port = Number(process.env.PORT ?? 5107);
 const store = new ChatStore();
@@ -38,7 +38,8 @@ app.get("/api/chat/rooms/:roomId/messages", async (req, res) => {
     if (!access.ok) {
       return res.status(403).json({ error: access.reason });
     }
-    store.ensureRoom(req.params.roomId, access.title, req.params.roomId.startsWith("campus") ? "campus" : "course");
+    const roomKind = req.params.roomId.startsWith("campus") ? "campus" : req.params.roomId.startsWith("tutor") ? "tutor" : "course";
+    store.ensureRoom(req.params.roomId, access.title, roomKind);
     res.json(store.recent(req.params.roomId, Number(req.query.limit ?? 50)));
   } catch (error) {
     res.status(502).json({ error: error.message });
@@ -70,7 +71,8 @@ io.on("connection", (socket) => {
         ack?.({ ok: false, error: access.reason });
         return;
       }
-      store.ensureRoom(roomId, access.title, roomId.startsWith("campus") ? "campus" : "course");
+      const joinKind = roomId.startsWith("campus") ? "campus" : roomId.startsWith("tutor") ? "tutor" : "course";
+      store.ensureRoom(roomId, access.title, joinKind);
       socket.join(roomId);
       ack?.({ ok: true, title: access.title, messages: store.recent(roomId, 50) });
     } catch (error) {
@@ -107,6 +109,27 @@ io.on("connection", (socket) => {
       });
       io.to(roomId).emit("message", message);
       ack?.({ ok: true, message });
+
+      // AI tutor: generate a reply for tutor rooms
+      const tutorCourseId = parseTutorCourseId(roomId);
+      if (tutorCourseId) {
+        try {
+          const answer = await askTutor(tutorCourseId, body, socket.user.accessToken);
+          const botMsg = await store.append({
+            id: crypto.randomUUID(),
+            clientId: crypto.randomUUID(),
+            roomId,
+            roomTitle: store.rooms.get(roomId)?.title,
+            body: answer,
+            senderId: "ai-tutor",
+            senderName: "AI Tutor",
+            sentAt: new Date().toISOString(),
+          });
+          io.to(roomId).emit("message", botMsg);
+        } catch (err) {
+          console.warn("AI tutor reply failed:", err.message);
+        }
+      }
     } catch (error) {
       ack?.({ ok: false, error: error.message });
     }

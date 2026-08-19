@@ -86,3 +86,11 @@ export function courseRoomId(courseId) {
 export function parseCourseId(roomId) {
   return roomId.startsWith("course:") ? roomId.slice("course:".length) : null;
 }
+
+export function tutorRoomId(courseId) {
+  return `tutor:${courseId}`;
+}
+
+export function parseTutorCourseId(roomId) {
+  return roomId.startsWith("tutor:") ? roomId.slice("tutor:".length) : null;
+}
