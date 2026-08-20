@@ -7,7 +7,7 @@ This repository uses **spec-driven development**. Read these before changing pro
 3. `.specify/feature.json` — active feature directory
 4. `.cursor/rules/sdd.mdc` — always-on SDD workflow
 
-Qualified stories in **real product order** (auth first): `specs/STORIES.md`. Workflow: `specs/WORKFLOW.md`.
+Qualified stories in **BA format** (As a / I want / So that), real product order: `specs/STORIES.md`. Workflow: `specs/WORKFLOW.md`.
 
 New slices: **specify → plan → tasks → implement → converge**. Skills live in `.cursor/skills/speckit-*/SKILL.md`.
 

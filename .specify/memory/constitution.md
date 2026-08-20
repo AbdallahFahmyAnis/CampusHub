@@ -10,7 +10,7 @@ New product slices start with `specs/NNN-slug/spec.md`. Do not implement a slice
 
 ### Story traceability
 
-Every shipped slice has a story id `CH-Snn`. Product order (auth first) is `specs/STORIES.md`. Specs include **screens**, **apply (code paths)**, **test**, and **mock**. New types and endpoint classes cite the story in XML docs or file headers. Tests use `[Trait("Story", "CH-Snn")]`. Workflow: Specify → Apply → Test → Mock → Retest → Done (`specs/WORKFLOW.md`).
+Every shipped slice has a story id `CH-Snn`. Product order (auth first) and **BA user stories** are in `specs/STORIES.md`. Specs include **screens**, **apply (code paths)**, **test**, and **mock**. New types and endpoint classes cite the story in XML docs or file headers. Tests use `[Trait("Story", "CH-Snn")]`. Workflow: Specify → Apply → Test → Mock → Retest → Done (`specs/WORKFLOW.md`).
 
 ### One vertical slice
 

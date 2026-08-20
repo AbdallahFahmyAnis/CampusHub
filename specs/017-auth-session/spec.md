@@ -7,6 +7,12 @@
 **Status**: Implemented  
 **Input**: Full A–Z identity as it exists in the running product (cookie BFF + OpenIddict). No public student self-register. No OAuth `/connect/revoke`.
 
+## User story
+
+**As a** campus user,  
+**I want** to register through an approved path, sign in, keep a secure session, and sign out,  
+**so that** only I can use my account and tokens never appear in the browser.
+
 ## Qualified header
 
 | Field | Value |

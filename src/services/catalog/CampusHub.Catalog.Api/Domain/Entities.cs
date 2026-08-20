@@ -234,3 +234,15 @@ public sealed class CourseAnnouncement
     public required string AuthorName { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
+
+/// <summary>SDD CH-S22 — specs/022-course-resources. Syllabus / reading link.</summary>
+public sealed class CourseResource
+{
+    public Guid Id { get; set; }
+    public Guid CourseId { get; set; }
+    public Course Course { get; set; } = null!;
+    public required string Title { get; set; }
+    public required string Url { get; set; }
+    public string? Description { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+}

@@ -25,7 +25,9 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
         await SeedAssignmentsAsync(cancellationToken);
         await EnsureAssignmentDueDatesAsync(cancellationToken);
         await SeedAnnouncementsAsync(cancellationToken);
+        await SeedResourcesAsync(cancellationToken);
         await SeedGradebookDemoAsync(cancellationToken);
+        await SeedFullDistributedForWaitlistAsync(cancellationToken);
         await search.RebuildAsync(db, cancellationToken);
         logger.LogInformation(
             "Catalog seed completed with {CourseCount} courses",
@@ -407,6 +409,74 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
                 CreatedAt = DateTimeOffset.UtcNow,
             });
         await db.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedResourcesAsync(CancellationToken ct)
+    {
+        try
+        {
+            if (await db.CourseResources.AnyAsync(ct))
+            {
+                return;
+            }
+        }
+        catch
+        {
+            return;
+        }
+
+        db.CourseResources.AddRange(
+            new CourseResource
+            {
+                Id = Guid.Parse("ffffffff-ffff-ffff-ffff-fffffffffff0"),
+                CourseId = AlgorithmsId,
+                Title = "Course syllabus (PDF)",
+                Url = "https://example.com/algorithms/syllabus.pdf",
+                Description = "Week-by-week topics, office hours, and grading weights.",
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
+            new CourseResource
+            {
+                Id = Guid.Parse("ffffffff-ffff-ffff-ffff-fffffffffff1"),
+                CourseId = AlgorithmsId,
+                Title = "CLRS companion notes",
+                Url = "https://example.com/algorithms/clrs-notes",
+                Description = "Optional reading aligned to early lectures.",
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
+            new CourseResource
+            {
+                Id = Guid.Parse("ffffffff-ffff-ffff-ffff-fffffffffff2"),
+                CourseId = LinearId,
+                Title = "Linear Algebra syllabus",
+                Url = "https://example.com/linear-algebra/syllabus",
+                Description = "Outline of vector spaces, matrices, and applications.",
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>SDD CH-S23 — keep Distributed Systems full so waitlist is clickable.</summary>
+    private async Task SeedFullDistributedForWaitlistAsync(CancellationToken ct)
+    {
+        try
+        {
+            var course = await db.Courses.SingleOrDefaultAsync(c => c.Id == DistributedId, ct);
+            if (course is null)
+            {
+                return;
+            }
+
+            course.Status = CourseStatus.Published;
+            course.PublishedAt ??= DateTimeOffset.UtcNow;
+            course.RemainingSeats = 0;
+            await db.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "CH-S23 full Distributed seed skipped");
+            db.ChangeTracker.Clear();
+        }
     }
 
     private async Task SeedGradebookDemoAsync(CancellationToken ct)

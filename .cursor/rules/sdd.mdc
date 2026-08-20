@@ -17,7 +17,7 @@ CampusHub follows Spec Kit–style SDD.
 6. Add or extend tests with `[Trait("Story", "CH-Snn")]`. Seed mock data so the screens in the spec are clickable.
 7. When the user says **proceed to next**, take the next backlog item in `specs/000-product/spec.md`, specify it, then implement — do not invent a slice with no spec.
 
-Story index: `specs/STORIES.md` (auth first, A–Z per feature). Workflow: `specs/WORKFLOW.md`.
+Story index: `specs/STORIES.md` (BA format: As a / I want / So that). Workflow: `specs/WORKFLOW.md`.
 
 ## Commands (Cursor skills)
 

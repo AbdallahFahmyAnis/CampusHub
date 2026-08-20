@@ -1,9 +1,9 @@
-/** SDD CH-S11–S16 teacher authoring: quizzes, assignments, due dates, announcements. */
+/** SDD CH-S11–S16, CH-S22 teacher authoring: quizzes, assignments, due dates, announcements, resources. */
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummaryDto, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog.api';
+import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummaryDto, CourseResourceDto, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog.api';
 
 @Component({
   selector: 'app-course-editor',
@@ -200,6 +200,25 @@ import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummary
           <button class="btn" type="submit">Post announcement</button>
         </form>
       </section>
+      <section class="panel" style="margin-top: 24px; max-width: 720px;">
+        <h2>Resources</h2>
+        <p class="muted">Syllabus and reading links appear on the player Resources tab.</p>
+        @for (item of resources(); track item.id) {
+          <article class="qa">
+            <h3><a [href]="item.url" target="_blank" rel="noopener noreferrer">{{ item.title }}</a></h3>
+            @if (item.description) {
+              <p>{{ item.description }}</p>
+            }
+            <p class="muted">{{ item.url }}</p>
+          </article>
+        }
+        <form class="form stacked" (submit)="addResource($event)">
+          <label>Title <input name="rtitle" [(ngModel)]="resourceTitle" /></label>
+          <label>URL <input name="rurl" type="url" [(ngModel)]="resourceUrl" placeholder="https://" /></label>
+          <label>Description (optional) <textarea name="rdesc" rows="2" [(ngModel)]="resourceDescription"></textarea></label>
+          <button class="btn" type="submit">Add resource</button>
+        </form>
+      </section>
     }
   `,
 })
@@ -217,6 +236,7 @@ export class CourseEditor {
   readonly quizzes = signal<QuizSummaryDto[]>([]);
   readonly assignments = signal<AssignmentSummaryDto[]>([]);
   readonly announcements = signal<AnnouncementDto[]>([]);
+  readonly resources = signal<CourseResourceDto[]>([]);
   readonly saving = signal(false);
   sectionTitle = '';
   quizTitle = '';
@@ -231,6 +251,9 @@ export class CourseEditor {
   assignmentDue = '';
   announcementTitle = '';
   announcementBody = '';
+  resourceTitle = '';
+  resourceUrl = '';
+  resourceDescription = '';
   assignmentSubs: Record<string, AssignmentSubmissionDto[]> = {};
   gradeScore: Record<string, number> = {};
   gradeFeedback: Record<string, string> = {};
@@ -270,6 +293,7 @@ export class CourseEditor {
     this.quizzes.set(await this.api.quizzes(id));
     this.assignments.set(await this.api.assignments(id).catch(() => []));
     this.announcements.set(await this.api.announcements(id).catch(() => []));
+    this.resources.set(await this.api.resources(id).catch(() => []));
     this.form.patchValue({
       subjectId: course.subjectId,
       title: course.title,
@@ -432,6 +456,29 @@ export class CourseEditor {
       this.error.set(null);
     } catch {
       this.error.set('Could not post the announcement.');
+    }
+  }
+
+  async addResource(event: Event): Promise<void> {
+    event.preventDefault();
+    const id = this.id();
+    if (!id || !this.resourceTitle.trim() || !this.resourceUrl.trim()) {
+      this.error.set('Add a resource title and https URL.');
+      return;
+    }
+    try {
+      await this.api.createResource(id, {
+        title: this.resourceTitle.trim(),
+        url: this.resourceUrl.trim(),
+        description: this.resourceDescription.trim() || null,
+      });
+      this.resourceTitle = '';
+      this.resourceUrl = '';
+      this.resourceDescription = '';
+      this.resources.set(await this.api.resources(id));
+      this.error.set(null);
+    } catch {
+      this.error.set('Could not save the resource. Use an http(s) URL.');
     }
   }
 

@@ -166,6 +166,15 @@ public sealed class EnrollmentSaga(
             enrollment.StudentName,
             enrollment.CourseId,
             enrollment.CourseTitle));
+        // CH-S23: confirmed enrollment clears any waitlist place for this course.
+        var waitRows = await db.CourseWaitlists
+            .Where(w => w.CourseId == enrollment.CourseId && w.StudentId == enrollment.StudentId)
+            .ToListAsync(ct);
+        if (waitRows.Count > 0)
+        {
+            db.CourseWaitlists.RemoveRange(waitRows);
+        }
+
         await db.SaveChangesAsync(ct);
     }
 

@@ -5,6 +5,12 @@
 **Created**: 2026-08-20  
 **Status**: Implemented
 
+## User story
+
+**As a** student,  
+**I want** to enrol using simulated payment,  
+**so that** I can start the course without a live card network.
+
 ## Qualified header
 
 | Field | Value |

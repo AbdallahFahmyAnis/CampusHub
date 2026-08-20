@@ -21,4 +21,6 @@ export const SddStories = {
   enroll: { id: 'CH-S19', spec: 'specs/019-enroll-checkout' },
   player: { id: 'CH-S20', spec: 'specs/020-course-player' },
   coursePass: { id: 'CH-S21', spec: 'specs/021-course-pass' },
+  resources: { id: 'CH-S22', spec: 'specs/022-course-resources' },
+  waitlist: { id: 'CH-S23', spec: 'specs/023-course-waitlist' },
 } as const;
