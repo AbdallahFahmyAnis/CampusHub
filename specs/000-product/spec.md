@@ -64,8 +64,9 @@ See [`specs/STORIES.md`](../STORIES.md) for the BA backlog (As a / I want / So t
 19. Teacher analytics (CH-S07)
 20. Mock billing (CH-S03)
 21. Platform `/ops` vs campus `/campus` (CH-S04)
-22. Course resources / syllabus links (CH-S22)
 23. Course waitlist when full (CH-S23)
+24. Teacher enrollment roster (CH-S24)
+25. Discussion pinning / Q&A moderation (CH-S25)
 
 Story index and Jira import: [`specs/jira/README.md`](../jira/README.md). Qualified cards: [`specs/STORIES.md`](../STORIES.md). Workflow: [`specs/WORKFLOW.md`](../WORKFLOW.md).
 
@@ -85,7 +86,4 @@ Each story is **Done** when Specify, Apply, Test, Mock, and Retest are complete.
 
 ## Next (backlog, unspecified)
 
-Pick one, write `specs/NNN-slug/spec.md`, then implement:
-
-- Teacher roster from enrollments (cross-service)
-- Discussion pinning / Q&A moderation
+All qualified backlog items through CH-S25 are specified and implemented. Add new slices to this list before "proceed to next".

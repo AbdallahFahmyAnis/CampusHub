@@ -207,16 +207,46 @@ import { EnrollmentApi, WaitlistStatusDto } from '../../../enrollment-mfe/src/ap
               <p class="muted">Enroll to ask a question. You can still read the thread below.</p>
             }
             @for (question of questions(); track question.id) {
-              <article class="qa">
-                <h3>{{ question.title }}</h3>
+              <article class="qa" [class.hidden-post]="question.isHidden">
+                <div class="qa-head">
+                  <h3>
+                    @if (question.isPinned) {
+                      <span class="pill" data-status="Published">Pinned</span>
+                    }
+                    @if (question.isHidden) {
+                      <span class="pill" data-status="Archived">Hidden</span>
+                    }
+                    {{ question.title }}
+                  </h3>
+                  @if (canModerate(item)) {
+                    <div class="qa-actions">
+                      <button type="button" class="btn secondary" (click)="togglePin(question)" [disabled]="busy()">
+                        {{ question.isPinned ? 'Unpin' : 'Pin' }}
+                      </button>
+                      <button type="button" class="btn secondary" (click)="toggleHideQuestion(question)" [disabled]="busy()">
+                        {{ question.isHidden ? 'Unhide' : 'Hide' }}
+                      </button>
+                    </div>
+                  }
+                </div>
                 <p>{{ question.body }}</p>
                 <p class="muted">{{ question.authorName }} · {{ question.createdAt | date: 'mediumDate' }}</p>
                 @for (answer of question.answers; track answer.id) {
-                  <div class="answer" [class.teacher]="answer.isTeacher">
-                    <strong>{{ answer.authorName }}</strong>
-                    @if (answer.isTeacher) {
-                      <span class="pill" data-status="Published">Instructor</span>
-                    }
+                  <div class="answer" [class.teacher]="answer.isTeacher" [class.hidden-post]="answer.isHidden">
+                    <div class="qa-head">
+                      <strong>{{ answer.authorName }}</strong>
+                      @if (answer.isTeacher) {
+                        <span class="pill" data-status="Published">Instructor</span>
+                      }
+                      @if (answer.isHidden) {
+                        <span class="pill" data-status="Archived">Hidden</span>
+                      }
+                      @if (canModerate(item)) {
+                        <button type="button" class="btn secondary" (click)="toggleHideAnswer(question, answer)" [disabled]="busy()">
+                          {{ answer.isHidden ? 'Unhide answer' : 'Hide answer' }}
+                        </button>
+                      }
+                    </div>
                     <p>{{ answer.body }}</p>
                   </div>
                 }
@@ -406,6 +436,66 @@ export class CourseDetail {
       this.questions.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
     } catch {
       this.error.set('Could not post the answer.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  canModerate(item: CourseDetailDto): boolean {
+    const sub = this.session.session().sub;
+    return this.session.isTeacher() && (this.session.isAdmin() || item.teacherId === sub);
+  }
+
+  async togglePin(question: QuestionDto): Promise<void> {
+    const id = this.course()?.id;
+    if (!id) {
+      return;
+    }
+    this.busy.set(true);
+    try {
+      const updated = await this.api.pinQuestion(id, question.id, !question.isPinned);
+      this.questions.update((items) =>
+        items.map((item) => (item.id === updated.id ? updated : item)).sort((a, b) => {
+          if (a.isPinned !== b.isPinned) {
+            return a.isPinned ? -1 : 1;
+          }
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }),
+      );
+    } catch {
+      this.error.set('Could not update pin.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  async toggleHideQuestion(question: QuestionDto): Promise<void> {
+    const id = this.course()?.id;
+    if (!id) {
+      return;
+    }
+    this.busy.set(true);
+    try {
+      const updated = await this.api.hideQuestion(id, question.id, !question.isHidden);
+      this.questions.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+    } catch {
+      this.error.set('Could not hide the question.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  async toggleHideAnswer(question: QuestionDto, answer: { id: string; isHidden: boolean }): Promise<void> {
+    const id = this.course()?.id;
+    if (!id) {
+      return;
+    }
+    this.busy.set(true);
+    try {
+      const updated = await this.api.hideAnswer(id, question.id, answer.id, !answer.isHidden);
+      this.questions.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+    } catch {
+      this.error.set('Could not hide the answer.');
     } finally {
       this.busy.set(false);
     }

@@ -164,15 +164,18 @@ internal static class CatalogMappings
     public static ReviewDto ToReview(CourseReview review, string studentId) =>
         new(review.Id, review.StudentName, review.Rating, review.Title, review.Body, review.CreatedAt, review.StudentId == studentId);
 
-    public static QuestionDto ToQuestion(CourseQuestion question) =>
+    public static QuestionDto ToQuestion(CourseQuestion question, bool includeHiddenAnswers = false) =>
         new(
             question.Id,
             question.AuthorName,
             question.Title,
             question.Body,
             question.CreatedAt,
+            question.IsPinned,
+            question.IsHidden,
             question.Answers
+                .Where(a => includeHiddenAnswers || !a.IsHidden)
                 .OrderBy(a => a.CreatedAt)
-                .Select(a => new AnswerDto(a.Id, a.AuthorName, a.Body, a.IsTeacher, a.CreatedAt))
+                .Select(a => new AnswerDto(a.Id, a.AuthorName, a.Body, a.IsTeacher, a.CreatedAt, a.IsHidden))
                 .ToList());
 }

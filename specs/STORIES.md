@@ -31,8 +31,10 @@ Professional backlog for CampusHub. Each item is an independent user story: **As
 | CH-S04 | Must | Platform | Separate platform ops from campus admin | [006](006-ops-campus/spec.md) |
 | CH-S22 | Should | Teach & learn | Publish course resource links | [022](022-course-resources/spec.md) |
 | CH-S23 | Should | Teach & learn | Join a waitlist when a course is full | [023](023-course-waitlist/spec.md) |
+| CH-S24 | Should | Teach & learn | View confirmed enrollment roster | [024](024-course-roster/spec.md) |
+| CH-S25 | Should | Teach & learn | Pin and moderate course Q&A | [025](025-discussion-moderation/spec.md) |
 
-Status for CH-S01–S23: **Done** (implemented). CH-S01–S16 = Jira Discovery MDP-12–MDP-27. CH-S17–S23 = in-repo until the next Jira import.
+Status for CH-S01–S25: **Done** (implemented). CH-S01–S16 = Jira Discovery MDP-12–MDP-27. CH-S17–S25 = in-repo until the next Jira import.
 
 ---
 
@@ -376,6 +378,55 @@ Status for CH-S01–S23: **Done** (implemented). CH-S01–S16 = Jira Discovery M
 3. **Given** I am waitlisted, **when** I leave, **then** I am removed from the queue.
 4. **Given** open seats, **when** I try to join waitlist, **then** the API rejects and UI shows Enroll now.
 5. **Given** confirmed enrollment, **when** the saga completes, **then** I am not on that waitlist.
+
+---
+
+## CH-S24 — View confirmed enrollment roster
+
+**As a** teacher,  
+**I want** a roster of confirmed enrollments for my course,  
+**so that** I see every enrolled student even before they submit quizzes or assignments.
+
+| | |
+|---|---|
+| **Priority** | Should |
+| **Epic** | Teach & learn |
+| **Value** | Authoritative enrollment list; gradebook only shows students with submissions. |
+
+**In scope:** `/catalog/{id}/roster`, Catalog auth + Enrollment internal API, seed Sam/Noah on Algorithms.  
+**Out of scope:** cancel enrollment from roster; in-progress checkout rows.
+
+**Acceptance criteria**
+
+1. **Given** I own the course, **when** I open Roster, **then** I see confirmed students with name, email, enrolled date (oldest first).
+2. **Given** a confirmed student with no submissions, **when** I open Roster, **then** they appear (unlike gradebook).
+3. **Given** I cannot manage the course, **when** I call the roster API, **then** access is denied.
+4. **Given** no confirmed enrollments, **when** I open Roster, **then** empty state is shown.
+
+---
+
+## CH-S25 — Pin and moderate course Q&A
+
+**As a** teacher,  
+**I want** to pin important questions and hide inappropriate Q&A posts,  
+**so that** students see the best answers first and the thread stays on-topic.
+
+| | |
+|---|---|
+| **Priority** | Should |
+| **Epic** | Teach & learn |
+| **Value** | Lightweight curation on existing course Q&A without a separate forum. |
+
+**In scope:** pin/unpin, hide/unhide questions and answers, editor + detail + player UI, pinned Algorithms seed.  
+**Out of scope:** edit student text; live chat moderation.
+
+**Acceptance criteria**
+
+1. **Given** I own the course, **when** I pin a question, **then** it shows Pinned and sorts first for everyone.
+2. **Given** I hide a post, **when** a student loads Q&A, **then** that post is omitted.
+3. **Given** I hid a post, **when** I open Q&A as owner, **then** I see it marked Hidden with unhide.
+4. **Given** I am not the owner, **when** I call pin/hide APIs, **then** access is denied.
+5. **Given** I hide a pinned question, **when** save succeeds, **then** it is unpinned and hidden from students.
 
 ---
 

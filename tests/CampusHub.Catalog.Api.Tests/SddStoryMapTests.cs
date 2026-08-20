@@ -16,5 +16,7 @@ public class SddStoryMapTests
         Assert.Equal("specs/019-enroll-checkout", SddStories.SpecPath(SddStories.ChS19Enroll));
         Assert.Equal("specs/022-course-resources", SddStories.SpecPath(SddStories.ChS22Resources));
         Assert.Equal("specs/023-course-waitlist", SddStories.SpecPath(SddStories.ChS23Waitlist));
+        Assert.Equal("specs/024-course-roster", SddStories.SpecPath(SddStories.ChS24Roster));
+        Assert.Equal("specs/025-discussion-moderation", SddStories.SpecPath(SddStories.ChS25Moderation));
     }
 }

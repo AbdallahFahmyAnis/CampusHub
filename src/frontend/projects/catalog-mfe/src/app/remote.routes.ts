@@ -5,6 +5,7 @@ import { CourseDetail } from './course-detail';
 import { CourseEditor } from './course-editor';
 import { CourseGradebook } from './course-gradebook';
 import { CourseList } from './course-list';
+import { CourseRoster } from './course-roster';
 import { TeacherCourses } from './teacher-courses';
 
 export const CATALOG_ROUTES: Routes = [
@@ -13,6 +14,7 @@ export const CATALOG_ROUTES: Routes = [
   { path: 'new', component: CourseEditor, canActivate: [teacherGuard] },
   { path: ':id/analytics', component: CourseAnalytics, canActivate: [teacherGuard] },
   { path: ':id/gradebook', component: CourseGradebook, canActivate: [teacherGuard] },
+  { path: ':id/roster', component: CourseRoster, canActivate: [teacherGuard] },
   { path: ':id/edit', component: CourseEditor, canActivate: [teacherGuard] },
   { path: ':id', component: CourseDetail },
 ];

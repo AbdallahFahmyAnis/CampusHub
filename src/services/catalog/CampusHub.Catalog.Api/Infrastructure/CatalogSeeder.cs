@@ -638,7 +638,8 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
                 AuthorName = "Sam Student",
                 Title = "When is quicksort the wrong default?",
                 Body = "If a library already has a stable sort, should I still reach for quicksort in an interview answer?",
-                CreatedAt = DateTimeOffset.UtcNow.AddDays(-2)
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-2),
+                IsPinned = true, // CH-S25 demo FAQ
             };
             question.Answers.Add(new CourseAnswer
             {
@@ -650,6 +651,28 @@ public sealed class CatalogSeeder(CatalogDbContext db, CourseSearch search, ILog
                 CreatedAt = DateTimeOffset.UtcNow.AddDays(-2).AddHours(3)
             });
             db.CourseQuestions.Add(question);
+
+            var followUp = new CourseQuestion
+            {
+                Id = Guid.NewGuid(),
+                CourseId = AlgorithmsId,
+                AuthorId = SeedUsers.StudentId,
+                AuthorName = "Noah Student",
+                Title = "Are interview big-O answers ever wrong?",
+                Body = "Do interviewers expect amortized analysis for dynamic arrays every time?",
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            };
+            db.CourseQuestions.Add(followUp);
+        }
+        else
+        {
+            var pinned = await db.CourseQuestions
+                .Where(q => q.CourseId == AlgorithmsId && q.Title.Contains("quicksort"))
+                .FirstOrDefaultAsync(ct);
+            if (pinned is not null && !pinned.IsPinned)
+            {
+                pinned.IsPinned = true;
+            }
         }
 
         await db.SaveChangesAsync(ct);

@@ -36,6 +36,7 @@ public static class CatalogEndpoints
         api.MapNoteEndpoints();
         api.MapAnnouncementEndpoints();
         api.MapResourceEndpoints();
+        api.MapRosterEndpoints();
         api.MapGradeEndpoints();
 
         return app;

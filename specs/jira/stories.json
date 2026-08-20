@@ -177,6 +177,20 @@
       "summary": "As a student I want to join a waitlist when a course is full",
       "spec": "specs/023-course-waitlist/spec.md",
       "description": "As a student,\nI want to join a waitlist when a published course is full,\nso that I keep my place and can enrol when seats open again.\n\nBusiness value: Captures demand on sold-out courses.\n\nAcceptance criteria:\n1. Given a published full course, when I open detail, then I see Join waitlist and 0 seats.\n2. Given I join, when the request succeeds, then I see my position and the course on /enroll Waitlist.\n3. Given I am waitlisted, when I leave, then I am removed from the queue.\n4. Given open seats, when I try to join waitlist, then the API rejects and UI shows Enroll now.\n5. Given confirmed enrollment, when the saga completes, then I am not on that waitlist.\n\nScreens: /catalog/{id}, /enroll\nPriority: Should | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S24",
+      "epic": "learn",
+      "summary": "As a teacher I want an enrollment roster so I see every confirmed student",
+      "spec": "specs/024-course-roster/spec.md",
+      "description": "As a teacher,\nI want a roster of confirmed enrollments for my course,\nso that I see every enrolled student even before they submit work.\n\nBusiness value: Gradebook only lists students with submissions.\n\nAcceptance criteria:\n1. Given I own the course, when I open Roster, then I see confirmed students with name, email, enrolled date.\n2. Given a confirmed student with no submissions, when I open Roster, then they still appear.\n3. Given I cannot manage the course, when I call the roster API, then access is denied.\n4. Given no confirmed enrollments, when I open Roster, then empty state is shown.\n\nScreens: /catalog/{id}/roster\nPriority: Should | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S25",
+      "epic": "learn",
+      "summary": "As a teacher I want to pin and moderate course Q&A",
+      "spec": "specs/025-discussion-moderation/spec.md",
+      "description": "As a teacher,\nI want to pin important questions and hide inappropriate Q&A posts,\nso that students see the best answers first and the thread stays on-topic.\n\nBusiness value: Lightweight curation on existing course Q&A.\n\nAcceptance criteria:\n1. Given I own the course, when I pin a question, then it shows Pinned and sorts first.\n2. Given I hide a post, when a student loads Q&A, then that post is omitted.\n3. Given I hid a post, when I open Q&A as owner, then I see Hidden with unhide.\n4. Given I am not the owner, when I call pin/hide APIs, then access is denied.\n5. Given I hide a pinned question, when save succeeds, then it is unpinned and hidden.\n\nScreens: /catalog/{id}#qa, /catalog/{id}/edit, /learn/{id}?tab=qa\nPriority: Should | Epic: Teach & learn | Status: Done"
     }
   ]
 }

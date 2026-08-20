@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using CampusHub.BuildingBlocks.Security;
+using CampusHub.BuildingBlocks.Sdd;
 using CampusHub.Catalog.Api.Contracts;
 using CampusHub.Catalog.Api.Domain;
 using CampusHub.Catalog.Api.Infrastructure;
@@ -9,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CampusHub.Catalog.Api.Features;
 
 /// <summary>
-/// SDD CH-S07 analytics, CH-S08 ask/tutor, CH-S10 progress dashboard — specs/009, 010, 012.
+/// SDD CH-S07 analytics, CH-S08 ask/tutor, CH-S10 progress dashboard, CH-S25 Q&A moderation — specs/009, 010, 012, 025.
 /// </summary>
 public static class CourseLearningEndpoints
 {
@@ -34,6 +35,9 @@ public static class CourseLearningEndpoints
         api.MapGet("/courses/{id:guid}/questions", ListQuestions);
         api.MapPost("/courses/{id:guid}/questions", CreateQuestion);
         api.MapPost("/courses/{id:guid}/questions/{questionId:guid}/answers", CreateAnswer);
+        api.MapPost("/courses/{id:guid}/questions/{questionId:guid}/pin", PinQuestion).RequireAuthorization("CanManageCatalog"); // CH-S25
+        api.MapPost("/courses/{id:guid}/questions/{questionId:guid}/hide", HideQuestion).RequireAuthorization("CanManageCatalog"); // CH-S25
+        api.MapPost("/courses/{id:guid}/questions/{questionId:guid}/answers/{answerId:guid}/hide", HideAnswer).RequireAuthorization("CanManageCatalog"); // CH-S25
         return api;
     }
 
@@ -665,13 +669,28 @@ public static class CourseLearningEndpoints
             return Results.NotFound();
         }
 
+        var course = await db.Courses.AsNoTracking().SingleOrDefaultAsync(c => c.Id == id, ct);
+        var canModerate = course is not null && QuestionModerationRules.CanModerate(
+            CatalogEndpoints.CanManage(user),
+            CatalogEndpoints.IsOwner(course, user),
+            user.IsInRole(Roles.Administrator));
+
         var items = await db.CourseQuestions.AsNoTracking()
             .Where(q => q.CourseId == id)
             .Include(q => q.Answers)
             .ToListAsync(ct);
-        return Results.Ok(items
-            .OrderByDescending(q => q.CreatedAt)
-            .Select(CatalogMappings.ToQuestion));
+
+        if (!canModerate)
+        {
+            items = QuestionModerationRules.VisibleToStudents(items, q => q.IsHidden).ToList();
+        }
+
+        var ordered = QuestionModerationRules.OrderForDisplay(
+            items,
+            q => q.IsPinned,
+            q => q.CreatedAt);
+
+        return Results.Ok(ordered.Select(q => CatalogMappings.ToQuestion(q, canModerate)));
     }
 
     private static async Task<IResult> CreateQuestion(
@@ -757,7 +776,129 @@ public static class CourseLearningEndpoints
         db.CourseAnswers.Add(answer);
         await db.SaveChangesAsync(ct);
         question.Answers.Add(answer);
-        return Results.Ok(CatalogMappings.ToQuestion(question));
+        return Results.Ok(CatalogMappings.ToQuestion(question, isStaff));
+    }
+
+    private static async Task<IResult> PinQuestion(
+        Guid id,
+        Guid questionId,
+        PinQuestionRequest request,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+    {
+        var course = await db.Courses.SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (!QuestionModerationRules.CanModerate(
+                CatalogEndpoints.CanManage(user),
+                CatalogEndpoints.IsOwner(course, user),
+                user.IsInRole(Roles.Administrator)))
+        {
+            return Results.Json(new { error = "Only the course owner can pin questions." }, statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        var question = await db.CourseQuestions
+            .Include(q => q.Answers)
+            .SingleOrDefaultAsync(q => q.Id == questionId && q.CourseId == id, ct);
+        if (question is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (question.IsHidden && request.Pinned)
+        {
+            return Results.BadRequest(new { error = "Unhide the question before pinning it." });
+        }
+
+        question.IsPinned = request.Pinned;
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(CatalogMappings.ToQuestion(question, includeHiddenAnswers: true));
+    }
+
+    private static async Task<IResult> HideQuestion(
+        Guid id,
+        Guid questionId,
+        HideContentRequest request,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+    {
+        var course = await db.Courses.SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (!QuestionModerationRules.CanModerate(
+                CatalogEndpoints.CanManage(user),
+                CatalogEndpoints.IsOwner(course, user),
+                user.IsInRole(Roles.Administrator)))
+        {
+            return Results.Json(new { error = "Only the course owner can moderate questions." }, statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        var question = await db.CourseQuestions
+            .Include(q => q.Answers)
+            .SingleOrDefaultAsync(q => q.Id == questionId && q.CourseId == id, ct);
+        if (question is null)
+        {
+            return Results.NotFound();
+        }
+
+        question.IsHidden = request.Hidden;
+        if (request.Hidden)
+        {
+            question.IsPinned = false;
+        }
+
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(CatalogMappings.ToQuestion(question, includeHiddenAnswers: true));
+    }
+
+    private static async Task<IResult> HideAnswer(
+        Guid id,
+        Guid questionId,
+        Guid answerId,
+        HideContentRequest request,
+        CatalogDbContext db,
+        ClaimsPrincipal user,
+        CancellationToken ct)
+    {
+        var course = await db.Courses.SingleOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (!QuestionModerationRules.CanModerate(
+                CatalogEndpoints.CanManage(user),
+                CatalogEndpoints.IsOwner(course, user),
+                user.IsInRole(Roles.Administrator)))
+        {
+            return Results.Json(new { error = "Only the course owner can moderate answers." }, statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        var question = await db.CourseQuestions
+            .Include(q => q.Answers)
+            .SingleOrDefaultAsync(q => q.Id == questionId && q.CourseId == id, ct);
+        if (question is null)
+        {
+            return Results.NotFound();
+        }
+
+        var answer = question.Answers.SingleOrDefault(a => a.Id == answerId);
+        if (answer is null)
+        {
+            return Results.NotFound();
+        }
+
+        answer.IsHidden = request.Hidden;
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(CatalogMappings.ToQuestion(question, includeHiddenAnswers: true));
     }
 
     private static Task<bool> CourseVisible(CatalogDbContext db, Guid id, ClaimsPrincipal user, CancellationToken ct)

@@ -23,4 +23,6 @@ export const SddStories = {
   coursePass: { id: 'CH-S21', spec: 'specs/021-course-pass' },
   resources: { id: 'CH-S22', spec: 'specs/022-course-resources' },
   waitlist: { id: 'CH-S23', spec: 'specs/023-course-waitlist' },
+  roster: { id: 'CH-S24', spec: 'specs/024-course-roster' },
+  moderation: { id: 'CH-S25', spec: 'specs/025-discussion-moderation' },
 } as const;

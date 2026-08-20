@@ -82,8 +82,41 @@ public sealed class EnrollmentGateway(HttpClient http, IConfiguration configurat
         }
     }
 
+    public async Task<EnrollmentRosterDto?> GetRosterAsync(Guid courseId, CancellationToken ct)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"/api/enrollments/internal/roster?courseId={courseId}");
+            request.Headers.Add("X-Internal-Key", configuration["Internal:ApiKey"] ?? "campus-dev-internal");
+            var response = await http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<EnrollmentRosterDto>(ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private sealed record ConfirmedResponse(bool Confirmed, Guid? EnrollmentId);
 }
+
+public sealed record EnrollmentRosterRowDto(
+    Guid EnrollmentId,
+    string StudentId,
+    string StudentName,
+    string StudentEmail,
+    DateTimeOffset EnrolledAt);
+
+public sealed record EnrollmentRosterDto(
+    Guid CourseId,
+    IReadOnlyList<EnrollmentRosterRowDto> Confirmed);
 
 public sealed record EnrollmentMonthPoint(string Month, int Count, decimal Revenue);
 public sealed record EnrollmentStatsDto(

@@ -1,9 +1,19 @@
-/** SDD CH-S11–S16, CH-S22 teacher authoring: quizzes, assignments, due dates, announcements, resources. */
+/** SDD CH-S11–S16, CH-S22, CH-S25 teacher authoring: quizzes, assignments, due dates, announcements, resources, Q&A moderation. */
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummaryDto, CourseResourceDto, CurriculumDto, QuizSummaryDto, SubjectDto } from './catalog.api';
+import {
+  CatalogApi,
+  AnnouncementDto,
+  AssignmentSubmissionDto,
+  AssignmentSummaryDto,
+  CourseResourceDto,
+  CurriculumDto,
+  QuestionDto,
+  QuizSummaryDto,
+  SubjectDto,
+} from './catalog.api';
 
 @Component({
   selector: 'app-course-editor',
@@ -21,6 +31,7 @@ import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummary
             <span class="pill" [attr.data-status]="current">{{ current }}</span>
           }
           <a class="btn secondary" [routerLink]="['/catalog', courseId, 'gradebook']">Gradebook</a>
+          <a class="btn secondary" [routerLink]="['/catalog', courseId, 'roster']">Roster</a>
           <a class="btn secondary" [routerLink]="['/catalog', courseId, 'analytics']">Analytics</a>
         </div>
       } @else if (status(); as current) {
@@ -219,6 +230,49 @@ import { CatalogApi, AnnouncementDto, AssignmentSubmissionDto, AssignmentSummary
           <button class="btn" type="submit">Add resource</button>
         </form>
       </section>
+      <section class="panel" style="margin-top: 24px; max-width: 720px;">
+        <h2>Q&amp;A moderation</h2>
+        <p class="muted">Pin FAQs and hide off-topic posts. Hidden content stays visible here until you unhide it.</p>
+        @for (question of questions(); track question.id) {
+          <article class="qa" [class.hidden-post]="question.isHidden">
+            <div class="qa-head">
+              <h3>
+                @if (question.isPinned) {
+                  <span class="pill" data-status="Published">Pinned</span>
+                }
+                @if (question.isHidden) {
+                  <span class="pill" data-status="Archived">Hidden</span>
+                }
+                {{ question.title }}
+              </h3>
+              <div class="qa-actions">
+                <button type="button" class="btn secondary" (click)="togglePin(question)" [disabled]="saving()">
+                  {{ question.isPinned ? 'Unpin' : 'Pin' }}
+                </button>
+                <button type="button" class="btn secondary" (click)="toggleHideQuestion(question)" [disabled]="saving()">
+                  {{ question.isHidden ? 'Unhide' : 'Hide' }}
+                </button>
+              </div>
+            </div>
+            <p>{{ question.body }}</p>
+            <p class="muted">{{ question.authorName }}</p>
+            @for (answer of question.answers; track answer.id) {
+              <div class="answer" [class.hidden-post]="answer.isHidden">
+                <strong>{{ answer.authorName }}</strong>
+                @if (answer.isHidden) {
+                  <span class="pill" data-status="Archived">Hidden</span>
+                }
+                <p>{{ answer.body }}</p>
+                <button type="button" class="btn secondary" (click)="toggleHideAnswer(question, answer)" [disabled]="saving()">
+                  {{ answer.isHidden ? 'Unhide answer' : 'Hide answer' }}
+                </button>
+              </div>
+            }
+          </article>
+        } @empty {
+          <p class="muted">No questions yet.</p>
+        }
+      </section>
     }
   `,
 })
@@ -237,6 +291,7 @@ export class CourseEditor {
   readonly assignments = signal<AssignmentSummaryDto[]>([]);
   readonly announcements = signal<AnnouncementDto[]>([]);
   readonly resources = signal<CourseResourceDto[]>([]);
+  readonly questions = signal<QuestionDto[]>([]);
   readonly saving = signal(false);
   sectionTitle = '';
   quizTitle = '';
@@ -294,6 +349,7 @@ export class CourseEditor {
     this.assignments.set(await this.api.assignments(id).catch(() => []));
     this.announcements.set(await this.api.announcements(id).catch(() => []));
     this.resources.set(await this.api.resources(id).catch(() => []));
+    this.questions.set(await this.api.questions(id).catch(() => []));
     this.form.patchValue({
       subjectId: course.subjectId,
       title: course.title,
@@ -506,6 +562,61 @@ export class CourseEditor {
       );
     } catch {
       this.error.set('Could not save the grade.');
+    }
+  }
+
+  async togglePin(question: QuestionDto): Promise<void> {
+    const id = this.id();
+    if (!id) {
+      return;
+    }
+    this.saving.set(true);
+    try {
+      const updated = await this.api.pinQuestion(id, question.id, !question.isPinned);
+      this.questions.update((items) =>
+        items.map((item) => (item.id === updated.id ? updated : item)).sort((a, b) => {
+          if (a.isPinned !== b.isPinned) {
+            return a.isPinned ? -1 : 1;
+          }
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }),
+      );
+    } catch {
+      this.error.set('Could not update pin.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async toggleHideQuestion(question: QuestionDto): Promise<void> {
+    const id = this.id();
+    if (!id) {
+      return;
+    }
+    this.saving.set(true);
+    try {
+      const updated = await this.api.hideQuestion(id, question.id, !question.isHidden);
+      this.questions.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+    } catch {
+      this.error.set('Could not hide the question.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async toggleHideAnswer(question: QuestionDto, answer: { id: string; isHidden: boolean }): Promise<void> {
+    const id = this.id();
+    if (!id) {
+      return;
+    }
+    this.saving.set(true);
+    try {
+      const updated = await this.api.hideAnswer(id, question.id, answer.id, !answer.isHidden);
+      this.questions.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
+    } catch {
+      this.error.set('Could not hide the answer.');
+    } finally {
+      this.saving.set(false);
     }
   }
 }

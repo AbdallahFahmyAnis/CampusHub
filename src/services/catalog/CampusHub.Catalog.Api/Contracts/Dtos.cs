@@ -146,7 +146,8 @@ public sealed record AnswerDto(
     string AuthorName,
     string Body,
     bool IsTeacher,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool IsHidden);
 
 public sealed record QuestionDto(
     Guid Id,
@@ -154,11 +155,17 @@ public sealed record QuestionDto(
     string Title,
     string Body,
     DateTimeOffset CreatedAt,
+    bool IsPinned,
+    bool IsHidden,
     IReadOnlyList<AnswerDto> Answers);
 
 public sealed record CreateQuestionRequest(string Title, string Body);
 
 public sealed record CreateAnswerRequest(string Body);
+
+public sealed record PinQuestionRequest(bool Pinned);
+
+public sealed record HideContentRequest(bool Hidden);
 
 public sealed record CourseProgressDto(
     Guid CourseId,
@@ -265,6 +272,19 @@ public sealed record CourseResourceDto(
     DateTimeOffset CreatedAt);
 
 public sealed record CreateCourseResourceRequest(string Title, string Url, string? Description);
+
+/// <summary>SDD CH-S24 — specs/024-course-roster.</summary>
+public sealed record RosterRowDto(
+    string StudentId,
+    string StudentName,
+    string StudentEmail,
+    DateTimeOffset EnrolledAt);
+
+public sealed record CourseRosterDto(
+    Guid CourseId,
+    string CourseTitle,
+    int ConfirmedCount,
+    IReadOnlyList<RosterRowDto> Students);
 
 public sealed record GradebookColumnDto(string Kind, Guid Id, string Title, int MaxScore);
 

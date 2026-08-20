@@ -119,6 +119,7 @@ export interface AnswerDto {
   body: string;
   isTeacher: boolean;
   createdAt: string;
+  isHidden: boolean;
 }
 
 export interface QuestionDto {
@@ -127,6 +128,8 @@ export interface QuestionDto {
   title: string;
   body: string;
   createdAt: string;
+  isPinned: boolean;
+  isHidden: boolean;
   answers: AnswerDto[];
 }
 
@@ -268,6 +271,21 @@ export interface CourseResourceDto {
   createdAt: string;
 }
 
+/** SDD CH-S24 — specs/024-course-roster */
+export interface RosterRowDto {
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  enrolledAt: string;
+}
+
+export interface CourseRosterDto {
+  courseId: string;
+  courseTitle: string;
+  confirmedCount: number;
+  students: RosterRowDto[];
+}
+
 export interface GradebookColumnDto {
   kind: string;
   id: string;
@@ -402,6 +420,28 @@ export class CatalogApi {
     );
   }
 
+  /** CH-S25 — specs/025-discussion-moderation */
+  pinQuestion(courseId: string, questionId: string, pinned: boolean) {
+    return firstValueFrom(
+      this.http.post<QuestionDto>(`/api/catalog/courses/${courseId}/questions/${questionId}/pin`, { pinned }),
+    );
+  }
+
+  hideQuestion(courseId: string, questionId: string, hidden: boolean) {
+    return firstValueFrom(
+      this.http.post<QuestionDto>(`/api/catalog/courses/${courseId}/questions/${questionId}/hide`, { hidden }),
+    );
+  }
+
+  hideAnswer(courseId: string, questionId: string, answerId: string, hidden: boolean) {
+    return firstValueFrom(
+      this.http.post<QuestionDto>(
+        `/api/catalog/courses/${courseId}/questions/${questionId}/answers/${answerId}/hide`,
+        { hidden },
+      ),
+    );
+  }
+
   wishlist() {
     return firstValueFrom(this.http.get<CourseListItemDto[]>('/api/catalog/wishlist'));
   }
@@ -523,6 +563,10 @@ export class CatalogApi {
     return firstValueFrom(
       this.http.post<CourseResourceDto>(`/api/catalog/courses/${courseId}/resources`, payload),
     );
+  }
+
+  roster(courseId: string) {
+    return firstValueFrom(this.http.get<CourseRosterDto>(`/api/catalog/courses/${courseId}/roster`));
   }
 
   gradebook(courseId: string) {

@@ -213,6 +213,9 @@ internal static class CatalogSchema
         await TryAsync(db, """
             CREATE INDEX IF NOT EXISTS IX_CourseResources_CourseId ON CourseResources (CourseId);
             """, ct);
+        await TryAsync(db, "ALTER TABLE CourseQuestions ADD COLUMN IsPinned INTEGER NOT NULL DEFAULT 0", ct); // CH-S25
+        await TryAsync(db, "ALTER TABLE CourseQuestions ADD COLUMN IsHidden INTEGER NOT NULL DEFAULT 0", ct); // CH-S25
+        await TryAsync(db, "ALTER TABLE CourseAnswers ADD COLUMN IsHidden INTEGER NOT NULL DEFAULT 0", ct); // CH-S25
     }
 
     private static async Task TryAsync(CatalogDbContext db, string sql, CancellationToken ct)

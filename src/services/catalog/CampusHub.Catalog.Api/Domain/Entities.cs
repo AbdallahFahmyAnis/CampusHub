@@ -147,6 +147,8 @@ public sealed class CourseQuestion
     public required string Title { get; set; }
     public required string Body { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+    public bool IsPinned { get; set; } // CH-S25
+    public bool IsHidden { get; set; } // CH-S25
     public ICollection<CourseAnswer> Answers { get; set; } = new List<CourseAnswer>();
 }
 
@@ -159,6 +161,7 @@ public sealed class CourseAnswer
     public required string AuthorName { get; set; }
     public required string Body { get; set; }
     public bool IsTeacher { get; set; }
+    public bool IsHidden { get; set; } // CH-S25
     public DateTimeOffset CreatedAt { get; set; }
 }
 

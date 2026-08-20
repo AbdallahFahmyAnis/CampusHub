@@ -17,6 +17,7 @@ import { CatalogApi, GradebookDto } from './catalog.api';
       @if (courseId(); as id) {
         <div class="actions" style="display:flex;gap:.5rem;flex-wrap:wrap;">
           <a class="btn secondary" [routerLink]="['/catalog', id, 'edit']">Edit course</a>
+          <a class="btn secondary" [routerLink]="['/catalog', id, 'roster']">Roster</a>
           <a class="btn secondary" [routerLink]="['/catalog', id, 'analytics']">Analytics</a>
         </div>
       }

@@ -17,6 +17,7 @@ import { CatalogApi, CourseStatsDto } from './catalog.api';
         <div class="actions" style="display:flex;gap:.5rem;flex-wrap:wrap;">
           <a class="btn secondary" [routerLink]="['/catalog', courseId(), 'edit']">Edit course</a>
           <a class="btn secondary" [routerLink]="['/catalog', courseId(), 'gradebook']">Gradebook</a>
+          <a class="btn secondary" [routerLink]="['/catalog', courseId(), 'roster']">Roster</a>
         </div>
       }
     </div>

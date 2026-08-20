@@ -23,6 +23,7 @@ public static class EnrollmentEndpoints
         api.MapPost("/internal/payments/succeeded", PaymentSucceeded).AllowAnonymous();
         api.MapPost("/internal/payments/failed", PaymentFailed).AllowAnonymous();
         api.MapGet("/internal/stats", InternalStats).AllowAnonymous();
+        api.MapGet("/internal/roster", InternalRoster).AllowAnonymous();
         return app;
     }
 
@@ -239,6 +240,32 @@ public static class EnrollmentEndpoints
             months));
     }
 
+    private static async Task<IResult> InternalRoster(
+        Guid courseId,
+        HttpContext http,
+        IConfiguration config,
+        EnrollmentDbContext db,
+        CancellationToken ct)
+    {
+        if (!IsInternal(http, config))
+        {
+            return Results.Unauthorized();
+        }
+
+        var rows = await db.Enrollments.AsNoTracking()
+            .Where(e => e.CourseId == courseId && e.Status == CampusHub.Enrollment.Api.Domain.EnrollmentStatus.Confirmed)
+            .OrderBy(e => e.UpdatedAt)
+            .Select(e => new EnrollmentRosterRowDto(
+                e.Id,
+                e.StudentId,
+                e.StudentName,
+                e.StudentEmail,
+                e.UpdatedAt))
+            .ToListAsync(ct);
+
+        return Results.Ok(new EnrollmentRosterResponse(courseId, rows));
+    }
+
     private static bool IsInternal(HttpContext http, IConfiguration config)
     {
         var expected = config["Internal:ApiKey"] ?? "campus-dev-internal";
@@ -283,3 +310,14 @@ public sealed record EnrollmentDto(
     string? FailureReason,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
+
+public sealed record EnrollmentRosterRowDto(
+    Guid EnrollmentId,
+    string StudentId,
+    string StudentName,
+    string StudentEmail,
+    DateTimeOffset EnrolledAt);
+
+public sealed record EnrollmentRosterResponse(
+    Guid CourseId,
+    IReadOnlyList<EnrollmentRosterRowDto> Confirmed);
