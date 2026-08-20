@@ -29,8 +29,10 @@ Professional backlog for CampusHub. Each item is an independent user story: **As
 | CH-S07 | Should | Teach & learn | Inspect course analytics | [009](009-course-analytics/spec.md) |
 | CH-S03 | Should | Platform | Manage campus plan (mock billing) | [005](005-mock-billing/spec.md) |
 | CH-S04 | Must | Platform | Separate platform ops from campus admin | [006](006-ops-campus/spec.md) |
+| CH-S22 | Should | Teach & learn | Publish course resource links | [022](022-course-resources/spec.md) |
+| CH-S23 | Should | Teach & learn | Join a waitlist when a course is full | [023](023-course-waitlist/spec.md) |
 
-Status for all items below: **Done** (implemented). CH-S01–S16 = Jira Discovery MDP-12–MDP-27. CH-S17–S21 = in-repo until the next Jira import.
+Status for CH-S01–S23: **Done** (implemented). CH-S01–S16 = Jira Discovery MDP-12–MDP-27. CH-S17–S23 = in-repo until the next Jira import.
 
 ---
 
@@ -325,6 +327,55 @@ Status for all items below: **Done** (implemented). CH-S01–S16 = Jira Discover
 
 1. **Given** a platform admin on the default campus, **when** they open Ops, **then** they see platform health and ops tools.
 2. **Given** a campus-only admin, **when** they open Campus, **then** they do not receive platform-wide ops.
+
+---
+
+## CH-S22 — Publish course resource links
+
+**As a** teacher,  
+**I want** to publish syllabus links and extra reading materials on a course,  
+**so that** students find supporting resources without leaving the player.
+
+| | |
+|---|---|
+| **Priority** | Should |
+| **Epic** | Teach & learn |
+| **Value** | Official course links stay in one place; less time hunting outside CampusHub. |
+
+**In scope:** title + https URL + optional description; editor panel; player Resources tab; seed on Algorithms / Linear Algebra.  
+**Out of scope:** file uploads; per-lecture resources; link previews.
+
+**Acceptance criteria**
+
+1. **Given** I can manage the course, **when** I add a resource with title and https URL, **then** it appears in the editor and on the player Resources tab.
+2. **Given** no resources, **when** a student opens Resources, **then** an empty state is shown.
+3. **Given** a missing or non-http(s) URL, **when** I submit, **then** create is rejected.
+4. **Given** I cannot manage the course, **when** I POST a resource, **then** access is denied.
+
+---
+
+## CH-S23 — Join a waitlist when a course is full
+
+**As a** student,  
+**I want** to join a waitlist when a published course is full,  
+**so that** I keep my place and can enrol when seats open again.
+
+| | |
+|---|---|
+| **Priority** | Should |
+| **Epic** | Teach & learn |
+| **Value** | Captures demand on sold-out courses instead of a dead-end message. |
+
+**In scope:** join/leave, queue position, My enrollments waitlist section, full Distributed seed, clear on confirm.  
+**Out of scope:** auto-checkout on seat open; promotion notifications; teacher reordering.
+
+**Acceptance criteria**
+
+1. **Given** a published full course, **when** I open detail, **then** I see Join waitlist and 0 seats.
+2. **Given** I join, **when** the request succeeds, **then** I see my position and the course on `/enroll` Waitlist.
+3. **Given** I am waitlisted, **when** I leave, **then** I am removed from the queue.
+4. **Given** open seats, **when** I try to join waitlist, **then** the API rejects and UI shows Enroll now.
+5. **Given** confirmed enrollment, **when** the saga completes, **then** I am not on that waitlist.
 
 ---
 

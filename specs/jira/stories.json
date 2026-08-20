@@ -3,40 +3,180 @@
     {
       "key": "platform",
       "summary": "CampusHub Platform",
-      "description": "Identity, tenants, invites, billing, ops vs campus.\nSDD: specs/000-product/spec.md"
+      "description": "As a campus or platform administrator,\nI want identity, tenants, invites, billing, and separate ops consoles,\nso that each campus is isolated and plan entitlements are enforced.\n\nCovers: auth session, account profile, campus signup, people invites, mock billing, platform Ops vs campus console."
     },
     {
       "key": "learn",
       "summary": "CampusHub Teach & learn",
-      "description": "Quizzes, assignments, notes, announcements, gradebook, due dates.\nSDD: specs/000-product/spec.md"
+      "description": "As a teacher or enrolled student,\nI want to teach and learn through courses, quizzes, assignments, grades, and analytics,\nso that coursework is delivered and assessed in one product.\n\nCovers: enrol/checkout, course player, notes, quizzes, assignments, due dates, announcements, gradebook, analytics, course resources."
     },
     {
       "key": "discovery",
       "summary": "CampusHub Discovery & engagement",
-      "description": "Search, progress, notifications, certificates, chat and AI tutor.\nSDD: specs/000-product/spec.md"
+      "description": "As a learner,\nI want to discover courses and stay engaged with chat, notifications, certificates, and progress,\nso that I can find learning and keep returning.\n\nCovers: catalog search, progress dashboard, chat/Ask AI, notifications, certificates, course pass."
     }
   ],
   "stories": [
-    { "id": "CH-S01", "epic": "platform", "summary": "As a campus owner I want to register a tenant and apply plan entitlements", "spec": "specs/003-tenants-plans/spec.md" },
-    { "id": "CH-S02", "epic": "platform", "summary": "As a campus admin I want to invite people so only authorised users join", "spec": "specs/004-invites-people/spec.md" },
-    { "id": "CH-S03", "epic": "platform", "summary": "As a campus admin I want mock billing so I can change plan without a live PSP", "spec": "specs/005-mock-billing/spec.md" },
-    { "id": "CH-S04", "epic": "platform", "summary": "As platform vs campus admin I want separate consoles so tenant data stays isolated", "spec": "specs/006-ops-campus/spec.md" },
-    { "id": "CH-S05", "epic": "discovery", "summary": "As a user I want in-app notifications so I see events without email", "spec": "specs/007-notifications/spec.md" },
-    { "id": "CH-S06", "epic": "discovery", "summary": "As a student I want a completion certificate when I finish all lectures", "spec": "specs/008-certificates/spec.md" },
-    { "id": "CH-S07", "epic": "learn", "summary": "As a teacher I want course analytics so I can see if the offering is working", "spec": "specs/009-course-analytics/spec.md" },
-    { "id": "CH-S08", "epic": "discovery", "summary": "As a learner I want course chat and Ask AI so I can get help from materials and peers", "spec": "specs/010-chat-ai-tutor/spec.md" },
-    { "id": "CH-S09", "epic": "discovery", "summary": "As a learner I want to search and filter the catalog so I can find a relevant course", "spec": "specs/011-catalog-discovery/spec.md" },
-    { "id": "CH-S10", "epic": "discovery", "summary": "As a student I want a progress dashboard so I can resume the right lecture", "spec": "specs/012-progress-dashboard/spec.md" },
-    { "id": "CH-S11", "epic": "learn", "summary": "As a teacher I want to author quizzes; as a student I want to sit them and see a score", "spec": "specs/013-quizzes/spec.md" },
-    { "id": "CH-S12", "epic": "learn", "summary": "As a teacher I want written assignments; as a student I want to submit and receive a grade", "spec": "specs/014-assignments/spec.md" },
-    { "id": "CH-S13", "epic": "learn", "summary": "As a student I want lecture notes to persist so I can resume study later", "spec": "specs/015-lecture-notes/spec.md" },
-    { "id": "CH-S14", "epic": "learn", "summary": "As a teacher I want to publish announcements so the cohort sees timely news", "spec": "specs/016-announcements/spec.md" },
-    { "id": "CH-S15", "epic": "learn", "summary": "As a teacher I want a gradebook; as a student I want only my own scores", "spec": "specs/001-course-gradebook/spec.md" },
-    { "id": "CH-S16", "epic": "learn", "summary": "As a teacher I want due dates; as a student I want them on My learning calendar", "spec": "specs/002-assignment-due-dates/spec.md" },
-    { "id": "CH-S17", "epic": "platform", "summary": "As a user I want to register, sign in, refresh session, and sign out securely", "spec": "specs/017-auth-session/spec.md" },
-    { "id": "CH-S18", "epic": "platform", "summary": "As a signed-in user I want to maintain my profile and password", "spec": "specs/018-account-profile/spec.md" },
-    { "id": "CH-S19", "epic": "learn", "summary": "As a student I want to enrol with mock checkout so I can start learning", "spec": "specs/019-enroll-checkout/spec.md" },
-    { "id": "CH-S20", "epic": "learn", "summary": "As an enrolled student I want to consume the curriculum and complete lectures", "spec": "specs/020-course-player/spec.md" },
-    { "id": "CH-S21", "epic": "discovery", "summary": "As a student I want a QR course pass; as a teacher I want to scan attendance", "spec": "specs/021-course-pass/spec.md" }
+    {
+      "id": "CH-S01",
+      "epic": "platform",
+      "summary": "As a campus owner I want to register a tenant and apply plan entitlements",
+      "spec": "specs/003-tenants-plans/spec.md",
+      "description": "As a campus owner,\nI want my organisation to exist as a tenant on a plan,\nso that seats, AI, and chat follow what we pay for.\n\nBusiness value: Isolates campuses and gates paid capabilities by plan.\n\nAcceptance criteria:\n1. Given a successful campus signup, when the owner signs in, then the session shows that tenant and plan.\n2. Given Free plan, when a learner uses Ask AI, then answers come from course materials only (no model requirement).\n\nScreens: /signup, /catalog after login\nPriority: Must | Epic: Platform | Status: Done"
+    },
+    {
+      "id": "CH-S02",
+      "epic": "platform",
+      "summary": "As a campus admin I want to invite people so only authorised users join",
+      "spec": "specs/004-invites-people/spec.md",
+      "description": "As a campus administrator,\nI want to invite staff and students by email or token,\nso that only authorised people join my campus.\n\nBusiness value: Controlled onboarding without open public student registration.\n\nAcceptance criteria:\n1. Given I am a campus admin, when I create an invite on People, then I receive a token URL I can copy (email delivery is not required).\n2. Given a valid token, when the invitee accepts and sets a password, then they appear on the People list for that tenant.\n\nScreens: /people, /invite/:token\nPriority: Must | Epic: Platform | Status: Done"
+    },
+    {
+      "id": "CH-S03",
+      "epic": "platform",
+      "summary": "As a campus admin I want mock billing so I can change plan without a live PSP",
+      "spec": "specs/005-mock-billing/spec.md",
+      "description": "As a campus administrator,\nI want to view and change plan on a mock billing page,\nso that we can demo upgrades without a live payment provider.\n\nBusiness value: Demonstrates plan changes and entitlements without card processing.\n\nAcceptance criteria:\n1. Given I am campus admin, when I open Billing, then I see the current plan and mock invoices.\n2. Given a successful mock upgrade, when I sign in again, then session plan matches the new entitlement.\n\nScreens: /billing\nPriority: Should | Epic: Platform | Status: Done"
+    },
+    {
+      "id": "CH-S04",
+      "epic": "platform",
+      "summary": "As platform vs campus admin I want separate consoles so tenant data stays isolated",
+      "spec": "specs/006-ops-campus/spec.md",
+      "description": "As a platform administrator, I want a platform console.\nAs a campus owner, I want a campus console,\nso that tenant data is not mixed with platform-wide tools.\n\nBusiness value: Clear separation of duties and data boundaries.\n\nAcceptance criteria:\n1. Given a platform admin on the default campus, when they open Ops, then they see platform health and ops tools.\n2. Given a campus-only admin, when they open Campus, then they do not receive platform-wide ops.\n\nScreens: /ops, /campus\nPriority: Must | Epic: Platform | Status: Done"
+    },
+    {
+      "id": "CH-S05",
+      "epic": "discovery",
+      "summary": "As a user I want in-app notifications so I see events without email",
+      "spec": "specs/007-notifications/spec.md",
+      "description": "As a signed-in user,\nI want an inbox and a live unread count,\nso that I notice enrolment and teaching events without email.\n\nBusiness value: Timely awareness inside the product.\n\nAcceptance criteria:\n1. Given a relevant domain event, when Notification processes it, then an inbox row exists for me.\n2. Given the shell is open, when a new notification arrives, then unread count can update without a full page reload.\n\nScreens: /learn/inbox, shell bell\nPriority: Should | Epic: Discovery | Status: Done"
+    },
+    {
+      "id": "CH-S06",
+      "epic": "discovery",
+      "summary": "As a student I want a completion certificate when I finish all lectures",
+      "spec": "specs/008-certificates/spec.md",
+      "description": "As a student who finished every lecture,\nI want a certificate on my account,\nso that I can evidence completion.\n\nBusiness value: Proof of learning for the student and campus.\n\nAcceptance criteria:\n1. Given all lectures complete, when completion is processed, then a certificate is listed on Certificates.\n2. Given no completions, when I open Certificates, then the empty state explains how to earn one.\n\nScreens: /learn/certificates\nPriority: Should | Epic: Discovery | Status: Done"
+    },
+    {
+      "id": "CH-S07",
+      "epic": "learn",
+      "summary": "As a teacher I want course analytics so I can see if the offering is working",
+      "spec": "specs/009-course-analytics/spec.md",
+      "description": "As a teacher,\nI want enrolment, revenue, and lecture-completion stats for my course,\nso that I can see whether the offering is working.\n\nBusiness value: Teaching decisions based on real course usage.\n\nAcceptance criteria:\n1. Given I own the course (or I am admin), when I open analytics, then I see confirmed enrolments and per-lecture completion counts.\n2. Given I am not allowed to manage the course, when I request stats, then access is denied.\n\nScreens: /catalog/:id/analytics, /catalog/mine\nPriority: Should | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S08",
+      "epic": "discovery",
+      "summary": "As a learner I want course chat and Ask AI so I can get help from materials and peers",
+      "spec": "specs/010-chat-ai-tutor/spec.md",
+      "description": "As a learner on a campus plan that allows chat,\nI want a course room and an Ask AI tutor,\nso that I can get help from peers and from course materials.\n\nBusiness value: Support at the moment of learning; plan gates model AI.\n\nAcceptance criteria:\n1. Given enrolment (or staff), when I open course chat, then I can send messages.\n2. Given no AI key or Free plan, when I ask a question, then I still receive an answer from catalog text.\n\nScreens: /chat, player Ask AI tab\nPriority: Should | Epic: Discovery | Status: Done"
+    },
+    {
+      "id": "CH-S09",
+      "epic": "discovery",
+      "summary": "As a learner I want to search and filter the catalog so I can find a relevant course",
+      "spec": "specs/011-catalog-discovery/spec.md",
+      "description": "As a learner,\nI want to search, filter, sort, and see recommended courses,\nso that I can find a relevant offering without leaving the catalog.\n\nBusiness value: Faster course discovery and lower bounce from empty results.\n\nAcceptance criteria:\n1. Given I am signed in, when I apply filters, then the list and total count match those filters.\n2. Given search infrastructure is unavailable, when I search, then SQL fallback still returns courses.\n\nScreens: /catalog\nPriority: Must | Epic: Discovery | Status: Done"
+    },
+    {
+      "id": "CH-S10",
+      "epic": "discovery",
+      "summary": "As a student I want a progress dashboard so I can resume the right lecture",
+      "spec": "specs/012-progress-dashboard/spec.md",
+      "description": "As a student,\nI want a dashboard of progress and a continue action,\nso that I can resume the right lecture quickly.\n\nBusiness value: Improves completion by reducing friction to return.\n\nAcceptance criteria:\n1. Given lecture progress, when I open My learning, then I see courses and completion percents.\n2. Given an in-progress course, when I choose Continue, then the player opens at a sensible lecture.\n\nScreens: /learn\nPriority: Should | Epic: Discovery | Status: Done"
+    },
+    {
+      "id": "CH-S11",
+      "epic": "learn",
+      "summary": "As a teacher I want to author quizzes; as a student I want to sit them and see a score",
+      "spec": "specs/013-quizzes/spec.md",
+      "description": "As a teacher, I want to publish a multiple-choice quiz.\nAs a student, I want to sit it and see a score,\nso that mastery is measured in the course.\n\nBusiness value: Formative assessment inside the learning flow.\n\nAcceptance criteria:\n1. Given I am the course teacher, when I add a quiz, then it appears on the student Quiz tab.\n2. Given I am enrolled, when I submit answers, then I see percent and pass/fail against the pass mark.\n3. Given a missing attempts table at first run, when the quiz list loads, then the API does not return 500.\n\nScreens: course editor, player Quiz tab\nPriority: Must | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S12",
+      "epic": "learn",
+      "summary": "As a teacher I want written assignments; as a student I want to submit and receive a grade",
+      "spec": "specs/014-assignments/spec.md",
+      "description": "As a teacher, I want to set written work and grade it.\nAs a student, I want to submit it,\nso that coursework is collected in one place.\n\nBusiness value: Written assessment with feedback loop.\n\nAcceptance criteria:\n1. Given I am enrolled, when I submit text, then the teacher can see that submission.\n2. Given I am the teacher, when I enter a score, then it is clamped to the maximum and the student can see score and feedback.\n\nScreens: course editor, player Assignments tab\nPriority: Must | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S13",
+      "epic": "learn",
+      "summary": "As a student I want lecture notes to persist so I can resume study later",
+      "spec": "specs/015-lecture-notes/spec.md",
+      "description": "As a student,\nI want notes on a lecture to persist on my account,\nso that I can resume study later.\n\nBusiness value: Personal study continuity across sessions.\n\nAcceptance criteria:\n1. Given an unlocked lecture, when I save notes and refresh, then the same text is shown.\n2. Given saved notes, when I open My learning, then snippets link back to the lecture.\n\nScreens: player Notes tab, /learn\nPriority: Should | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S14",
+      "epic": "learn",
+      "summary": "As a teacher I want to publish announcements so the cohort sees timely news",
+      "spec": "specs/016-announcements/spec.md",
+      "description": "As a teacher,\nI want to post an announcement,\nso that the cohort sees timely course news.\n\nBusiness value: One place for cohort communications.\n\nAcceptance criteria:\n1. Given I can manage the course, when I post title and body, then students see it on the Announcements tab.\n2. Given no posts, when a student opens the tab, then an empty state is shown.\n\nScreens: course editor, player Announcements tab\nPriority: Should | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S15",
+      "epic": "learn",
+      "summary": "As a teacher I want a gradebook; as a student I want only my own scores",
+      "spec": "specs/001-course-gradebook/spec.md",
+      "description": "As a teacher, I want a roster of quiz and assignment scores.\nAs a student, I want only my own row,\nso that assessment is visible without leaking peers’ marks.\n\nBusiness value: Transparent grades with privacy for students.\n\nAcceptance criteria:\n1. Given I am the teacher, when I open the gradebook, then I see students who have submitted work and an overall percent.\n2. Given I am a student, when I open Grades, then I do not see other students’ scores.\n\nScreens: /catalog/:id/gradebook, player Grades tab\nPriority: Must | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S16",
+      "epic": "learn",
+      "summary": "As a teacher I want due dates; as a student I want them on My learning calendar",
+      "spec": "specs/002-assignment-due-dates/spec.md",
+      "description": "As a teacher, I want an optional due date.\nAs a student, I want upcoming and overdue work on My learning,\nso that I do not miss deadlines.\n\nBusiness value: Schedule clarity and fewer missed submissions.\n\nAcceptance criteria:\n1. Given a due date, when the student opens Assignments, then due, overdue, and late states are visible.\n2. Given dated work in a course I am learning, when I open My learning, then items appear in calendar order.\n3. Given no due date, when I view the calendar, then that assignment is omitted but remains submittable.\n\nScreens: course editor due field, player Assignments, /learn calendar\nPriority: Should | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S17",
+      "epic": "platform",
+      "summary": "As a user I want to register, sign in, refresh session, and sign out securely",
+      "spec": "specs/017-auth-session/spec.md",
+      "description": "As a campus user,\nI want to register through an approved path, sign in, stay signed in safely, and sign out,\nso that only I can use my account and the application never exposes tokens in the browser.\n\nBusiness value: Protects student and staff data; dependency for every other story.\n\nAcceptance criteria:\n1. Given a seeded student, when they sign in with a valid password, then they reach the catalog and session reports identity, role, tenant, and plan.\n2. Given a new campus owner, when they complete signup, then they can sign in as Administrator of that campus.\n3. Given a valid invite, when the invitee sets a password that meets policy, then they can sign in and appear on People.\n4. Given an authenticated session, when the UI calls APIs, then the gateway attaches a Bearer token and the browser does not store a JWT.\n5. Given an access token due to expire within two minutes, when the session is validated, then the gateway refreshes without asking the user to sign in again.\n6. Given Sign out, when logout completes, then protected routes require login again.\n7. Given an unauthenticated API call, when it hits /api/*, then the response is 401.\n\nScreens: /signup, /login, Identity login, /logout, /whoami, /invite/:token\nPriority: Must | Epic: Platform | Status: Done"
+    },
+    {
+      "id": "CH-S18",
+      "epic": "platform",
+      "summary": "As a signed-in user I want to maintain my profile and password",
+      "spec": "specs/018-account-profile/spec.md",
+      "description": "As a signed-in user,\nI want to update my display name and password,\nso that my identity in the product stays accurate without exposing my email to change.\n\nBusiness value: Self-service identity hygiene.\n\nAcceptance criteria:\n1. Given I am signed in, when I open Account, then I see my email (read-only) and can save a new display name.\n2. Given a valid current password, when I set a new password that meets policy, then I remain signed in and can use the new password at next login.\n\nScreens: /account\nPriority: Must | Epic: Platform | Status: Done"
+    },
+    {
+      "id": "CH-S19",
+      "epic": "learn",
+      "summary": "As a student I want to enrol with mock checkout so I can start learning",
+      "spec": "specs/019-enroll-checkout/spec.md",
+      "description": "As a student,\nI want to enrol in a published course using a simulated payment,\nso that I can start learning without a live card network.\n\nBusiness value: End-to-end enrol demo with seat reservation and compensation on failure.\n\nAcceptance criteria:\n1. Given a published course, when I pay successfully, then enrolment is confirmed and the player unlocks.\n2. Given I simulate payment failure, when the saga completes, then the reserved seat is released and I am not enrolled.\n\nScreens: /catalog/:id, /enroll/:courseId, /enroll\nPriority: Must | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S20",
+      "epic": "learn",
+      "summary": "As an enrolled student I want to consume the curriculum and complete lectures",
+      "spec": "specs/020-course-player/spec.md",
+      "description": "As an enrolled student,\nI want to open lectures in order and mark them complete,\nso that I can progress through the syllabus.\n\nBusiness value: Core learning delivery path.\n\nAcceptance criteria:\n1. Given confirmed enrolment (or staff), when I open the player, then I can view the current lecture and complete it.\n2. Given I am not enrolled, when I request a full lecture body or completion, then access is denied (preview lectures remain available).\n\nScreens: /learn/course/:courseId\nPriority: Must | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S21",
+      "epic": "discovery",
+      "summary": "As a student I want a QR course pass; as a teacher I want to scan attendance",
+      "spec": "specs/021-course-pass/spec.md",
+      "description": "As an enrolled student, I want a QR course pass.\nAs a teacher, I want to scan it,\nso that attendance can be recorded on campus.\n\nBusiness value: Physical-class attendance linked to enrolment.\n\nAcceptance criteria:\n1. Given confirmed enrolment, when I open Course pass, then I can display a QR for my pass.\n2. Given a revoked, expired, or unknown token, when a teacher scans, then the scan is rejected with a clear error.\n\nScreens: /learn/pass, /learn/attendance\nPriority: Should | Epic: Discovery | Status: Done"
+    },
+    {
+      "id": "CH-S22",
+      "epic": "learn",
+      "summary": "As a teacher I want to publish syllabus links so students find materials in the player",
+      "spec": "specs/022-course-resources/spec.md",
+      "description": "As a teacher,\nI want to publish syllabus links and extra reading materials on a course,\nso that students find supporting resources without leaving the player.\n\nBusiness value: Official course links stay in one place.\n\nAcceptance criteria:\n1. Given I can manage the course, when I add a resource with title and https URL, then it appears in the editor and on the player Resources tab.\n2. Given no resources, when a student opens Resources, then an empty state is shown.\n3. Given a missing or non-http(s) URL, when I submit, then create is rejected.\n4. Given I cannot manage the course, when I POST a resource, then access is denied.\n\nScreens: course editor Resources panel, player Resources tab\nPriority: Should | Epic: Teach & learn | Status: Done"
+    },
+    {
+      "id": "CH-S23",
+      "epic": "learn",
+      "summary": "As a student I want to join a waitlist when a course is full",
+      "spec": "specs/023-course-waitlist/spec.md",
+      "description": "As a student,\nI want to join a waitlist when a published course is full,\nso that I keep my place and can enrol when seats open again.\n\nBusiness value: Captures demand on sold-out courses.\n\nAcceptance criteria:\n1. Given a published full course, when I open detail, then I see Join waitlist and 0 seats.\n2. Given I join, when the request succeeds, then I see my position and the course on /enroll Waitlist.\n3. Given I am waitlisted, when I leave, then I am removed from the queue.\n4. Given open seats, when I try to join waitlist, then the API rejects and UI shows Enroll now.\n5. Given confirmed enrollment, when the saga completes, then I am not on that waitlist.\n\nScreens: /catalog/{id}, /enroll\nPriority: Should | Epic: Teach & learn | Status: Done"
+    }
   ]
 }

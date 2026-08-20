@@ -1,4 +1,4 @@
-/** SDD CH-S08 ask, CH-S11 quiz, CH-S12 assignments, CH-S13 notes, CH-S14 announcements, CH-S15 grades — player tabs. */
+/** SDD CH-S08 ask, CH-S11 quiz, CH-S12 assignments, CH-S13 notes, CH-S14 announcements, CH-S15 grades, CH-S22 resources — player tabs. */
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import {
   QuizSummaryDto,
   AssignmentSummaryDto,
   AnnouncementDto,
+  CourseResourceDto,
   GradebookDto,
   QuestionDto,
   ReviewDto,
@@ -65,6 +66,7 @@ import { SessionService } from '../../../shell/src/app/session';
             <button type="button" [class.active]="tab() === 'quiz'" (click)="tab.set('quiz')">Quiz</button>
             <button type="button" [class.active]="tab() === 'work'" (click)="tab.set('work')">Assignments</button>
             <button type="button" [class.active]="tab() === 'news'" (click)="tab.set('news')">Announcements</button>
+            <button type="button" [class.active]="tab() === 'resources'" (click)="tab.set('resources')">Resources</button>
             <button type="button" [class.active]="tab() === 'grades'" (click)="tab.set('grades')">Grades</button>
             <button type="button" [class.active]="tab() === 'qa'" (click)="tab.set('qa')">Q&amp;A</button>
             <button type="button" [class.active]="tab() === 'reviews'" (click)="tab.set('reviews')">Reviews</button>
@@ -239,6 +241,21 @@ import { SessionService } from '../../../shell/src/app/session';
             }
           }
 
+          @if (tab() === 'resources') {
+            @if (resources().length === 0) {
+              <p class="muted">The instructor has not added syllabus or reading links yet.</p>
+            }
+            @for (item of resources(); track item.id) {
+              <article class="qa">
+                <h3><a [href]="item.url" target="_blank" rel="noopener noreferrer">{{ item.title }}</a></h3>
+                @if (item.description) {
+                  <p>{{ item.description }}</p>
+                }
+                <p class="muted">{{ item.url }}</p>
+              </article>
+            }
+          }
+
           @if (tab() === 'grades') {
             @if (!item.enrolled && !session.isTeacher()) {
               <p class="muted">Enroll to see your grades for this course.</p>
@@ -363,10 +380,11 @@ export class CoursePlayer implements OnDestroy {
   readonly lectureId = signal<string | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly questions = signal<QuestionDto[]>([]);
-  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'work' | 'news' | 'grades' | 'qa' | 'reviews'>('lecture');
+  readonly tab = signal<'lecture' | 'notes' | 'ask' | 'quiz' | 'work' | 'news' | 'resources' | 'grades' | 'qa' | 'reviews'>('lecture');
   readonly quizzes = signal<QuizSummaryDto[]>([]);
   readonly assignments = signal<AssignmentSummaryDto[]>([]);
   readonly announcements = signal<AnnouncementDto[]>([]);
+  readonly resources = signal<CourseResourceDto[]>([]);
   readonly grades = signal<GradebookDto | null>(null);
   readonly activeQuiz = signal<QuizDetailDto | null>(null);
   readonly quizResult = signal<QuizAttemptDto | null>(null);
@@ -615,7 +633,7 @@ export class CoursePlayer implements OnDestroy {
   private async open(courseId: string, lectureId: string | null): Promise<void> {
     try {
       if (!this.course() || this.course()?.id !== courseId) {
-        const [course, curriculum, reviews, questions, quizzes, assignments, announcements, grades] = await Promise.all([
+        const [course, curriculum, reviews, questions, quizzes, assignments, announcements, resources, grades] = await Promise.all([
           this.api.course(courseId),
           this.api.curriculum(courseId),
           this.api.reviews(courseId),
@@ -623,6 +641,7 @@ export class CoursePlayer implements OnDestroy {
           this.api.quizzes(courseId).catch(() => []),
           this.api.assignments(courseId).catch(() => []),
           this.api.announcements(courseId).catch(() => []),
+          this.api.resources(courseId).catch(() => []),
           this.api.myGrades(courseId).catch(() => null),
         ]);
         this.course.set(course);
@@ -632,6 +651,7 @@ export class CoursePlayer implements OnDestroy {
         this.quizzes.set(quizzes);
         this.assignments.set(assignments);
         this.announcements.set(announcements);
+        this.resources.set(resources);
         this.grades.set(grades);
       }
       const first = this.curriculum()?.sections[0]?.lectures[0]?.id ?? null;

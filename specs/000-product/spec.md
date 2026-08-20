@@ -64,6 +64,8 @@ See [`specs/STORIES.md`](../STORIES.md) for the BA backlog (As a / I want / So t
 19. Teacher analytics (CH-S07)
 20. Mock billing (CH-S03)
 21. Platform `/ops` vs campus `/campus` (CH-S04)
+22. Course resources / syllabus links (CH-S22)
+23. Course waitlist when full (CH-S23)
 
 Story index and Jira import: [`specs/jira/README.md`](../jira/README.md). Qualified cards: [`specs/STORIES.md`](../STORIES.md). Workflow: [`specs/WORKFLOW.md`](../WORKFLOW.md).
 
@@ -85,7 +87,5 @@ Each story is **Done** when Specify, Apply, Test, Mock, and Retest are complete.
 
 Pick one, write `specs/NNN-slug/spec.md`, then implement:
 
-- Course resources (syllabus links / extra materials)
-- Waitlist when a course is full
 - Teacher roster from enrollments (cross-service)
 - Discussion pinning / Q&A moderation

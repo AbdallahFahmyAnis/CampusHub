@@ -26,6 +26,8 @@ public static class SddStories
     public const string ChS19Enroll = "CH-S19";
     public const string ChS20Player = "CH-S20";
     public const string ChS21CoursePass = "CH-S21";
+    public const string ChS22Resources = "CH-S22";
+    public const string ChS23Waitlist = "CH-S23";
 
     public static string SpecPath(string storyId) => storyId switch
     {
@@ -50,6 +52,8 @@ public static class SddStories
         ChS19Enroll => "specs/019-enroll-checkout",
         ChS20Player => "specs/020-course-player",
         ChS21CoursePass => "specs/021-course-pass",
+        ChS22Resources => "specs/022-course-resources",
+        ChS23Waitlist => "specs/023-course-waitlist",
         _ => "specs/000-product",
     };
 }

@@ -15,6 +15,7 @@ import {
 import { SessionService } from '../../../shell/src/app/session';
 import { VideoEmbed } from './video-embed';
 import { CourseChatPanel } from '../../../chat-mfe/src/app/course-chat-panel';
+import { EnrollmentApi, WaitlistStatusDto } from '../../../enrollment-mfe/src/app/enrollment.api';
 
 @Component({
   selector: 'app-course-detail',
@@ -62,10 +63,22 @@ import { CourseChatPanel } from '../../../chat-mfe/src/app/course-chat-panel';
                 }
               </div>
               <p class="buy-price">{{ item.price | number: '1.2-2' }} USD</p>
+              <p class="muted">{{ item.remainingSeats }} of {{ item.capacity }} seats left</p>
               @if (item.enrolled) {
                 <a class="btn buy" [routerLink]="['/learn', 'course', item.id]">Go to course</a>
               } @else if (!session.isTeacher() && item.canEnroll) {
                 <a class="btn buy" [routerLink]="['/enroll', item.id]">Enroll now</a>
+              } @else if (!session.isTeacher() && item.status === 'Published' && !item.canEnroll) {
+                @if (waitlist(); as w) {
+                  @if (w.waitlisted) {
+                    <p class="muted">Waitlist position {{ w.position }} of {{ w.queueLength }}</p>
+                    <button type="button" class="btn buy" (click)="leaveWaitlist()" [disabled]="busy()">Leave waitlist</button>
+                  } @else {
+                    <button type="button" class="btn buy" (click)="joinWaitlist()" [disabled]="busy()">Join waitlist</button>
+                  }
+                } @else {
+                  <p class="muted">This course is full.</p>
+                }
               } @else if (!item.canEnroll) {
                 <p class="muted">This course is not open for enrollment.</p>
               }
@@ -237,12 +250,14 @@ import { CourseChatPanel } from '../../../chat-mfe/src/app/course-chat-panel';
 })
 export class CourseDetail {
   private readonly api = inject(CatalogApi);
+  private readonly enrollApi = inject(EnrollmentApi);
   private readonly route = inject(ActivatedRoute);
   readonly session = inject(SessionService);
   readonly course = signal<CourseDetailDto | null>(null);
   readonly curriculum = signal<CurriculumDto | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly questions = signal<QuestionDto[]>([]);
+  readonly waitlist = signal<WaitlistStatusDto | null>(null);
   readonly error = signal<string | null>(null);
   readonly busy = signal(false);
   readonly starSlots = starSlots;
@@ -292,6 +307,44 @@ export class CourseDetail {
       }
     } catch {
       this.error.set('Could not update your wishlist.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  async joinWaitlist(): Promise<void> {
+    const course = this.course();
+    if (!course) {
+      return;
+    }
+    this.busy.set(true);
+    try {
+      const entry = await this.enrollApi.joinWaitlist(course.id);
+      this.waitlist.set({
+        waitlisted: true,
+        position: entry.position,
+        queueLength: entry.queueLength,
+      });
+      this.error.set(null);
+    } catch {
+      this.error.set('Could not join the waitlist. The course may have open seats — try Enroll now.');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  async leaveWaitlist(): Promise<void> {
+    const course = this.course();
+    if (!course) {
+      return;
+    }
+    this.busy.set(true);
+    try {
+      const status = await this.enrollApi.leaveWaitlist(course.id);
+      this.waitlist.set(status);
+      this.error.set(null);
+    } catch {
+      this.error.set('Could not leave the waitlist.');
     } finally {
       this.busy.set(false);
     }
@@ -360,16 +413,18 @@ export class CourseDetail {
 
   private async load(id: string): Promise<void> {
     try {
-      const [course, curriculum, reviews, questions] = await Promise.all([
+      const [course, curriculum, reviews, questions, waitlist] = await Promise.all([
         this.api.course(id),
         this.api.curriculum(id),
         this.api.reviews(id),
         this.api.questions(id),
+        this.enrollApi.waitlistStatus(id).catch(() => ({ waitlisted: false, position: null, queueLength: 0 })),
       ]);
       this.course.set(course);
       this.curriculum.set(curriculum);
       this.reviews.set(reviews);
       this.questions.set(questions);
+      this.waitlist.set(waitlist);
     } catch {
       this.error.set('Course was not found.');
     }

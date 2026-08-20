@@ -200,6 +200,19 @@ internal static class CatalogSchema
         await TryAsync(db, """
             CREATE INDEX IF NOT EXISTS IX_CourseAnnouncements_CourseId ON CourseAnnouncements (CourseId);
             """, ct);
+        await TryAsync(db, """
+            CREATE TABLE IF NOT EXISTS CourseResources (
+                Id TEXT NOT NULL CONSTRAINT PK_CourseResources PRIMARY KEY,
+                CourseId TEXT NOT NULL,
+                Title TEXT NOT NULL,
+                Url TEXT NOT NULL,
+                Description TEXT NULL,
+                CreatedAt TEXT NOT NULL
+            );
+            """, ct);
+        await TryAsync(db, """
+            CREATE INDEX IF NOT EXISTS IX_CourseResources_CourseId ON CourseResources (CourseId);
+            """, ct);
     }
 
     private static async Task TryAsync(CatalogDbContext db, string sql, CancellationToken ct)

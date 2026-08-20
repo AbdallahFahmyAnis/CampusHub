@@ -20,6 +20,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapDefaultEndpoints();
 app.MapEnrollmentEndpoints();
+app.MapWaitlistEndpoints();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
@@ -29,6 +30,7 @@ await using (var scope = app.Services.CreateAsyncScope())
         .Where(e => e.TenantId == Guid.Empty)
         .ExecuteUpdateAsync(
             setters => setters.SetProperty(e => e.TenantId, CampusHub.BuildingBlocks.Security.Tenancy.DefaultTenantId));
+    await EnrollmentSeeder.SeedWaitlistDemoAsync(db, app.Lifetime.ApplicationStopping);
 }
 
 app.Run();

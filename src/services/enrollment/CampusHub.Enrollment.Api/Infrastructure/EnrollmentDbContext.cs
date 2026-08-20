@@ -8,6 +8,7 @@ namespace CampusHub.Enrollment.Api.Infrastructure;
 public sealed class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> options) : DbContext(options)
 {
     public DbSet<EnrollmentEntity> Enrollments => Set<EnrollmentEntity>();
+    public DbSet<CourseWaitlist> CourseWaitlists => Set<CourseWaitlist>();
     public DbSet<OutboxMessage> Outbox => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -20,6 +21,20 @@ public sealed class EnrollmentDbContext(DbContextOptions<EnrollmentDbContext> op
             entity.HasIndex(x => new { x.StudentId, x.CourseId, x.Status });
             entity.HasIndex(x => new { x.TenantId, x.Status });
             entity.Property(x => x.TenantId).HasConversion(GuidAsText);
+        });
+
+        modelBuilder.Entity<CourseWaitlist>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasConversion(GuidAsText);
+            entity.Property(x => x.TenantId).HasConversion(GuidAsText);
+            entity.Property(x => x.CourseId).HasConversion(GuidAsText);
+            entity.Property(x => x.CourseTitle).HasMaxLength(300);
+            entity.Property(x => x.StudentId).HasMaxLength(64);
+            entity.Property(x => x.StudentEmail).HasMaxLength(320);
+            entity.Property(x => x.StudentName).HasMaxLength(200);
+            entity.HasIndex(x => new { x.CourseId, x.StudentId }).IsUnique();
+            entity.HasIndex(x => new { x.TenantId, x.StudentId });
         });
 
         modelBuilder.Entity<OutboxMessage>(entity =>

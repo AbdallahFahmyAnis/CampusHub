@@ -259,6 +259,15 @@ export interface AnnouncementDto {
   createdAt: string;
 }
 
+/** SDD CH-S22 — specs/022-course-resources */
+export interface CourseResourceDto {
+  id: string;
+  title: string;
+  url: string;
+  description: string | null;
+  createdAt: string;
+}
+
 export interface GradebookColumnDto {
   kind: string;
   id: string;
@@ -503,6 +512,16 @@ export class CatalogApi {
   createAnnouncement(courseId: string, payload: { title: string; body: string }) {
     return firstValueFrom(
       this.http.post<AnnouncementDto>(`/api/catalog/courses/${courseId}/announcements`, payload),
+    );
+  }
+
+  resources(courseId: string) {
+    return firstValueFrom(this.http.get<CourseResourceDto[]>(`/api/catalog/courses/${courseId}/resources`));
+  }
+
+  createResource(courseId: string, payload: { title: string; url: string; description?: string | null }) {
+    return firstValueFrom(
+      this.http.post<CourseResourceDto>(`/api/catalog/courses/${courseId}/resources`, payload),
     );
   }
 

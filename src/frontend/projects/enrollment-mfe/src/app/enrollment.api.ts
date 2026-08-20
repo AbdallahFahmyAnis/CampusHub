@@ -14,6 +14,22 @@ export interface EnrollmentDto {
   updatedAt: string;
 }
 
+/** SDD CH-S23 — specs/023-course-waitlist */
+export interface WaitlistEntryDto {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  position: number;
+  queueLength: number;
+  joinedAt: string;
+}
+
+export interface WaitlistStatusDto {
+  waitlisted: boolean;
+  position: number | null;
+  queueLength: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EnrollmentApi {
   private readonly http = inject(HttpClient);
@@ -30,5 +46,21 @@ export class EnrollmentApi {
 
   mine() {
     return firstValueFrom(this.http.get<EnrollmentDto[]>('/api/enrollments/mine'));
+  }
+
+  waitlistMine() {
+    return firstValueFrom(this.http.get<WaitlistEntryDto[]>('/api/enrollments/waitlist/mine'));
+  }
+
+  waitlistStatus(courseId: string) {
+    return firstValueFrom(this.http.get<WaitlistStatusDto>(`/api/enrollments/waitlist/courses/${courseId}`));
+  }
+
+  joinWaitlist(courseId: string) {
+    return firstValueFrom(this.http.post<WaitlistEntryDto>(`/api/enrollments/waitlist/courses/${courseId}`, {}));
+  }
+
+  leaveWaitlist(courseId: string) {
+    return firstValueFrom(this.http.delete<WaitlistStatusDto>(`/api/enrollments/waitlist/courses/${courseId}`));
   }
 }

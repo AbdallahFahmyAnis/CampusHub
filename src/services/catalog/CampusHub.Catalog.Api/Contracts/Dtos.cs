@@ -256,6 +256,16 @@ public sealed record AnnouncementDto(
 
 public sealed record CreateAnnouncementRequest(string Title, string Body);
 
+/// <summary>SDD CH-S22 — specs/022-course-resources.</summary>
+public sealed record CourseResourceDto(
+    Guid Id,
+    string Title,
+    string Url,
+    string? Description,
+    DateTimeOffset CreatedAt);
+
+public sealed record CreateCourseResourceRequest(string Title, string Url, string? Description);
+
 public sealed record GradebookColumnDto(string Kind, Guid Id, string Title, int MaxScore);
 
 public sealed record GradebookCellDto(Guid ItemId, int? Score, int MaxScore, bool Submitted);
